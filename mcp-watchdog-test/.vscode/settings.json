@@ -1,0 +1,4 @@
+{
+  "mcpWatchdog.pingIntervalMs": 5000,
+  "mcpWatchdog.initialBackoffMs": 500
+}

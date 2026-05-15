@@ -1,0 +1,125 @@
+{
+  "name": "mcp-watchdog",
+  "displayName": "MCP Watchdog",
+  "description": "Automatic keepalive and reconnection for MCP servers",
+  "version": "0.1.0",
+  "publisher": "local-mcp-watchdog",
+  "license": "MIT",
+  "keywords": [
+    "mcp",
+    "model context protocol",
+    "keepalive",
+    "reconnect",
+    "monitor",
+    "health",
+    "cursor",
+    "ai"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/vaibhav11123/mcp-watchdog.git"
+  },
+  "bugs": {
+    "url": "https://github.com/vaibhav11123/mcp-watchdog/issues"
+  },
+  "homepage": "https://github.com/vaibhav11123/mcp-watchdog#readme",
+  "engines": {
+    "vscode": "^1.105.0"
+  },
+  "categories": ["AI", "Other"],
+  "icon": "images/icon.png",
+  "galleryBanner": {
+    "color": "#1e1e1e",
+    "theme": "dark"
+  },
+  "activationEvents": ["onStartupFinished"],
+  "main": "./dist/extension.js",
+  "contributes": {
+    "commands": [
+      {
+        "command": "mcpWatchdog.showStatus",
+        "title": "MCP Watchdog: Show Server Status"
+      },
+      {
+        "command": "mcpWatchdog.reconnectAll",
+        "title": "MCP Watchdog: Reconnect All Servers"
+      },
+      {
+        "command": "mcpWatchdog.reconnectServer",
+        "title": "MCP Watchdog: Reconnect Server..."
+      },
+      {
+        "command": "mcpWatchdog.reconnectOne",
+        "title": "MCP Watchdog: Reconnect Server"
+      },
+      {
+        "command": "mcpWatchdog.focusServersView",
+        "title": "MCP Watchdog: Open Servers View"
+      }
+    ],
+    "viewsContainers": {
+      "activitybar": [
+        {
+          "id": "mcp-watchdog",
+          "title": "MCP Watchdog",
+          "icon": "images/icon.png"
+        }
+      ]
+    },
+    "views": {
+      "mcp-watchdog": [
+        {
+          "id": "mcpWatchdog.servers",
+          "name": "Servers",
+          "contextualTitle": "MCP servers (health)"
+        }
+      ]
+    },
+    "configuration": {
+      "title": "MCP Watchdog",
+      "properties": {
+        "mcpWatchdog.pingIntervalMs": {
+          "type": "number",
+          "default": 30000,
+          "description": "How often to ping each MCP server (ms). Default: 30000 (30s)"
+        },
+        "mcpWatchdog.maxRetries": {
+          "type": "number",
+          "default": 5,
+          "description": "Max reconnection attempts before marking server as failed"
+        },
+        "mcpWatchdog.initialBackoffMs": {
+          "type": "number",
+          "default": 1000,
+          "description": "Initial backoff delay before first reconnect attempt (ms)"
+        },
+        "mcpWatchdog.backoffMultiplier": {
+          "type": "number",
+          "default": 1.5,
+          "description": "Backoff multiplier (e.g. 1.5 → 1s, 1.5s, 2.25s, ...)"
+        },
+        "mcpWatchdog.maxBackoffMs": {
+          "type": "number",
+          "default": 30000,
+          "description": "Maximum backoff delay between retries (ms)"
+        }
+      }
+    }
+  },
+  "scripts": {
+    "vscode:prepublish": "npm run build",
+    "build": "esbuild src/extension.ts --bundle --outfile=dist/extension.js --external:vscode --format=cjs --platform=node",
+    "watch": "npm run build -- --watch",
+    "compile": "tsc --noEmit",
+    "smoke": "node scripts/smoke-connect.mjs"
+  },
+  "devDependencies": {
+    "@types/node": "^22.14.0",
+    "@types/vscode": "^1.105.0",
+    "esbuild": "^0.20.2",
+    "typescript": "^5.6.3"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.10.0"
+  }
+}
