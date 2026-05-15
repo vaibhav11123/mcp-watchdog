@@ -3,7 +3,7 @@
   "displayName": "MCP Watchdog",
   "description": "Automatic keepalive and reconnection for MCP servers",
   "version": "0.1.0",
-  "publisher": "local-mcp-watchdog",
+  "publisher": "mcp-watchdog",
   "license": "MIT",
   "keywords": [
     "mcp",
