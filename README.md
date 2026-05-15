@@ -3,6 +3,7 @@
 [![CI](https://github.com/vaibhav11123/mcp-watchdog/actions/workflows/ci.yml/badge.svg)](https://github.com/vaibhav11123/mcp-watchdog/actions/workflows/ci.yml)
 [![GitHub release](https://img.shields.io/github/v/release/vaibhav11123/mcp-watchdog?logo=github)](https://github.com/vaibhav11123/mcp-watchdog/releases)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](./LICENSE)
+[![Visual Studio Marketplace](https://img.shields.io/visual-studio-marketplace/v/mcp-watchdog.mcp-watchdog?label=VS%20Marketplace&logo=visualstudiocode)](https://marketplace.visualstudio.com/items?itemName=mcp-watchdog.mcp-watchdog)
 
 **Repository:** [github.com/vaibhav11123/mcp-watchdog](https://github.com/vaibhav11123/mcp-watchdog)
 
@@ -14,7 +15,7 @@ VS Code / Cursor extension that runs a **parallel health layer** over MCP server
 
 | Channel | Steps |
 |--------|--------|
-| **Marketplace** | Search **“MCP Watchdog”** (after you publish) or open `https://marketplace.visualstudio.com/items?itemName=<publisher>.mcp-watchdog`. |
+| **Marketplace** | Search **“MCP Watchdog”** or open **[MCP Watchdog on Visual Studio Marketplace](https://marketplace.visualstudio.com/items?itemName=mcp-watchdog.mcp-watchdog)** (`mcp-watchdog.mcp-watchdog`). |
 | **VSIX** | **[Releases](https://github.com/vaibhav11123/mcp-watchdog/releases)** → download the latest `.vsix`, then **Extensions** → **⋯** → **Install from VSIX…**, or run `cursor --install-extension ./mcp-watchdog-0.x.x.vsix` (or `code --install-extension …`). |
 
 After install, **reload** the window if commands or views do not appear.
@@ -111,7 +112,7 @@ See [CHANGELOG.md](./CHANGELOG.md).
 
 ## Ship checklist (maintainers)
 
-1. **`publisher`** — Replace `local-mcp-watchdog` with your [Marketplace publisher](https://marketplace.visualstudio.com/manage) id.
+1. **`publisher`** — Currently **`mcp-watchdog`**; change in `package.json` if you use a different [Marketplace publisher](https://marketplace.visualstudio.com/manage) id.
 2. **`repository` / `bugs` / `homepage`** — Update in `package.json` if you publish under a different GitHub org or repo name.
 3. **`version`** — Bump per semver; summarize in `CHANGELOG.md`.
 4. **README** — Screenshots, confirm engine range matches lowest editor you support.
