@@ -32,6 +32,15 @@ After install, **reload** the window if commands or views do not appear.
 2. Open that folder. **MCP Watchdog** shows in the **activity bar** → **Servers**; the **status bar** shows **`MCP: n/n`**.
 3. Optional: **View → Output → MCP Watchdog** for detailed logs.
 
+## Screenshots
+
+**Status bar** — aggregate health (`MCP: healthy / total`) on the bottom right:
+
+![MCP Watchdog status bar showing MCP healthy count](./images/screenshot-status-bar.png)
+
+**Servers** view — per-server state and last ping latency in the MCP Watchdog activity bar sidebar:
+
+![MCP Watchdog Servers tree with two healthy servers](./images/screenshot-servers-view.png)
 ### Example `mcp.json`
 
 ```json
@@ -94,7 +103,7 @@ Changes apply on **reload** or when **`mcp.json`** is reloaded; live settings re
 | **Connecting** forever | `npx`/network blocked; stdio command wrong; HTTP URL/firewall. |
 | `Ping failed: Not connected` then retry | Expected after killing a server or network blip; Watchdog should reconnect within your backoff settings. |
 
-**Screenshots for the Marketplace:** capture the **status bar** (`MCP: 2/2`) and the **Servers** view; add images under `docs/` or your repo and link them here in Markdown.
+See **Screenshots** above for the Marketplace / README visuals.
 
 ## Development
 

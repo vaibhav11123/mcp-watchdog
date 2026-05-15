@@ -2,7 +2,7 @@
   "name": "mcp-watchdog",
   "displayName": "MCP Watchdog",
   "description": "Automatic keepalive and reconnection for MCP servers",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "publisher": "mcp-watchdog",
   "license": "MIT",
   "keywords": [
@@ -17,7 +17,7 @@
   ],
   "repository": {
     "type": "git",
-    "url": "https://github.com/vaibhav11123/mcp-watchdog.git"
+    "url": "https://github.com/vaibhav11123/mcp-watchdog"
   },
   "bugs": {
     "url": "https://github.com/vaibhav11123/mcp-watchdog/issues"
