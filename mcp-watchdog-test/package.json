@@ -1,0 +1,12 @@
+{
+  "name": "mcp-watchdog-test",
+  "private": true,
+  "description": "Fixture workspace for manual MCP Watchdog debugging (F5 EDH opens this folder).",
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.10.0",
+    "zod": "^3.25.1"
+  },
+  "devDependencies": {
+    "tsx": "^4.19.0"
+  }
+}
