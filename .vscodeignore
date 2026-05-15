@@ -2,9 +2,12 @@
 .github/**
 src/**
 node_modules/**
+**/node_modules/**
 mcp-watchdog-test/**
+**/mcp-watchdog-test/**
 scripts/**
 esbuild.js
 tsconfig.json
 .gitignore
 *.map
+*.vsix
