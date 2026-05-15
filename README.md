@@ -6,7 +6,7 @@
 
 **Repository:** [github.com/vaibhav11123/mcp-watchdog](https://github.com/vaibhav11123/mcp-watchdog)
 
-VS Code / Cursor extension that runs a **parallel health layer** over MCP servers defined in **`.vscode/mcp.json`**: periodic pings, exponential backoff reconnects, and an extra check when the window regains focus (helpful after sleep).
+VS Code extension that runs a **parallel health layer** over MCP servers defined in **`.vscode/mcp.json`**: periodic pings, exponential backoff reconnects, and an extra check when the window regains focus (helpful after sleep).
 
 **This does not replace** the editor’s built-in MCP integration. It opens **its own** MCP client connections **only to monitor** reachability and latency.
 
@@ -15,13 +15,13 @@ VS Code / Cursor extension that runs a **parallel health layer** over MCP server
 | Channel | Steps |
 |--------|--------|
 | **Marketplace** | Search **“MCP Watchdog”** (after you publish) or open `https://marketplace.visualstudio.com/items?itemName=<publisher>.mcp-watchdog`. |
-| **VSIX** | **[Releases](https://github.com/vaibhav11123/mcp-watchdog/releases)** → download the latest `.vsix`, then **Extensions** → **⋯** → **Install from VSIX…**, or run `cursor --install-extension ./mcp-watchdog-0.x.x.vsix` (or `code --install-extension …`). |
+| **VSIX** | **[Releases](https://github.com/vaibhav11123/mcp-watchdog/releases)** → download the latest `.vsix`, then **Extensions** → **⋯** → **Install from VSIX…**, or run `code --install-extension ./mcp-watchdog-0.x.x.vsix`. |
 
 After install, **reload** the window if commands or views do not appear.
 
 ## Requirements
 
-- **VS Code** or **Cursor** with a compatible engine: this manifest declares **`engines.vscode`: `^1.105.0`** (adjust if you need a different floor after testing).
+- **VS Code** (or any editor that loads VS Code extensions) with a compatible engine: this manifest declares **`engines.vscode`: `^1.105.0`** (adjust if you need a different floor after testing).
 - A **workspace folder** that contains **`.vscode/mcp.json`** with a top-level **`servers`** object (same shape VS Code uses for MCP).
 - In **multi-root** workspaces, only the **first** folder is used when resolving **`mcp.json`** and **`${workspaceFolder}`**.
 
@@ -121,7 +121,7 @@ See [CHANGELOG.md](./CHANGELOG.md).
 npm run build
 npx @vscode/vsce package
 # install locally to verify
-cursor --install-extension mcp-watchdog-<version>.vsix
+code --install-extension mcp-watchdog-<version>.vsix
 ```
 
 ## License
