@@ -12,6 +12,7 @@
     "reconnect",
     "monitor",
     "health",
+    "cursor",
     "ai"
   ],
   "repository": {
