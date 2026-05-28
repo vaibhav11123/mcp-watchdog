@@ -59,9 +59,7 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
         await monitors.get(name)?.forceReconnect();
       }
     }),
-    vscode.commands.registerCommand('mcpWatchdog.focusServersView', async () => {
-      await vscode.commands.executeCommand('workbench.view.extension.mcp-watchdog');
-    }),
+    vscode.commands.registerCommand('mcpWatchdog.focusServersView', focusServersView),
     vscode.commands.registerCommand('mcpWatchdog.openMcpConfig', openMcpConfig),
   );
 
@@ -87,6 +85,16 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
   context.subscriptions.push({ dispose: () => configWatcher?.dispose() });
 
   await reloadServers();
+
+  const revealKey = 'mcpWatchdog.didRevealServersView';
+  if (!context.globalState.get<boolean>(revealKey)) {
+    void context.globalState.update(revealKey, true);
+    setTimeout(() => void focusServersView(), 750);
+  }
+}
+
+async function focusServersView(): Promise<void> {
+  await vscode.commands.executeCommand('mcpWatchdog.servers.focus');
 }
 
 async function reloadServers(): Promise<void> {

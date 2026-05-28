@@ -4,6 +4,17 @@ All notable changes to **MCP Watchdog** are documented here.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [0.1.4] - 2026-05-16
+
+### Added
+
+- **Getting Started walkthrough** (`mcpWatchdog.getStarted`) explaining that the UI is in the activity bar, not the Extensions detail page.
+- **First-run:** automatically focuses the **Servers** view once after install.
+
+### Changed
+
+- **Open Servers View** uses the standard `mcpWatchdog.servers.focus` command.
+
 ## [0.1.3] - 2026-05-16
 
 ### Fixed
@@ -48,6 +59,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - Reads **`.vscode/mcp.json`** (`servers`); expands **`${workspaceFolder}`** in strings.
 - Stdio and streamable HTTP transports via `@modelcontextprotocol/sdk`.
 
+[0.1.4]: https://github.com/vaibhav11123/mcp-watchdog/releases/tag/v0.1.4
 [0.1.3]: https://github.com/vaibhav11123/mcp-watchdog/releases/tag/v0.1.3
 [0.1.2]: https://github.com/vaibhav11123/mcp-watchdog/releases/tag/v0.1.2
 [0.1.1]: https://github.com/vaibhav11123/mcp-watchdog/releases/tag/v0.1.1

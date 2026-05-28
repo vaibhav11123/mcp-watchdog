@@ -30,6 +30,19 @@ After install, **reload** the window if commands or views do not appear.
   - **`~/.cursor/mcp.json`** — Cursor global (merged with project config)
 - In **multi-root** workspaces, only the **first** folder is used when resolving paths and **`${workspaceFolder}`**.
 
+## Where is the UI?
+
+VS Code has **two different sidebars**:
+
+| Place | What you see |
+|--------|----------------|
+| **Extensions** (puzzle piece) → click **MCP Watchdog** | Marketplace **README** only—the same for almost every extension. This is **not** the live dashboard. |
+| **Activity bar** → **MCP Watchdog** icon → **Servers** | Live server list, state, ping latency. This is the real UI. |
+
+Other extensions that “show UI when opened” usually either (1) open their **own activity bar panel** (GitLens, Docker, etc.), (2) add a **Getting Started walkthrough** (first install), or (3) use a **webview** in the sidebar. MCP Watchdog uses (1) + a walkthrough on first install.
+
+After install, run **Help → Welcome → MCP Watchdog: Get started** (walkthrough), or **MCP Watchdog: Open Servers View**.
+
 ## Quick start
 
 1. Add MCP config (see examples below). Command: **MCP Watchdog: Open MCP Config**.

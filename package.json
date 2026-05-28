@@ -2,7 +2,7 @@
   "name": "mcp-watchdog",
   "displayName": "MCP Watchdog",
   "description": "Automatic keepalive and reconnection for MCP servers",
-  "version": "0.1.3",
+  "version": "0.1.4",
   "publisher": "mcp-watchdog",
   "license": "MIT",
   "keywords": [
@@ -32,7 +32,7 @@
     "color": "#1e1e1e",
     "theme": "dark"
   },
-  "activationEvents": ["onStartupFinished"],
+  "activationEvents": ["onStartupFinished", "onWalkthrough:mcpWatchdog.getStarted"],
   "main": "./dist/extension.js",
   "contributes": {
     "commands": [
@@ -59,6 +59,41 @@
       {
         "command": "mcpWatchdog.openMcpConfig",
         "title": "MCP Watchdog: Open MCP Config"
+      }
+    ],
+    "walkthroughs": [
+      {
+        "id": "mcpWatchdog.getStarted",
+        "title": "Get started with MCP Watchdog",
+        "description": "Monitor MCP server health from the activity bar—not the Extensions panel.",
+        "steps": [
+          {
+            "id": "openServersView",
+            "title": "Open the Servers view",
+            "description": "The live UI is in the **activity bar** (left icon strip), not inside **Extensions** when you click the extension name.\n\n[Open MCP Watchdog sidebar](command:mcpWatchdog.focusServersView)",
+            "media": {
+              "image": "images/screenshot-servers-view.png",
+              "altText": "MCP Watchdog Servers tree in the sidebar"
+            },
+            "completionEvents": ["onView:mcpWatchdog.servers"]
+          },
+          {
+            "id": "addMcpConfig",
+            "title": "Add MCP config",
+            "description": "Use **.cursor/mcp.json** (Cursor) or **.vscode/mcp.json** (VS Code). Cursor often uses a `mcpServers` block.\n\n[Open or create MCP config](command:mcpWatchdog.openMcpConfig)",
+            "completionEvents": ["onCommand:mcpWatchdog.openMcpConfig"]
+          },
+          {
+            "id": "statusBar",
+            "title": "Check the status bar",
+            "description": "When servers are monitored, the bottom-right status bar shows **MCP: healthy/total**.\n\n[Show server status](command:mcpWatchdog.showStatus)",
+            "media": {
+              "image": "images/screenshot-status-bar.png",
+              "altText": "MCP Watchdog status bar indicator"
+            },
+            "completionEvents": ["onCommand:mcpWatchdog.showStatus"]
+          }
+        ]
       }
     ],
     "viewsWelcome": [
