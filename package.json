@@ -2,7 +2,7 @@
   "name": "mcp-watchdog",
   "displayName": "MCP Watchdog",
   "description": "Automatic keepalive and reconnection for MCP servers",
-  "version": "0.1.2",
+  "version": "0.1.3",
   "publisher": "mcp-watchdog",
   "license": "MIT",
   "keywords": [
@@ -55,6 +55,16 @@
       {
         "command": "mcpWatchdog.focusServersView",
         "title": "MCP Watchdog: Open Servers View"
+      },
+      {
+        "command": "mcpWatchdog.openMcpConfig",
+        "title": "MCP Watchdog: Open MCP Config"
+      }
+    ],
+    "viewsWelcome": [
+      {
+        "view": "mcpWatchdog.servers",
+        "contents": "MCP Watchdog shows health for MCP servers in your config.\n\n[Open a folder](command:workbench.action.openFolder)\n\nAdd **.cursor/mcp.json** (Cursor) or **.vscode/mcp.json** (VS Code).\n\n[Open or create MCP config](command:mcpWatchdog.openMcpConfig)"
       }
     ],
     "viewsContainers": {

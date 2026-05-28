@@ -1,6 +1,11 @@
 import * as vscode from 'vscode';
 import { ServerMonitor, ServerStatus } from './monitor';
-import { readMcpConfig, watchMcpConfig } from './config';
+import {
+  emptyViewMessage,
+  loadMcpConfig,
+  McpConfigStatus,
+  watchMcpConfig,
+} from './config';
 import { McpStatusBar } from './statusBar';
 import { Logger } from './logger';
 import { ServersTreeProvider } from './serversTree';
@@ -12,10 +17,24 @@ let statusBar: McpStatusBar;
 let logger: Logger;
 let statuses = new Map<string, ServerStatus>();
 let serversTreeProvider: ServersTreeProvider | undefined;
+let serversView: vscode.TreeView<vscode.TreeItem> | undefined;
+let lastConfigStatus: McpConfigStatus = { kind: 'no_workspace' };
+let configWatcher: vscode.Disposable | undefined;
 
 function refreshAllUi(): void {
   statusBar.update([...statuses.values()]);
   serversTreeProvider?.refresh();
+  if (serversView) {
+    serversView.message = emptyViewMessage(lastConfigStatus);
+  }
+}
+
+function resetConfigWatcher(): void {
+  configWatcher?.dispose();
+  configWatcher = watchMcpConfig(() => {
+    logger.info('[Watchdog] MCP config changed — reloading servers');
+    void reloadServers();
+  });
 }
 
 export async function activate(context: vscode.ExtensionContext): Promise<void> {
@@ -24,9 +43,10 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
 
   const serversTree = new ServersTreeProvider(() => [...statuses.values()]);
   serversTreeProvider = serversTree;
-  const serversView = vscode.window.createTreeView('mcpWatchdog.servers', {
+  serversView = vscode.window.createTreeView('mcpWatchdog.servers', {
     treeDataProvider: serversTree,
   });
+  serversView.message = emptyViewMessage({ kind: 'no_workspace' });
 
   context.subscriptions.push(logger, statusBar, serversView);
 
@@ -42,6 +62,7 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
     vscode.commands.registerCommand('mcpWatchdog.focusServersView', async () => {
       await vscode.commands.executeCommand('workbench.view.extension.mcp-watchdog');
     }),
+    vscode.commands.registerCommand('mcpWatchdog.openMcpConfig', openMcpConfig),
   );
 
   context.subscriptions.push(
@@ -55,11 +76,15 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
     }),
   );
 
-  const configWatcher = watchMcpConfig(async () => {
-    logger.info('[Watchdog] mcp.json changed — reloading servers');
-    await reloadServers();
-  });
-  context.subscriptions.push(configWatcher);
+  context.subscriptions.push(
+    vscode.workspace.onDidChangeWorkspaceFolders(() => {
+      resetConfigWatcher();
+      void reloadServers();
+    }),
+  );
+
+  resetConfigWatcher();
+  context.subscriptions.push({ dispose: () => configWatcher?.dispose() });
 
   await reloadServers();
 }
@@ -71,9 +96,19 @@ async function reloadServers(): Promise<void> {
   monitors.clear();
   statuses.clear();
 
-  const config = readMcpConfig();
-  if (!config) {
-    logger.info('[Watchdog] No .vscode/mcp.json found');
+  const { status, config } = loadMcpConfig();
+  lastConfigStatus = status;
+
+  if (!config || status.kind !== 'ok') {
+    const detail =
+      status.kind === 'no_config'
+        ? 'No MCP config file found'
+        : status.kind === 'empty_servers'
+          ? 'No valid server entries in mcp.json'
+          : status.kind === 'no_workspace'
+            ? 'No workspace folder open'
+            : 'MCP config not loaded';
+    logger.info(`[Watchdog] ${detail}`);
     statusBar.update([]);
     refreshAllUi();
     return;
@@ -86,8 +121,8 @@ async function reloadServers(): Promise<void> {
       name,
       serverConfig,
       opts,
-      (status) => {
-        statuses.set(name, status);
+      (s) => {
+        statuses.set(name, s);
         refreshAllUi();
       },
       logger.getLogFn(),
@@ -96,7 +131,12 @@ async function reloadServers(): Promise<void> {
     void monitor.start();
   }
 
-  logger.info(`[Watchdog] Monitoring ${monitors.size} server(s)`);
+  if (status.kind === 'ok') {
+    logger.info(`[Watchdog] Monitoring ${monitors.size} server(s) from ${status.sources.join(', ')}`);
+  } else {
+    logger.info(`[Watchdog] Monitoring ${monitors.size} server(s)`);
+  }
+  refreshAllUi();
 }
 
 function getOptions() {
@@ -110,6 +150,51 @@ function getOptions() {
   };
 }
 
+async function openMcpConfig(): Promise<void> {
+  const folders = vscode.workspace.workspaceFolders;
+  if (!folders?.length) {
+    void vscode.window.showInformationMessage('Open a folder first, then add .vscode/mcp.json or .cursor/mcp.json.');
+    return;
+  }
+
+  const root = folders[0].uri;
+  const candidates = [
+    vscode.Uri.joinPath(root, '.cursor', 'mcp.json'),
+    vscode.Uri.joinPath(root, '.vscode', 'mcp.json'),
+  ];
+
+  for (const uri of candidates) {
+    try {
+      await vscode.workspace.fs.stat(uri);
+      const doc = await vscode.workspace.openTextDocument(uri);
+      await vscode.window.showTextDocument(doc);
+      return;
+    } catch {
+      // try next
+    }
+  }
+
+  const pick = await vscode.window.showQuickPick(
+    [
+      { label: 'Cursor project config', path: '.cursor/mcp.json', description: 'Recommended for Cursor' },
+      { label: 'VS Code workspace config', path: '.vscode/mcp.json', description: 'Recommended for VS Code' },
+    ],
+    { placeHolder: 'Create MCP config file' },
+  );
+  if (!pick) return;
+
+  const uri = vscode.Uri.joinPath(root, ...pick.path.split('/'));
+  const template =
+    pick.path.includes('.cursor')
+      ? '{\n  "mcpServers": {\n    "example": {\n      "command": "npx",\n      "args": ["-y", "@modelcontextprotocol/server-memory"]\n    }\n  }\n}\n'
+      : '{\n  "servers": {\n    "example": {\n      "type": "stdio",\n      "command": "npx",\n      "args": ["-y", "@modelcontextprotocol/server-memory"]\n    }\n  }\n}\n';
+
+  await vscode.workspace.fs.writeFile(uri, Buffer.from(template, 'utf8'));
+  const doc = await vscode.workspace.openTextDocument(uri);
+  await vscode.window.showTextDocument(doc);
+  void vscode.window.showInformationMessage('MCP config created. Save the file and reload the window.');
+}
+
 async function reconnectAll(): Promise<void> {
   for (const monitor of monitors.values()) {
     await monitor.forceReconnect();
@@ -119,7 +204,9 @@ async function reconnectAll(): Promise<void> {
 async function reconnectServer(): Promise<void> {
   const names = [...monitors.keys()];
   if (names.length === 0) {
-    void vscode.window.showInformationMessage('No MCP servers configured.');
+    void vscode.window.showInformationMessage(
+      'No MCP servers configured. Add .vscode/mcp.json or .cursor/mcp.json, or run "MCP Watchdog: Open MCP Config".',
+    );
     return;
   }
   const picked = await vscode.window.showQuickPick(names, {
@@ -132,9 +219,13 @@ async function reconnectServer(): Promise<void> {
 
 async function showStatusPanel(): Promise<void> {
   if (statuses.size === 0) {
-    void vscode.window.showInformationMessage(
-      'No MCP servers configured. Add servers to .vscode/mcp.json',
-    );
+    const msg =
+      lastConfigStatus.kind === 'no_workspace'
+        ? 'Open a workspace folder first.'
+        : lastConfigStatus.kind === 'no_config'
+          ? 'No MCP config found. Use "MCP Watchdog: Open MCP Config" or add .cursor/mcp.json / .vscode/mcp.json.'
+          : 'No MCP servers configured or all entries were invalid.';
+    void vscode.window.showInformationMessage(msg);
     return;
   }
 

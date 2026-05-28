@@ -4,6 +4,18 @@ All notable changes to **MCP Watchdog** are documented here.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [0.1.3] - 2026-05-16
+
+### Fixed
+
+- **Empty Servers view on Cursor:** read **`.cursor/mcp.json`** (`mcpServers`) and **`~/.cursor/mcp.json`**, not only **`.vscode/mcp.json`** (`servers`).
+- **Empty view after opening a folder:** reload when workspace folders change; watch all MCP config paths.
+- **Blank UI with no guidance:** tree **message**, **viewsWelcome**, and **Open MCP Config** command.
+
+### Added
+
+- **MCP Watchdog: Open MCP Config** — open or scaffold Cursor/VS Code MCP config files.
+
 ## [0.1.2] - 2026-05-16
 
 ### Added
@@ -36,6 +48,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - Reads **`.vscode/mcp.json`** (`servers`); expands **`${workspaceFolder}`** in strings.
 - Stdio and streamable HTTP transports via `@modelcontextprotocol/sdk`.
 
+[0.1.3]: https://github.com/vaibhav11123/mcp-watchdog/releases/tag/v0.1.3
 [0.1.2]: https://github.com/vaibhav11123/mcp-watchdog/releases/tag/v0.1.2
 [0.1.1]: https://github.com/vaibhav11123/mcp-watchdog/releases/tag/v0.1.1
 [0.1.0]: https://github.com/vaibhav11123/mcp-watchdog/releases/tag/v0.1.0

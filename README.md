@@ -7,7 +7,7 @@
 
 **Repository:** [github.com/vaibhav11123/mcp-watchdog](https://github.com/vaibhav11123/mcp-watchdog)
 
-VS Code / Cursor extension that runs a **parallel health layer** over MCP servers defined in **`.vscode/mcp.json`**: periodic pings, exponential backoff reconnects, and an extra check when the window regains focus (helpful after sleep).
+VS Code / Cursor extension that runs a **parallel health layer** over MCP servers from your MCP config files: periodic pings, exponential backoff reconnects, and an extra check when the window regains focus (helpful after sleep).
 
 **This does not replace** the editor’s built-in MCP integration. It opens **its own** MCP client connections **only to monitor** reachability and latency.
 
@@ -23,13 +23,17 @@ After install, **reload** the window if commands or views do not appear.
 ## Requirements
 
 - **VS Code** or **Cursor** with a compatible engine: this manifest declares **`engines.vscode`: `^1.105.0`** (adjust if you need a different floor after testing).
-- A **workspace folder** that contains **`.vscode/mcp.json`** with a top-level **`servers`** object (same shape VS Code uses for MCP).
-- In **multi-root** workspaces, only the **first** folder is used when resolving **`mcp.json`** and **`${workspaceFolder}`**.
+- A **workspace folder** open in the editor.
+- MCP config in at least one of:
+  - **`.vscode/mcp.json`** — VS Code (`servers` object)
+  - **`.cursor/mcp.json`** — Cursor (`mcpServers` or `servers`)
+  - **`~/.cursor/mcp.json`** — Cursor global (merged with project config)
+- In **multi-root** workspaces, only the **first** folder is used when resolving paths and **`${workspaceFolder}`**.
 
 ## Quick start
 
-1. Add `.vscode/mcp.json` (see example below). You may use **`${workspaceFolder}`** in `args`, `cwd`, `env` values, and URLs — MCP Watchdog expands it like VS Code.
-2. Open that folder. **MCP Watchdog** shows in the **activity bar** → **Servers**; the **status bar** shows **`MCP: n/n`**.
+1. Add MCP config (see examples below). Command: **MCP Watchdog: Open MCP Config**.
+2. Open that folder. Click the **MCP Watchdog** icon in the **activity bar** → **Servers** (not the Extensions panel). The **status bar** shows **`MCP: n/n`** when servers are monitored.
 3. Optional: **View → Output → MCP Watchdog** for detailed logs.
 
 ## Screenshots
@@ -68,6 +72,7 @@ After install, **reload** the window if commands or views do not appear.
 - **MCP Watchdog: Reconnect All Servers**
 - **MCP Watchdog: Reconnect Server…**
 - **MCP Watchdog: Open Servers View** — Focus the **Servers** tree.
+- **MCP Watchdog: Open MCP Config** — Open or create `.cursor/mcp.json` / `.vscode/mcp.json`.
 
 ## Settings (`mcpWatchdog.*`)
 
@@ -89,7 +94,7 @@ Changes apply on **reload** or when **`mcp.json`** is reloaded; live settings re
 
 ## Known limitations
 
-- **Workspace `mcp.json` only** (first root folder). User-global MCP config paths are not read.
+- Reads **`.vscode/mcp.json`**, **`.cursor/mcp.json`**, and **`~/.cursor/mcp.json`** (merged; project files override global). Does not read other user-global VS Code MCP paths yet.
 - **Independent of the editor’s MCP UI**: native MCP may show different state until the next Watchdog ping.
 - **HTTP transport** may combine SDK-level reconnection with Watchdog-level retries.
 - **Malformed `mcp.json`**: invalid JSON shows an error notification; fix the file and save.
@@ -98,7 +103,8 @@ Changes apply on **reload** or when **`mcp.json`** is reloaded; live settings re
 
 | Symptom | What to check |
 |---------|----------------|
-| No **MCP Watchdog** in Output / no status | Folder open? **`.vscode/mcp.json`** present? Try **Developer: Show Running Extensions** → **MCP Watchdog** activated. |
+| **Servers** view is empty | Open a **folder** (not just a file). Add **`.cursor/mcp.json`** (Cursor) or **`.vscode/mcp.json`** (VS Code). Use the **activity bar** MCP Watchdog icon, not the Extensions detail page. |
+| No **MCP Watchdog** in Output / no status | Folder open? MCP config present? Try **Developer: Show Running Extensions** → **MCP Watchdog** activated. |
 | **No servers** / **0/n** | `servers` key missing or empty; path is wrong root in multi-root. |
 | **Connecting** forever | `npx`/network blocked; stdio command wrong; HTTP URL/firewall. |
 | `Ping failed: Not connected` then retry | Expected after killing a server or network blip; Watchdog should reconnect within your backoff settings. |
