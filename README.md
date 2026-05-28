@@ -3,7 +3,7 @@
 [![CI](https://github.com/vaibhav11123/mcp-watchdog/actions/workflows/ci.yml/badge.svg)](https://github.com/vaibhav11123/mcp-watchdog/actions/workflows/ci.yml)
 [![GitHub release](https://img.shields.io/github/v/release/vaibhav11123/mcp-watchdog?logo=github)](https://github.com/vaibhav11123/mcp-watchdog/releases)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](./LICENSE)
-[![Visual Studio Marketplace](https://img.shields.io/visual-studio-marketplace/v/mcp-watchdog.mcp-watchdog?label=VS%20Marketplace&logo=visualstudiocode)](https://marketplace.visualstudio.com/items?itemName=mcp-watchdog.mcp-watchdog)
+[![Install on VS Marketplace](https://img.shields.io/badge/VS%20Marketplace-Install-0078d4?logo=visualstudiocode&logoColor=white)](https://marketplace.visualstudio.com/items?itemName=mcp-watchdog.mcp-watchdog)
 
 **Repository:** [github.com/vaibhav11123/mcp-watchdog](https://github.com/vaibhav11123/mcp-watchdog)
 
