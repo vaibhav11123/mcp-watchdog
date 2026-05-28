@@ -156,7 +156,8 @@
     "build": "esbuild src/extension.ts --bundle --outfile=dist/extension.js --external:vscode --format=cjs --platform=node",
     "watch": "npm run build -- --watch",
     "compile": "tsc --noEmit",
-    "smoke": "node scripts/smoke-connect.mjs"
+    "smoke": "node scripts/smoke-connect.mjs",
+    "test": "npm run compile && npm run build && npm run smoke && node scripts/test-integration.mjs"
   },
   "devDependencies": {
     "@types/node": "^22.14.0",

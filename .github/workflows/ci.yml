@@ -25,3 +25,6 @@ jobs:
 
       - name: Bundle extension
         run: npm run build
+
+      - name: Smoke + integration tests
+        run: npm run smoke && node scripts/test-integration.mjs
