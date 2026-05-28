@@ -1,5 +1,5 @@
 import * as vscode from 'vscode';
-import { ServerMonitor, ServerStatus } from './monitor';
+import { ServerMonitor, ServerStatus, ServerState } from './monitor';
 import {
   emptyViewMessage,
   loadMcpConfig,
@@ -9,6 +9,8 @@ import {
 import { McpStatusBar } from './statusBar';
 import { Logger } from './logger';
 import { ServersTreeProvider } from './serversTree';
+import { OverviewViewProvider } from './overviewView';
+import { STATE_PRESENTATION } from './ui/statePresentation';
 
 type StatusPickItem = vscode.QuickPickItem & { serverName: string };
 
@@ -17,13 +19,16 @@ let statusBar: McpStatusBar;
 let logger: Logger;
 let statuses = new Map<string, ServerStatus>();
 let serversTreeProvider: ServersTreeProvider | undefined;
+let overviewProvider: OverviewViewProvider | undefined;
 let serversView: vscode.TreeView<vscode.TreeItem> | undefined;
 let lastConfigStatus: McpConfigStatus = { kind: 'no_workspace' };
 let configWatcher: vscode.Disposable | undefined;
 
 function refreshAllUi(): void {
-  statusBar.update([...statuses.values()]);
+  const list = [...statuses.values()];
+  statusBar.update(list);
   serversTreeProvider?.refresh();
+  overviewProvider?.update(list, lastConfigStatus);
   if (serversView) {
     serversView.message = emptyViewMessage(lastConfigStatus);
   }
@@ -41,6 +46,11 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
   logger = new Logger();
   statusBar = new McpStatusBar('mcpWatchdog.showStatus');
 
+  overviewProvider = new OverviewViewProvider(context.extensionUri);
+  context.subscriptions.push(
+    vscode.window.registerWebviewViewProvider('mcpWatchdog.overview', overviewProvider),
+  );
+
   const serversTree = new ServersTreeProvider(() => [...statuses.values()]);
   serversTreeProvider = serversTree;
   serversView = vscode.window.createTreeView('mcpWatchdog.servers', {
@@ -54,13 +64,19 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
     vscode.commands.registerCommand('mcpWatchdog.showStatus', showStatusPanel),
     vscode.commands.registerCommand('mcpWatchdog.reconnectAll', reconnectAll),
     vscode.commands.registerCommand('mcpWatchdog.reconnectServer', reconnectServer),
-    vscode.commands.registerCommand('mcpWatchdog.reconnectOne', async (name: string) => {
-      if (typeof name === 'string') {
-        await monitors.get(name)?.forceReconnect();
-      }
+    vscode.commands.registerCommand('mcpWatchdog.reconnectOne', async (arg: unknown) => {
+      const name =
+        typeof arg === 'string'
+          ? arg
+          : arg && typeof arg === 'object' && 'serverName' in arg
+            ? String((arg as { serverName: string }).serverName)
+            : undefined;
+      if (name) await monitors.get(name)?.forceReconnect();
     }),
     vscode.commands.registerCommand('mcpWatchdog.focusServersView', focusServersView),
     vscode.commands.registerCommand('mcpWatchdog.openMcpConfig', openMcpConfig),
+    vscode.commands.registerCommand('mcpWatchdog.showOutput', () => logger.show()),
+    vscode.commands.registerCommand('mcpWatchdog.refresh', () => reloadServers()),
   );
 
   context.subscriptions.push(
@@ -94,7 +110,8 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
 }
 
 async function focusServersView(): Promise<void> {
-  await vscode.commands.executeCommand('mcpWatchdog.servers.focus');
+  await vscode.commands.executeCommand('workbench.view.extension.mcp-watchdog');
+  await vscode.commands.executeCommand('mcpWatchdog.overview.focus');
 }
 
 async function reloadServers(): Promise<void> {
@@ -200,13 +217,14 @@ async function openMcpConfig(): Promise<void> {
   await vscode.workspace.fs.writeFile(uri, Buffer.from(template, 'utf8'));
   const doc = await vscode.workspace.openTextDocument(uri);
   await vscode.window.showTextDocument(doc);
-  void vscode.window.showInformationMessage('MCP config created. Save the file and reload the window.');
+  void vscode.window.showInformationMessage('MCP config created. Save the file to start monitoring.');
 }
 
 async function reconnectAll(): Promise<void> {
   for (const monitor of monitors.values()) {
     await monitor.forceReconnect();
   }
+  void vscode.window.showInformationMessage('MCP Watchdog: reconnecting all servers…');
 }
 
 async function reconnectServer(): Promise<void> {
@@ -225,6 +243,14 @@ async function reconnectServer(): Promise<void> {
   }
 }
 
+const QUICK_PICK_ICON: Record<ServerState, string> = {
+  healthy: '$(check)',
+  connecting: '$(sync~spin)',
+  degraded: '$(warning)',
+  failed: '$(error)',
+  disconnected: '$(circle-slash)',
+};
+
 async function showStatusPanel(): Promise<void> {
   if (statuses.size === 0) {
     const msg =
@@ -237,32 +263,23 @@ async function showStatusPanel(): Promise<void> {
     return;
   }
 
-  const iconMap: Record<string, string> = {
-    healthy: '✓',
-    connecting: '⟳',
-    degraded: '⚠',
-    failed: '✗',
-    disconnected: '○',
-  };
-
   const items: StatusPickItem[] = [...statuses.values()].map((s) => {
-    const icon = iconMap[s.state];
-    const ping = s.lastPingMs !== undefined ? ` (${s.lastPingMs}ms)` : '';
+    const ping = s.lastPingMs !== undefined ? ` · ${s.lastPingMs} ms` : '';
     return {
-      label: `${icon} ${s.name}`,
-      description: s.state + ping,
+      label: `${QUICK_PICK_ICON[s.state]} ${s.name}`,
+      description: `${STATE_PRESENTATION[s.state].label}${ping}`,
       detail: s.lastError,
       serverName: s.name,
     };
   });
 
   const item = await vscode.window.showQuickPick<StatusPickItem>(items, {
-    placeHolder: 'MCP Server Status — pick a server to reconnect',
+    placeHolder: 'MCP servers — select to reconnect',
     canPickMany: false,
   });
   if (!item) return;
   await monitors.get(item.serverName)?.forceReconnect();
-  void vscode.window.showInformationMessage(`Reconnecting ${item.serverName}...`);
+  void vscode.window.showInformationMessage(`Reconnecting ${item.serverName}…`);
 }
 
 export async function deactivate(): Promise<void> {

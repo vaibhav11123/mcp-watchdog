@@ -1,36 +1,42 @@
 import * as vscode from 'vscode';
-import { ServerState, ServerStatus } from './monitor';
+import { ServerStatus } from './monitor';
+import {
+  formatTreeDescription,
+  stateThemeIcon,
+  STATE_PRESENTATION,
+} from './ui/statePresentation';
 
 class ServerTreeItem extends vscode.TreeItem {
   constructor(readonly serverName: string, status: ServerStatus) {
     super(status.name, vscode.TreeItemCollapsibleState.None);
 
-    const ping = status.lastPingMs !== undefined ? `${status.lastPingMs} ms` : '—';
-    this.description = `${status.state} · ${ping}`;
+    this.description = formatTreeDescription(status.state, status.lastPingMs);
+    this.contextValue = 'mcpWatchdogServer';
 
     const md = new vscode.MarkdownString();
     md.isTrusted = true;
+    md.supportHtml = false;
+    const p = STATE_PRESENTATION[status.state];
     md.appendMarkdown(`**${status.name}**\n\n`);
-    md.appendMarkdown(`State: \`${status.state}\`\n\n`);
-    md.appendMarkdown(`Last ping: ${ping}`);
-    if (status.lastError) {
-      md.appendMarkdown(`\n\n${status.lastError}`);
+    md.appendMarkdown(`Status: **${p.label}**\n\n`);
+    md.appendMarkdown(
+      `Latency: ${status.lastPingMs !== undefined ? `${status.lastPingMs} ms` : '—'}\n\n`,
+    );
+    if (status.retryCount > 0) {
+      md.appendMarkdown(`Retries: ${status.retryCount}\n\n`);
     }
-    md.appendMarkdown(`\n\n_Click to reconnect_`);
+    if (status.lastError) {
+      md.appendMarkdown(`Error: ${status.lastError}\n\n`);
+    }
+    const args = encodeURIComponent(JSON.stringify([serverName]));
+    md.appendMarkdown(`[Reconnect](command:mcpWatchdog.reconnectOne?${args})`);
     this.tooltip = md;
 
-    const iconId: Record<ServerState, string> = {
-      healthy: 'check',
-      connecting: 'sync~spin',
-      degraded: 'warning',
-      failed: 'error',
-      disconnected: 'circle-slash',
-    };
-    this.iconPath = new vscode.ThemeIcon(iconId[status.state]);
+    this.iconPath = stateThemeIcon(status.state);
 
     this.command = {
       command: 'mcpWatchdog.reconnectOne',
-      title: 'Reconnect',
+      title: 'Reconnect server',
       arguments: [serverName],
     };
   }
@@ -51,7 +57,8 @@ export class ServersTreeProvider implements vscode.TreeDataProvider<ServerTreeIt
   }
 
   getChildren(): ServerTreeItem[] {
-    return this.getStatuses().map((s) => new ServerTreeItem(s.name, s));
+    const statuses = this.getStatuses();
+    return statuses.map((s) => new ServerTreeItem(s.name, s));
   }
 
   getParent(): undefined {

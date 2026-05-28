@@ -2,7 +2,7 @@
   "name": "mcp-watchdog",
   "displayName": "MCP Watchdog",
   "description": "Automatic keepalive and reconnection for MCP servers",
-  "version": "0.1.4",
+  "version": "0.1.5",
   "publisher": "mcp-watchdog",
   "license": "MIT",
   "keywords": [
@@ -32,7 +32,7 @@
     "color": "#1e1e1e",
     "theme": "dark"
   },
-  "activationEvents": ["onStartupFinished", "onWalkthrough:mcpWatchdog.getStarted"],
+  "activationEvents": ["onStartupFinished"],
   "main": "./dist/extension.js",
   "contributes": {
     "commands": [
@@ -59,8 +59,43 @@
       {
         "command": "mcpWatchdog.openMcpConfig",
         "title": "MCP Watchdog: Open MCP Config"
+      },
+      {
+        "command": "mcpWatchdog.showOutput",
+        "title": "MCP Watchdog: Show Output Log"
+      },
+      {
+        "command": "mcpWatchdog.refresh",
+        "title": "MCP Watchdog: Refresh",
+        "icon": "$(refresh)"
       }
     ],
+    "menus": {
+      "view/title": [
+        {
+          "command": "mcpWatchdog.refresh",
+          "when": "view == mcpWatchdog.overview || view == mcpWatchdog.servers",
+          "group": "navigation@1"
+        },
+        {
+          "command": "mcpWatchdog.reconnectAll",
+          "when": "view == mcpWatchdog.overview || view == mcpWatchdog.servers",
+          "group": "navigation@2"
+        },
+        {
+          "command": "mcpWatchdog.openMcpConfig",
+          "when": "view == mcpWatchdog.overview || view == mcpWatchdog.servers",
+          "group": "navigation@3"
+        }
+      ],
+      "view/item/context": [
+        {
+          "command": "mcpWatchdog.reconnectOne",
+          "when": "view == mcpWatchdog.servers && viewItem == mcpWatchdogServer",
+          "group": "inline"
+        }
+      ]
+    },
     "walkthroughs": [
       {
         "id": "mcpWatchdog.getStarted",
@@ -69,13 +104,13 @@
         "steps": [
           {
             "id": "openServersView",
-            "title": "Open the Servers view",
-            "description": "The live UI is in the **activity bar** (left icon strip), not inside **Extensions** when you click the extension name.\n\n[Open MCP Watchdog sidebar](command:mcpWatchdog.focusServersView)",
+            "title": "Open the dashboard",
+            "description": "The live UI is in the **activity bar** (left icon strip): **Overview** dashboard + **Servers** list—not inside **Extensions**.\n\n[Open MCP Watchdog](command:mcpWatchdog.focusServersView)",
             "media": {
               "image": "images/screenshot-servers-view.png",
               "altText": "MCP Watchdog Servers tree in the sidebar"
             },
-            "completionEvents": ["onView:mcpWatchdog.servers"]
+            "completionEvents": ["onView:mcpWatchdog.overview"]
           },
           {
             "id": "addMcpConfig",
@@ -98,8 +133,12 @@
     ],
     "viewsWelcome": [
       {
+        "view": "mcpWatchdog.overview",
+        "contents": "**MCP Watchdog** monitors your MCP servers.\n\n[Open a folder](command:workbench.action.openFolder)\n\nThen add **.cursor/mcp.json** or **.vscode/mcp.json**.\n\n[Create MCP config](command:mcpWatchdog.openMcpConfig)"
+      },
+      {
         "view": "mcpWatchdog.servers",
-        "contents": "MCP Watchdog shows health for MCP servers in your config.\n\n[Open a folder](command:workbench.action.openFolder)\n\nAdd **.cursor/mcp.json** (Cursor) or **.vscode/mcp.json** (VS Code).\n\n[Open or create MCP config](command:mcpWatchdog.openMcpConfig)"
+        "contents": "Per-server list with latency and reconnect.\n\n[Open Overview](command:mcpWatchdog.overview.focus)\n\n[Create MCP config](command:mcpWatchdog.openMcpConfig)"
       }
     ],
     "viewsContainers": {
@@ -113,6 +152,12 @@
     },
     "views": {
       "mcp-watchdog": [
+        {
+          "id": "mcpWatchdog.overview",
+          "name": "Overview",
+          "type": "webview",
+          "contextualTitle": "MCP health dashboard"
+        },
         {
           "id": "mcpWatchdog.servers",
           "name": "Servers",

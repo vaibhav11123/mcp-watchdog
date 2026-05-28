@@ -4,6 +4,19 @@ All notable changes to **MCP Watchdog** are documented here.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [0.1.5] - 2026-05-16
+
+### Added
+
+- **Overview** webview dashboard (metrics, server list, reconnect actions) using VS Code theme colors and ui-ux-pro-max dev-tool palette (#22C55E healthy).
+- View toolbar: **Refresh**, **Reconnect all**, **Open MCP config**; context menu **Reconnect** on Servers tree.
+- **Show Output Log** command; codicon-based quick pick (no emoji icons).
+
+### Changed
+
+- Tree/status copy uses human-readable labels (**Healthy**, **Reconnecting**, **Failed**) and colored ThemeIcons.
+- First-run and walkthrough open **Overview** first.
+
 ## [0.1.4] - 2026-05-16
 
 ### Added
@@ -59,6 +72,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - Reads **`.vscode/mcp.json`** (`servers`); expands **`${workspaceFolder}`** in strings.
 - Stdio and streamable HTTP transports via `@modelcontextprotocol/sdk`.
 
+[0.1.5]: https://github.com/vaibhav11123/mcp-watchdog/releases/tag/v0.1.5
 [0.1.4]: https://github.com/vaibhav11123/mcp-watchdog/releases/tag/v0.1.4
 [0.1.3]: https://github.com/vaibhav11123/mcp-watchdog/releases/tag/v0.1.3
 [0.1.2]: https://github.com/vaibhav11123/mcp-watchdog/releases/tag/v0.1.2

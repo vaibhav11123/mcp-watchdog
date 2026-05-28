@@ -1,5 +1,6 @@
 import * as vscode from 'vscode';
 import { ServerStatus } from './monitor';
+import { STATE_PRESENTATION } from './ui/statePresentation';
 
 export class McpStatusBar implements vscode.Disposable {
   private item: vscode.StatusBarItem;
@@ -14,7 +15,7 @@ export class McpStatusBar implements vscode.Disposable {
     const total = statuses.length;
     if (total === 0) {
       this.item.text = '$(circle-slash) MCP';
-      this.item.tooltip = 'No MCP servers configured';
+      this.item.tooltip = 'No MCP servers monitored — open MCP Watchdog sidebar';
       this.item.backgroundColor = undefined;
       return;
     }
@@ -29,21 +30,17 @@ export class McpStatusBar implements vscode.Disposable {
       this.item.tooltip = this.buildTooltip(statuses);
       this.item.backgroundColor = undefined;
     } else if (failed > 0) {
-      this.item.text = `$(warning) MCP: ${healthy}/${total}`;
+      this.item.text = `$(error) MCP: ${healthy}/${total}`;
       this.item.tooltip = this.buildTooltip(statuses);
-      this.item.backgroundColor = new vscode.ThemeColor('statusBarItem.warningBackground');
-    } else if (connecting > 0) {
+      this.item.backgroundColor = new vscode.ThemeColor('statusBarItem.errorBackground');
+    } else if (connecting > 0 || degraded) {
       this.item.text = `$(sync~spin) MCP: ${healthy}/${total}`;
-      this.item.tooltip = this.buildTooltip(statuses);
-      this.item.backgroundColor = undefined;
-    } else if (degraded) {
-      this.item.text = `$(warning) MCP: ${healthy}/${total}`;
       this.item.tooltip = this.buildTooltip(statuses);
       this.item.backgroundColor = new vscode.ThemeColor('statusBarItem.warningBackground');
     } else {
       this.item.text = `$(circle-slash) MCP: ${healthy}/${total}`;
       this.item.tooltip = this.buildTooltip(statuses);
-      this.item.backgroundColor = new vscode.ThemeColor('statusBarItem.errorBackground');
+      this.item.backgroundColor = undefined;
     }
   }
 
@@ -52,17 +49,11 @@ export class McpStatusBar implements vscode.Disposable {
     md.isTrusted = true;
     md.appendMarkdown('**MCP Watchdog**\n\n');
     for (const s of statuses) {
-      const icon = {
-        healthy: '$(check)',
-        connecting: '$(sync~spin)',
-        degraded: '$(warning)',
-        failed: '$(error)',
-        disconnected: '$(circle-slash)',
-      }[s.state];
-      const ping = s.lastPingMs !== undefined ? ` · ${s.lastPingMs}ms` : '';
-      md.appendMarkdown(`${icon} **${s.name}** — ${s.state}${ping}\n\n`);
+      const p = STATE_PRESENTATION[s.state];
+      const ping = s.lastPingMs !== undefined ? ` · ${s.lastPingMs} ms` : '';
+      md.appendMarkdown(`$(${p.icon}) **${s.name}** — ${p.label}${ping}\n\n`);
     }
-    md.appendMarkdown('\n_Click to manage_');
+    md.appendMarkdown('\n[Open dashboard](command:mcpWatchdog.overview.focus) · [Reconnect all](command:mcpWatchdog.reconnectAll)');
     return md;
   }
 
