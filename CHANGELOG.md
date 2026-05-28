@@ -4,6 +4,12 @@ All notable changes to **MCP Watchdog** are documented here.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [0.1.6] - 2026-05-29
+
+### Changed
+
+- **README:** replace retired Shields.io live Marketplace version badge with a static **Install** badge (Shields.io deprecated VS Marketplace API badges).
+
 ## [0.1.5] - 2026-05-16
 
 ### Added
@@ -72,6 +78,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - Reads **`.vscode/mcp.json`** (`servers`); expands **`${workspaceFolder}`** in strings.
 - Stdio and streamable HTTP transports via `@modelcontextprotocol/sdk`.
 
+[0.1.6]: https://github.com/vaibhav11123/mcp-watchdog/releases/tag/v0.1.6
 [0.1.5]: https://github.com/vaibhav11123/mcp-watchdog/releases/tag/v0.1.5
 [0.1.4]: https://github.com/vaibhav11123/mcp-watchdog/releases/tag/v0.1.4
 [0.1.3]: https://github.com/vaibhav11123/mcp-watchdog/releases/tag/v0.1.3
