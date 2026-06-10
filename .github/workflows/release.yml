@@ -40,19 +40,21 @@ jobs:
           generate_release_notes: true
 
       - name: Publish to VS Marketplace
-        if: ${{ secrets.VSCE_PAT != '' }}
-        run: npx @vscode/vsce publish --skip-duplicate
         env:
           VSCE_PAT: ${{ secrets.VSCE_PAT }}
+        run: |
+          if [ -z "$VSCE_PAT" ]; then
+            echo "::warning::VSCE_PAT not set — skip Marketplace publish (see CONTRIBUTING.md)"
+            exit 0
+          fi
+          npx @vscode/vsce publish --skip-duplicate
 
       - name: Publish to Open VSX
-        if: ${{ secrets.OVSX_PAT != '' }}
-        run: npx ovsx publish *.vsix --skip-duplicate
         env:
           OVSX_PAT: ${{ secrets.OVSX_PAT }}
-
-      - name: Publish secrets reminder
-        if: ${{ secrets.VSCE_PAT == '' || secrets.OVSX_PAT == '' }}
         run: |
-          echo "::warning::Add VSCE_PAT and/or OVSX_PAT repo secrets to enable Marketplace/Open VSX publish."
-          echo "See CONTRIBUTING.md → Release secrets"
+          if [ -z "$OVSX_PAT" ]; then
+            echo "::warning::OVSX_PAT not set — skip Open VSX publish (see CONTRIBUTING.md)"
+            exit 0
+          fi
+          npx ovsx publish *.vsix --skip-duplicate
