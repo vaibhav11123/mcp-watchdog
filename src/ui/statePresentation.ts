@@ -27,3 +27,10 @@ export function formatPing(lastPingMs?: number): string {
 export function formatTreeDescription(state: ServerState, lastPingMs?: number): string {
   return `${STATE_PRESENTATION[state].label} · ${formatPing(lastPingMs)}`;
 }
+
+/** Shown when workspace MCP config exists but user has not approved monitoring yet. */
+export const UNTRUSTED_PRESENTATION = {
+  label: 'Awaiting approval',
+  icon: 'shield',
+  themeColor: 'editorWarning.foreground',
+} as const;

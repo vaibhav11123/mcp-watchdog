@@ -4,6 +4,29 @@ All notable changes to **MCP Watchdog** are documented here.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [Unreleased]
+
+## [0.2.0] - 2026-05-29
+
+### Added
+
+- Vitest unit test infrastructure; pure `config-core.ts` module testable without VS Code host.
+- **Trust gate:** `mcpWatchdog.requireApproval` (default `true`) — no stdio/HTTP connections until **Review & Allow**; per-workspace approval until config fingerprint changes.
+- Command **MCP Watchdog: Review Trusted Servers**.
+- **Probe modes:** `mcpWatchdog.probeMode` (`interval` default, `persistent` legacy); `mcpWatchdog.perServer` overrides.
+- **Alerts:** `mcpWatchdog.notify` (`failures` default); failure toasts with Reconnect / Show Log / Reload Window / Mute 1h; flap detection consolidates noisy alerts.
+- `mcpWatchdog.pingTimeoutMs`; live settings reload (500ms debounce); ±10% jitter on probe delays.
+- Extension host tests (`npm run test:host`); CI matrix (lint, unit OS matrix, integration, host + xvfb).
+
+### Changed
+
+- **Default probe mode is now `interval`** — connect → ping → close each cycle (no long-lived duplicate stdio process between checks).
+- SDK dependency tightened to `>=1.29.0 <2.0.0`.
+
+### Security
+
+- No MCP server execution before explicit user consent when `requireApproval` is true (default).
+
 ## [0.1.6] - 2026-05-29
 
 ### Changed

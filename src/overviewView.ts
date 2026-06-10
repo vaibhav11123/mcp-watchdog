@@ -36,6 +36,9 @@ export class OverviewViewProvider implements vscode.WebviewViewProvider {
         case 'openFolder':
           void vscode.commands.executeCommand('workbench.action.openFolder');
           break;
+        case 'reviewTrust':
+          void vscode.commands.executeCommand('mcpWatchdog.reviewTrust');
+          break;
         case 'reconnect':
           if (typeof (msg as { server?: string }).server === 'string') {
             void vscode.commands.executeCommand(
@@ -62,9 +65,12 @@ export class OverviewViewProvider implements vscode.WebviewViewProvider {
 
   private renderHtml(data: OverviewSnapshot): string {
     const nonce = String(Date.now());
-    const body = data.empty
-      ? renderEmptyState(data.configStatus)
-      : renderDashboard(data);
+    const body =
+      data.configStatus.kind === 'untrusted'
+        ? renderUntrustedState(data)
+        : data.empty
+          ? renderEmptyState(data.configStatus)
+          : renderDashboard(data);
 
     return `<!DOCTYPE html>
 <html lang="en">
@@ -230,10 +236,15 @@ interface OverviewSnapshot {
     ping: string;
     error?: string;
     dotClass: string;
+    mode?: string;
+    disabled?: boolean;
   }>;
 }
 
-function statusesSnapshot(statuses: ServerStatus[], configStatus: McpConfigStatus): OverviewSnapshot {
+function statusesSnapshot(
+  statuses: ServerStatus[],
+  configStatus: McpConfigStatus,
+): OverviewSnapshot {
   const servers = statuses.map((s) => {
     const p = STATE_PRESENTATION[s.state];
     const dotClass =
@@ -251,12 +262,21 @@ function statusesSnapshot(statuses: ServerStatus[], configStatus: McpConfigStatu
       ping: s.lastPingMs !== undefined ? `${s.lastPingMs} ms` : '—',
       error: s.lastError,
       dotClass,
+      mode:
+        s.probeMode === 'interval'
+          ? 'interval probe'
+          : s.probeMode === 'persistent'
+            ? 'persistent'
+            : undefined,
+      disabled: s.disabled,
     };
   });
 
   const healthy = statuses.filter((s) => s.state === 'healthy').length;
   const failed = statuses.filter((s) => s.state === 'failed').length;
-  const attention = statuses.filter((s) => s.state === 'degraded' || s.state === 'connecting').length;
+  const attention = statuses.filter(
+    (s) => s.state === 'degraded' || s.state === 'connecting',
+  ).length;
 
   return {
     empty: statuses.length === 0,
@@ -267,6 +287,32 @@ function statusesSnapshot(statuses: ServerStatus[], configStatus: McpConfigStatu
     total: statuses.length,
     servers,
   };
+}
+
+function renderUntrustedState(data: OverviewSnapshot): string {
+  const rows = data.servers
+    .map(
+      (s) => `
+    <li>
+      <span class="dot muted" aria-hidden="true"></span>
+      <div style="flex:1;min-width:0">
+        <div class="server-name">${escapeHtml(s.name)}</div>
+        <div class="server-meta">Awaiting approval</div>
+      </div>
+    </li>`,
+    )
+    .join('');
+
+  return `
+    <h1>MCP Watchdog</h1>
+    <div class="empty">
+      <p>${data.configStatus.kind === 'untrusted' ? escapeHtml(`${data.configStatus.serverCount} MCP server(s) need your approval before Watchdog can connect (stdio commands / HTTP URLs).`) : ''}</p>
+      ${rows ? `<ul>${rows}</ul>` : ''}
+      <div class="actions">
+        <button data-action="reviewTrust">Review &amp; allow</button>
+        <button class="secondary" data-action="openConfig">MCP config</button>
+      </div>
+    </div>`;
 }
 
 function renderEmptyState(configStatus: McpConfigStatus): string {
@@ -306,7 +352,7 @@ function renderDashboard(data: OverviewSnapshot): string {
       <span class="dot ${s.dotClass}" aria-hidden="true"></span>
       <div style="flex:1;min-width:0">
         <div class="server-name">${escapeHtml(s.name)}</div>
-        <div class="server-meta">${escapeHtml(s.label)} · ${escapeHtml(s.ping)}</div>
+        <div class="server-meta">${escapeHtml(s.label)} · ${escapeHtml(s.ping)}${s.mode ? ` · ${escapeHtml(s.mode)}` : ''}${s.disabled ? ' · disabled' : ''}</div>
         ${s.error ? `<div class="server-error">${escapeHtml(s.error)}</div>` : ''}
         ${
           s.state === 'failed' || s.state === 'degraded'

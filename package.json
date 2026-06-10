@@ -1,18 +1,25 @@
 {
   "name": "mcp-watchdog",
   "displayName": "MCP Watchdog",
-  "description": "Automatic keepalive and reconnection for MCP servers",
-  "version": "0.1.6",
+  "description": "Alerts when MCP servers silently disconnect in Cursor, VS Code, and forks. Status bar, reconnect toasts, interval health probes, trust gate.",
+  "version": "0.2.0",
   "publisher": "mcp-watchdog",
   "license": "MIT",
   "keywords": [
     "mcp",
     "model context protocol",
+    "cursor mcp disconnect",
+    "mcp not connected",
+    "mcp auto reconnect",
     "keepalive",
     "reconnect",
     "monitor",
     "health",
     "cursor",
+    "windsurf",
+    "open vsx",
+    "status bar",
+    "notification",
     "ai"
   ],
   "repository": {
@@ -68,6 +75,10 @@
         "command": "mcpWatchdog.refresh",
         "title": "MCP Watchdog: Refresh",
         "icon": "$(refresh)"
+      },
+      {
+        "command": "mcpWatchdog.reviewTrust",
+        "title": "MCP Watchdog: Review Trusted Servers"
       }
     ],
     "menus": {
@@ -173,6 +184,11 @@
           "default": 30000,
           "description": "How often to ping each MCP server (ms). Default: 30000 (30s)"
         },
+        "mcpWatchdog.pingTimeoutMs": {
+          "type": "number",
+          "default": 5000,
+          "description": "Timeout for each MCP ping/probe (ms)"
+        },
         "mcpWatchdog.maxRetries": {
           "type": "number",
           "default": 5,
@@ -192,6 +208,41 @@
           "type": "number",
           "default": 30000,
           "description": "Maximum backoff delay between retries (ms)"
+        },
+        "mcpWatchdog.requireApproval": {
+          "type": "boolean",
+          "default": true,
+          "description": "Require explicit approval before connecting to MCP servers (stdio commands / HTTP URLs). Set false on trusted single-user machines to auto-connect like earlier releases."
+        },
+        "mcpWatchdog.probeMode": {
+          "type": "string",
+          "enum": ["interval", "persistent"],
+          "default": "interval",
+          "description": "interval: connect → ping → close each cycle (no long-lived process). persistent: keep a client open between pings (legacy behavior)."
+        },
+        "mcpWatchdog.degradedAlertDelayMs": {
+          "type": "number",
+          "default": 60000,
+          "description": "Wait this long (ms) in degraded state before showing a warning notification (avoids noise from a single missed ping)."
+        },
+        "mcpWatchdog.notify": {
+          "type": "string",
+          "enum": ["all", "failures", "none"],
+          "default": "failures",
+          "description": "Toast notifications: failures (default), all (includes recovery), none"
+        },
+        "mcpWatchdog.perServer": {
+          "type": "object",
+          "default": {},
+          "description": "Per-server overrides, e.g. {\"memory\":{\"probeMode\":\"persistent\",\"pingIntervalMs\":60000,\"enabled\":false}}",
+          "additionalProperties": {
+            "type": "object",
+            "properties": {
+              "probeMode": { "type": "string", "enum": ["interval", "persistent"] },
+              "pingIntervalMs": { "type": "number" },
+              "enabled": { "type": "boolean" }
+            }
+          }
         }
       }
     }
@@ -202,15 +253,29 @@
     "watch": "npm run build -- --watch",
     "compile": "tsc --noEmit",
     "smoke": "node scripts/smoke-connect.mjs",
-    "test": "npm run compile && npm run build && npm run smoke && node scripts/test-integration.mjs"
+    "test:unit": "vitest run",
+    "test:host": "tsc -p tsconfig.test.json && vscode-test",
+    "lint": "eslint src test",
+    "format:check": "prettier --check \"src/**/*.ts\" \"test/**/*.ts\"",
+    "test": "npm run compile && npm run build && npm run test:unit && npm run smoke && node scripts/test-integration.mjs"
   },
   "devDependencies": {
+    "@eslint/js": "^9.28.0",
+    "@types/mocha": "^10.0.10",
     "@types/node": "^22.14.0",
     "@types/vscode": "^1.105.0",
+    "@vitest/coverage-v8": "^3.2.4",
+    "@vscode/test-cli": "^0.0.10",
+    "@vscode/test-electron": "^2.4.1",
     "esbuild": "^0.20.2",
-    "typescript": "^5.6.3"
+    "eslint": "^9.28.0",
+    "mocha": "^11.2.2",
+    "prettier": "^3.5.3",
+    "typescript": "^5.6.3",
+    "typescript-eslint": "^8.33.0",
+    "vitest": "^3.2.4"
   },
   "dependencies": {
-    "@modelcontextprotocol/sdk": "^1.10.0"
+    "@modelcontextprotocol/sdk": ">=1.29.0 <2.0.0"
   }
 }

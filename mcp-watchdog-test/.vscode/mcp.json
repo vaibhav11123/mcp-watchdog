@@ -1,5 +1,11 @@
 {
   "servers": {
+    "echo": {
+      "type": "stdio",
+      "command": "node",
+      "args": ["fixtures/echo-server.js"],
+      "cwd": "${workspaceFolder}"
+    },
     "memory": {
       "type": "stdio",
       "command": "npx",

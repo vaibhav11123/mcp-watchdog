@@ -1,4 +1,5 @@
 import * as vscode from 'vscode';
+import type { McpConfigStatus } from './config-core';
 import { ServerStatus } from './monitor';
 import { STATE_PRESENTATION } from './ui/statePresentation';
 
@@ -11,7 +12,14 @@ export class McpStatusBar implements vscode.Disposable {
     this.item.show();
   }
 
-  update(statuses: ServerStatus[]): void {
+  update(statuses: ServerStatus[], configStatus?: McpConfigStatus): void {
+    if (configStatus?.kind === 'untrusted') {
+      this.item.text = '$(shield) MCP: untrusted';
+      this.item.tooltip = `${configStatus.serverCount} server(s) awaiting approval — click to review`;
+      this.item.backgroundColor = new vscode.ThemeColor('statusBarItem.warningBackground');
+      return;
+    }
+
     const total = statuses.length;
     if (total === 0) {
       this.item.text = '$(circle-slash) MCP';
@@ -53,7 +61,9 @@ export class McpStatusBar implements vscode.Disposable {
       const ping = s.lastPingMs !== undefined ? ` · ${s.lastPingMs} ms` : '';
       md.appendMarkdown(`$(${p.icon}) **${s.name}** — ${p.label}${ping}\n\n`);
     }
-    md.appendMarkdown('\n[Open dashboard](command:mcpWatchdog.overview.focus) · [Reconnect all](command:mcpWatchdog.reconnectAll)');
+    md.appendMarkdown(
+      '\n[Open dashboard](command:mcpWatchdog.overview.focus) · [Reconnect all](command:mcpWatchdog.reconnectAll)',
+    );
     return md;
   }
 

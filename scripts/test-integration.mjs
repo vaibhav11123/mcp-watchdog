@@ -138,12 +138,19 @@ async function pingServer(name, config) {
   }
 }
 
+async function assertIntervalProbeTwice(name, config) {
+  await pingServer(name, config);
+  await pingServer(name, config);
+  console.log(`INTERVAL OK [${name}] two connect/ping/close cycles`);
+}
+
 async function assertRuntimeTests() {
   const servers = readConfigFile(path.join(FIXTURE_ROOT, '.vscode', 'mcp.json'), FIXTURE_ROOT);
   assert(servers, 'fixture mcp.json missing');
 
   await pingServer('memory', servers.memory);
   await pingServer('filesystem', servers.filesystem);
+  await assertIntervalProbeTwice('memory', servers.memory);
 }
 
 async function main() {

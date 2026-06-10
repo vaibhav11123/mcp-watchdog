@@ -3,22 +3,53 @@
 [![CI](https://github.com/vaibhav11123/mcp-watchdog/actions/workflows/ci.yml/badge.svg)](https://github.com/vaibhav11123/mcp-watchdog/actions/workflows/ci.yml)
 [![GitHub release](https://img.shields.io/github/v/release/vaibhav11123/mcp-watchdog?logo=github)](https://github.com/vaibhav11123/mcp-watchdog/releases)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](./LICENSE)
+[![Open VSX](https://img.shields.io/badge/Open%20VSX-Install-3c1?style=flat-square&logo=data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIyNCIgaGVpZ2h0PSIyNCIgdmlld0JveD0iMCAwIDI0IDI0Ij48cGF0aCBmaWxsPSIjRkZGIiBkPSJNMTIgMkM2LjQ4IDIgMiA2LjQ4IDIgMTJzNC40OCAxMCAxMCAxMCAxMC00LjQ4IDEwLTEwUzE3LjUyIDIgMTIgMnptMCAxOGMtNC40MSAwLTgtMy41OS04LThzMy41OS04IDgtOCA4IDMuNTkgOCA4LTMuNTkgOC04IDh6Ii8+PC9zdmc+)](https://open-vsx.org/extension/mcp-watchdog/mcp-watchdog)
 [![Install on VS Marketplace](https://img.shields.io/badge/VS%20Marketplace-Install-0078d4?logo=visualstudiocode&logoColor=white)](https://marketplace.visualstudio.com/items?itemName=mcp-watchdog.mcp-watchdog)
 
 **Repository:** [github.com/vaibhav11123/mcp-watchdog](https://github.com/vaibhav11123/mcp-watchdog)
 
-VS Code / Cursor extension that runs a **parallel health layer** over MCP servers from your MCP config files: periodic pings, exponential backoff reconnects, and an extra check when the window regains focus (helpful after sleep).
+## Why
 
-**This does not replace** the editor’s built-in MCP integration. It opens **its own** MCP client connections **only to monitor** reachability and latency.
+**Your editor drops MCP servers silently.** After sleep, a flaky `npx` child, or a network blip, Cursor and VS Code often keep showing tools as available while the underlying MCP connection is dead. You only notice when a tool call fails mid-task.
+
+**MCP Watchdog** is a parallel health layer: it probes your configured servers on a schedule, shows **`MCP: healthy/total`** in the status bar, **notifies you when something fails**, and offers **one-click Reconnect** (or **Reload Window** when the editor’s own MCP client is stuck).
+
+**Honest scope:** this does **not** replace the editor’s built-in MCP integration. Watchdog opens its **own** read-only health connections to measure reachability and latency — it cannot fix editor-internal MCP state without you reloading.
+
+Works in **Cursor**, **Windsurf**, **VS Code**, **VSCodium**, and other forks that install from [Open VSX](https://open-vsx.org/).
+
+## Demo
+
+<!-- GIF shot list (record → save as images/demo.gif, ~15s):
+  1. Activity bar → MCP Watchdog → Overview, status bar MCP: 1/1 healthy
+  2. Terminal: pkill -f server-memory (or your MCP server)
+  3. Toast: "MCP server … failed" with Reconnect / Reload Window
+  4. Click Reconnect → healthy again
+-->
+
+![MCP Watchdog — servers healthy in the activity bar sidebar](./images/screenshot-servers-view.png)
+
+*Replace with `images/demo.gif` when recorded (15s: kill server → failure toast → Reconnect → healthy).*
 
 ## Install
 
-| Channel | Steps |
-|--------|--------|
-| **Marketplace** | Search **“MCP Watchdog”** or open **[MCP Watchdog on Visual Studio Marketplace](https://marketplace.visualstudio.com/items?itemName=mcp-watchdog.mcp-watchdog)** (`mcp-watchdog.mcp-watchdog`). |
-| **VSIX** | **[Releases](https://github.com/vaibhav11123/mcp-watchdog/releases)** → download the latest `.vsix`, then **Extensions** → **⋯** → **Install from VSIX…**, or run `cursor --install-extension ./mcp-watchdog-0.x.x.vsix` (or `code --install-extension …`). |
+### Install in Cursor (recommended)
 
-After install, **reload** the window if commands or views do not appear.
+Most Cursor installs pull extensions from **Open VSX**, not the VS Marketplace:
+
+1. **Extensions** (`Cmd+Shift+X`) → search **`MCP Watchdog`**
+2. Or open **[MCP Watchdog on Open VSX](https://open-vsx.org/extension/mcp-watchdog/mcp-watchdog)** → **Download** / install from the registry
+3. Or CLI: `cursor --install-extension mcp-watchdog.mcp-watchdog`
+
+### All install channels
+
+| Channel | Who | How |
+|--------|-----|-----|
+| **[Open VSX](https://open-vsx.org/extension/mcp-watchdog/mcp-watchdog)** | **Cursor, Windsurf, VSCodium, Trae**, most VS Code forks | Extensions search, or link above |
+| **[VS Marketplace](https://marketplace.visualstudio.com/items?itemName=mcp-watchdog.mcp-watchdog)** | VS Code (Microsoft build) | Extensions search → `mcp-watchdog.mcp-watchdog` |
+| **[GitHub Releases](https://github.com/vaibhav11123/mcp-watchdog/releases)** | Airgapped / manual | Download `.vsix` → **Install from VSIX…**, or `cursor --install-extension mcp-watchdog-0.2.0.vsix` |
+
+After install, **reload** the window. Open the **activity bar** MCP Watchdog icon (not the Extensions detail page).
 
 ## Requirements
 
@@ -79,9 +110,14 @@ After install, run **Help → Welcome → MCP Watchdog: Get started** (walkthrou
 
 **Security:** only configure servers you trust. This extension runs **`command`** (e.g. `npx`, `node`) and opens **HTTP(S)** URLs you specify.
 
+### Trust & consent
+
+By default (**`mcpWatchdog.requireApproval`**: `true`), Watchdog **does not** spawn stdio processes or open HTTP connections until you approve. On first load (or after `mcp.json` changes), you get a notification with **Review & Allow** / **Not now**. **Review & Allow** opens a multi-select list of every server (`name — command args` or `name — url`); only the subset you confirm is monitored. Approval is stored per workspace folder and survives reloads. Changing a command, arg, or URL in config re-prompts. **Not now** leaves the status bar at `$(shield) MCP: untrusted` — click it to review again. Set **`requireApproval`** to `false` on a trusted single-user machine to auto-connect like 0.1.x.
+
 ## Commands
 
 - **MCP Watchdog: Show Server Status** — Quick pick with per-server state.
+- **MCP Watchdog: Review Trusted Servers** — Change the approved subset or revoke trust.
 - **MCP Watchdog: Reconnect All Servers**
 - **MCP Watchdog: Reconnect Server…**
 - **MCP Watchdog: Open Servers View** — Focus the **Servers** tree.
@@ -96,8 +132,25 @@ After install, run **Help → Welcome → MCP Watchdog: Get started** (walkthrou
 | `initialBackoffMs` | `1000` | First backoff after failure (ms). |
 | `backoffMultiplier` | `1.5` | Backoff multiplier. |
 | `maxBackoffMs` | `30000` | Backoff cap (ms). |
+| `requireApproval` | `true` | Prompt before connecting to configured MCP servers. |
+| `probeMode` | `interval` | `interval` = connect/ping/close each cycle; `persistent` = long-lived client (0.1.x behavior). |
+| `perServer` | `{}` | Per-server `probeMode`, `pingIntervalMs`, `enabled` overrides. |
+| `pingTimeoutMs` | `5000` | Ping/probe timeout (ms). |
+| `notify` | `failures` | Toasts: `failures` (default), `all` (+ recovery), `none`. |
+| `degradedAlertDelayMs` | `60000` | Wait before warning toast on sustained degraded state. |
 
-Changes apply on **reload** or when **`mcp.json`** is reloaded; live settings refresh without reload is not implemented yet.
+### Alerts
+
+When a server fails, Watchdog shows a notification with **Reconnect**, **Show Log**, **Reload Window**, and **Mute 1h**. Set `mcpWatchdog.notify` to `all` to also get recovery toasts. Repeated failures within 10 minutes collapse into a single **flapping** warning.
+
+### Probe modes
+
+| Mode | Behavior | When to use |
+|------|----------|-------------|
+| **interval** (default) | Each cycle connects, pings, then closes — no duplicate stdio process between checks. | Most servers; avoids leaving extra `npx` children running. |
+| **persistent** | Keeps one MCP client open and pings on an interval. | Stateful servers that lose session state on disconnect (use deliberately). |
+
+Settings changes apply within ~1s without reloading the window; **`mcp.json`** edits reload monitors via the file watcher.
 
 ## Privacy & data
 
@@ -140,17 +193,14 @@ See [CHANGELOG.md](./CHANGELOG.md).
 
 ## Ship checklist (maintainers)
 
-1. **`publisher`** — Currently **`mcp-watchdog`**; change in `package.json` if you use a different [Marketplace publisher](https://marketplace.visualstudio.com/manage) id.
-2. **`repository` / `bugs` / `homepage`** — Update in `package.json` if you publish under a different GitHub org or repo name.
-3. **`version`** — Bump per semver; summarize in `CHANGELOG.md`.
-4. **README** — Screenshots, confirm engine range matches lowest editor you support.
-5. **Publish** — `npx @vscode/vsce login <publisher>` then `npx @vscode/vsce publish` (after `npm run build`).
+1. Record **`images/demo.gif`** (see HTML comment in README Demo section).
+2. `npm test` && `npx vsce package` — confirm `vsce ls` has no `test/`, `*.local.md`.
+3. Set GitHub secrets: **`VSCE_PAT`**, **`OVSX_PAT`** (see [CONTRIBUTING.md](./CONTRIBUTING.md)).
+4. `./scripts/ship-release.sh` or push tag `v*` to run [release.yml](./.github/workflows/release.yml).
 
 ```bash
-npm run build
-npx @vscode/vsce package
-# install locally to verify
-cursor --install-extension mcp-watchdog-<version>.vsix
+export VSCE_PAT=... OVSX_PAT=...   # one-time
+./scripts/ship-release.sh
 ```
 
 ## License

@@ -1,0 +1,21 @@
+---
+description: MCP Watchdog repo conventions
+alwaysApply: true
+---
+- VS Code extension, TypeScript strict. Bundle with esbuild (npm run build); typecheck is
+  tsc --noEmit (npm run compile). Both must pass before you claim done.
+- Only runtime dependency is @modelcontextprotocol/sdk. Do not add runtime deps without asking.
+  devDependencies for testing/linting are fine.
+- monitor.ts and config-core.ts (after task W1) must stay importable without the vscode module.
+  All vscode API usage belongs in extension.ts, statusBar.ts, serversTree.ts, overviewView.ts,
+  logger.ts, or thin glue.
+- Never log or render values of server env vars or HTTP headers. Names are fine, values never.
+- States are exactly: connecting | healthy | degraded | failed | disconnected. Do not add states
+  without updating ui/statePresentation.ts, statusBar.ts, serversTree.ts, overviewView.ts together.
+- Every new setting goes in package.json contributes.configuration with a default and description,
+  and is read via vscode.workspace.getConfiguration('mcpWatchdog').
+- Unit tests: vitest, in test/unit/, run with npm run test:unit. They must pass with no network
+  and no VS Code host. Anything needing npx/network goes in scripts/ (smoke/integration tier).
+- Update CHANGELOG.md (Keep a Changelog format) and README for any user-visible change.
+- Do not bump version; the maintainer does releases.
+- Do not add Co-authored-by trailers to commits. Never commit *.local.md or *.vsix.

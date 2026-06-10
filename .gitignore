@@ -1,4 +1,9 @@
 dist
 node_modules
 *.vsix
+*.local.md
+launch/
 .DS_Store
+.vscode-test/
+out-test/
+coverage/

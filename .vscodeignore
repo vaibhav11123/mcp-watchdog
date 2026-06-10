@@ -6,8 +6,12 @@ node_modules/**
 mcp-watchdog-test/**
 **/mcp-watchdog-test/**
 scripts/**
+test/**
+out-test/**
+coverage/**
 esbuild.js
 tsconfig.json
 .gitignore
 *.map
 *.vsix
+*.local.md

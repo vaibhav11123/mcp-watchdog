@@ -1,16 +1,25 @@
 import * as vscode from 'vscode';
 import { ServerStatus } from './monitor';
-import {
-  formatTreeDescription,
-  stateThemeIcon,
-  STATE_PRESENTATION,
-} from './ui/statePresentation';
+import { formatTreeDescription, stateThemeIcon, STATE_PRESENTATION } from './ui/statePresentation';
 
 class ServerTreeItem extends vscode.TreeItem {
-  constructor(readonly serverName: string, status: ServerStatus) {
+  constructor(
+    readonly serverName: string,
+    status: ServerStatus,
+  ) {
     super(status.name, vscode.TreeItemCollapsibleState.None);
 
-    this.description = formatTreeDescription(status.state, status.lastPingMs);
+    const mode =
+      status.probeMode === 'interval'
+        ? 'interval probe'
+        : status.probeMode === 'persistent'
+          ? 'persistent'
+          : undefined;
+    const flapping = status.flapping ? ' (flapping)' : '';
+    const disabled = status.disabled ? ' (disabled)' : '';
+    const modeSuffix = mode ? ` · ${mode}` : '';
+    this.description =
+      formatTreeDescription(status.state, status.lastPingMs) + modeSuffix + flapping + disabled;
     this.contextValue = 'mcpWatchdogServer';
 
     const md = new vscode.MarkdownString();
@@ -22,6 +31,14 @@ class ServerTreeItem extends vscode.TreeItem {
     md.appendMarkdown(
       `Latency: ${status.lastPingMs !== undefined ? `${status.lastPingMs} ms` : '—'}\n\n`,
     );
+    if (status.probeMode) {
+      md.appendMarkdown(
+        `Mode: **${status.probeMode === 'interval' ? 'interval probe' : 'persistent'}**\n\n`,
+      );
+    }
+    if (status.disabled) {
+      md.appendMarkdown('Monitoring: **disabled** (per-server setting)\n\n');
+    }
     if (status.retryCount > 0) {
       md.appendMarkdown(`Retries: ${status.retryCount}\n\n`);
     }

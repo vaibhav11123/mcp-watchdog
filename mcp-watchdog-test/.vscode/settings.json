@@ -1,4 +1,11 @@
 {
-  "mcpWatchdog.pingIntervalMs": 5000,
-  "mcpWatchdog.initialBackoffMs": 500
+  "mcpWatchdog.requireApproval": false,
+  "mcpWatchdog.probeMode": "persistent",
+  "mcpWatchdog.perServer": {
+    "echo": { "probeMode": "persistent" },
+    "memory": { "probeMode": "persistent" }
+  },
+  "mcpWatchdog.pingIntervalMs": 2000,
+  "mcpWatchdog.notify": "failures",
+  "mcpWatchdog.degradedAlertDelayMs": 2500
 }
