@@ -19,6 +19,11 @@ suite('MCP Watchdog alerts (host)', () => {
     await cfg.update('pingIntervalMs', 2000, vscode.ConfigurationTarget.Workspace);
     await cfg.update('degradedAlertDelayMs', 2500, vscode.ConfigurationTarget.Workspace);
     await cfg.update('notify', 'failures', vscode.ConfigurationTarget.Workspace);
+    await cfg.update(
+      'perServer',
+      { memory: { enabled: false }, filesystem: { enabled: false } },
+      vscode.ConfigurationTarget.Workspace,
+    );
 
     const ext = vscode.extensions.getExtension(EXT_ID);
     const api = (await ext!.activate()) as McpWatchdogApi;
@@ -73,6 +78,7 @@ suite('MCP Watchdog alerts (host)', () => {
     }
 
     assert.ok(alert, `expected alert; statuses=${JSON.stringify(api.getStatuses())}`);
+    assert.strictEqual(alert!.server, TARGET);
     assert.ok(alert!.actions.includes('Reconnect') && alert!.actions.includes('Reload Window'));
     assert.match(alert!.message, /echo/i);
   });
