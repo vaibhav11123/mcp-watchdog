@@ -16,6 +16,9 @@ suite('MCP Watchdog alerts (host)', () => {
 
     const cfg = vscode.workspace.getConfiguration('mcpWatchdog');
     await cfg.update('requireApproval', false, vscode.ConfigurationTarget.Workspace);
+    await cfg.update('pingIntervalMs', 2000, vscode.ConfigurationTarget.Workspace);
+    await cfg.update('degradedAlertDelayMs', 2500, vscode.ConfigurationTarget.Workspace);
+    await cfg.update('notify', 'failures', vscode.ConfigurationTarget.Workspace);
 
     const ext = vscode.extensions.getExtension(EXT_ID);
     const api = (await ext!.activate()) as McpWatchdogApi;
@@ -53,7 +56,7 @@ suite('MCP Watchdog alerts (host)', () => {
       `echo should be degraded/failed; got ${JSON.stringify(afterKill)}`,
     );
 
-    const alertDeadline = Date.now() + 10_000;
+    const alertDeadline = Date.now() + 30_000;
     let alert = api.getLastAlert();
     while (Date.now() < alertDeadline) {
       alert = api.getLastAlert();

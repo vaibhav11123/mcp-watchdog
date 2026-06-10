@@ -4,25 +4,55 @@ on:
   push:
     tags:
       - 'v*'
+  workflow_dispatch:
+
+permissions:
+  contents: write
 
 jobs:
   release:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
           cache: npm
+
       - run: npm ci
       - run: npm test
-      - run: npx vsce package
-      - uses: softprops/action-gh-release@v2
+
+      - name: Package VSIX
+        run: npx @vscode/vsce package -o "mcp-watchdog-${{ github.ref_name }}.vsix"
+
+      - name: Verify VSIX excludes dev paths
+        run: |
+          npx @vscode/vsce ls | grep -E 'test/|local\.md|launch/' && {
+            echo "VSIX contains forbidden paths"
+            exit 1
+          } || true
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
         with:
           files: '*.vsix'
-      - run: npx vsce publish
+          generate_release_notes: true
+
+      - name: Publish to VS Marketplace
+        if: ${{ secrets.VSCE_PAT != '' }}
+        run: npx @vscode/vsce publish --skip-duplicate
         env:
           VSCE_PAT: ${{ secrets.VSCE_PAT }}
-      - run: npx ovsx publish *.vsix
+
+      - name: Publish to Open VSX
+        if: ${{ secrets.OVSX_PAT != '' }}
+        run: npx ovsx publish *.vsix --skip-duplicate
         env:
           OVSX_PAT: ${{ secrets.OVSX_PAT }}
+
+      - name: Publish secrets reminder
+        if: ${{ secrets.VSCE_PAT == '' || secrets.OVSX_PAT == '' }}
+        run: |
+          echo "::warning::Add VSCE_PAT and/or OVSX_PAT repo secrets to enable Marketplace/Open VSX publish."
+          echo "See CONTRIBUTING.md → Release secrets"

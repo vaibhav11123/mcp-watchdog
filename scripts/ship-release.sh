@@ -14,7 +14,7 @@ npx vsce ls | grep -E 'test/|local\.md|launch/' && { echo "VSIX contains forbidd
 if [[ -z "${VSCE_PAT:-}" ]]; then
   echo "WARN: VSCE_PAT not set — skip Marketplace publish"
 else
-  npx vsce publish -p "$VSCE_PAT"
+  npx @vscode/vsce publish -p "$VSCE_PAT" --skip-duplicate
 fi
 
 if [[ -z "${OVSX_PAT:-}" ]]; then

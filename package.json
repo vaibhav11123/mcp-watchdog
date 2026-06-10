@@ -2,7 +2,7 @@
   "name": "mcp-watchdog",
   "displayName": "MCP Watchdog",
   "description": "Alerts when MCP servers silently disconnect in Cursor, VS Code, and forks. Status bar, reconnect toasts, interval health probes, trust gate.",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "publisher": "mcp-watchdog",
   "license": "MIT",
   "keywords": [

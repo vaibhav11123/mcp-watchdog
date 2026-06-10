@@ -22,7 +22,14 @@ The `release.yml` workflow expects GitHub repo secrets:
 | `VSCE_PAT` | [Marketplace publisher](https://marketplace.visualstudio.com/manage) → Personal Access Token with **Marketplace (Publish)** scope |
 | `OVSX_PAT` | [open-vsx.org](https://open-vsx.org) → log in → Profile → **Access Tokens** → generate |
 
-Add both under **GitHub → repo → Settings → Secrets and variables → Actions**.
+Add both under **GitHub → repo → Settings → Secrets and variables → Actions**, or run:
+
+```bash
+chmod +x scripts/setup-github-secrets.sh
+./scripts/setup-github-secrets.sh
+```
+
+(`VSCE_PAT` must be a **new** Azure DevOps PAT with **Marketplace (Publish)** — `vsce login` stores a token locally but does not expose it for GitHub.)
 
 Then ship:
 

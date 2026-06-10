@@ -1,7 +1,7 @@
 # MCP Watchdog
 
 [![CI](https://github.com/vaibhav11123/mcp-watchdog/actions/workflows/ci.yml/badge.svg)](https://github.com/vaibhav11123/mcp-watchdog/actions/workflows/ci.yml)
-[![GitHub release](https://img.shields.io/github/v/release/vaibhav11123/mcp-watchdog?logo=github)](https://github.com/vaibhav11123/mcp-watchdog/releases)
+[![GitHub release](https://img.shields.io/badge/release-v0.2.1-333?logo=github)](https://github.com/vaibhav11123/mcp-watchdog/releases)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](./LICENSE)
 [![Open VSX](https://img.shields.io/badge/Open%20VSX-Install-3c1?style=flat-square&logo=data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIyNCIgaGVpZ2h0PSIyNCIgdmlld0JveD0iMCAwIDI0IDI0Ij48cGF0aCBmaWxsPSIjRkZGIiBkPSJNMTIgMkM2LjQ4IDIgMiA2LjQ4IDIgMTJzNC40OCAxMCAxMCAxMCAxMC00LjQ4IDEwLTEwUzE3LjUyIDIgMTIgMnptMCAxOGMtNC40MSAwLTgtMy41OS04LThzMy41OS04IDgtOCA4IDMuNTkgOCA4LTMuNTkgOC04IDh6Ii8+PC9zdmc+)](https://open-vsx.org/extension/mcp-watchdog/mcp-watchdog)
 [![Install on VS Marketplace](https://img.shields.io/badge/VS%20Marketplace-Install-0078d4?logo=visualstudiocode&logoColor=white)](https://marketplace.visualstudio.com/items?itemName=mcp-watchdog.mcp-watchdog)
