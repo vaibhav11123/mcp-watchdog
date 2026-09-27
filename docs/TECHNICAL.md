@@ -735,7 +735,7 @@ Typical matrix:
 ### 17.3 Release
 
 - Maintainer bumps version (agents must not).
-- Pipeline is **designed for dual publish**: **VS Marketplace** (`VSCE_PAT`) + **Open VSX** (`OVSX_PAT`). Marketplace is live at **0.2.1**; Open VSX is pending until the first successful `ovsx publish`.
+- Pipeline is **designed for dual publish**: **VS Marketplace** (`VSCE_PAT`) + **Open VSX** (`OVSX_PAT`). Both channels are live at **0.2.1** (Open VSX namespace not yet verified).
 - `release.yml` on `v*` tags; helper `./scripts/ship-release.sh`.
 - When `VSCE_PAT` / `OVSX_PAT` secrets are empty, `release.yml` **soft-skips** the corresponding Marketplace / Open VSX publish steps (GitHub release + `.vsix` artifact still proceed).
 - Secrets setup documented in CONTRIBUTING.md.
@@ -744,7 +744,7 @@ Typical matrix:
 
 | Channel | Audience | Status (0.2.1) |
 |---------|----------|----------------|
-| Open VSX | Cursor, Windsurf, VSCodium, most forks | Pending — designed for dual publish; first `ovsx publish` not done yet |
+| Open VSX | Cursor, Windsurf, VSCodium, most forks | Live — `mcp-watchdog.mcp-watchdog@0.2.1` (unverified namespace until ownership claimed) |
 | VS Marketplace | Microsoft VS Code | Live — `mcp-watchdog.mcp-watchdog@0.2.1` public |
 | GitHub Releases | Airgapped / manual `.vsix` | Live — releases + `.vsix` exist |
 
@@ -757,7 +757,7 @@ README badges vs reality:
 | CI | Renders | Was failing on host (1.105.0) from npx memory/filesystem noise; lint/unit/integration pass. Host-fixture isolation disables those servers (`enabled: false`). |
 | GitHub release | Renders (static v0.2.1) | OK — releases + .vsix exist |
 | License MIT | Renders | OK — LICENSE present |
-| Open VSX | Renders (static Install) | Dead until published — API 404; namespace mcp-watchdog missing; OVSX_PAT was never set on release runs |
+| Open VSX | Renders (static Install) | **Live** at [open-vsx.org/extension/mcp-watchdog/mcp-watchdog](https://open-vsx.org/extension/mcp-watchdog/mcp-watchdog) — `mcp-watchdog.mcp-watchdog@0.2.1` (API 200). Publisher warning is expected until namespace ownership is claimed: published by GitHub user `vaibhav11123`, namespace `mcp-watchdog` not yet verified. Claim via EclipseFdn/open-vsx.org namespace issue (prove Marketplace publisher access). `OVSX_PAT` is set as a GitHub Actions secret for future releases. |
 | VS Marketplace | Renders | OK — mcp-watchdog.mcp-watchdog@0.2.1 public |
 
 Additional notes:
