@@ -1,13 +1,28 @@
 import * as assert from 'assert';
 import { execSync } from 'child_process';
 import * as vscode from 'vscode';
+import { activateWatchdog, delay, ECHO, setupEchoOnlyHost, type McpWatchdogApi } from './helpers';
 
-const EXT_ID = 'mcp-watchdog.mcp-watchdog';
-const TARGET = 'echo';
+function killEchoServer(): void {
+  try {
+    execSync("pkill -9 -f 'echo-server.js'", { stdio: 'ignore' });
+  } catch {
+    // already dead
+  }
+}
 
-interface McpWatchdogApi {
-  getStatuses(): Array<{ name: string; state: string }>;
-  getLastAlert(): { kind: string; message: string; actions: string[]; server: string } | undefined;
+function matchingEchoAlert(api: McpWatchdogApi) {
+  const alert = api.getLastAlert();
+  if (
+    alert &&
+    alert.server === ECHO &&
+    (alert.kind === 'error' || alert.kind === 'warning') &&
+    alert.actions.includes('Reconnect') &&
+    alert.actions.includes('Reload Window')
+  ) {
+    return alert;
+  }
+  return undefined;
 }
 
 suite('MCP Watchdog alerts (host)', () => {
@@ -15,71 +30,61 @@ suite('MCP Watchdog alerts (host)', () => {
     this.timeout(90_000);
 
     const cfg = vscode.workspace.getConfiguration('mcpWatchdog');
-    await cfg.update('requireApproval', false, vscode.ConfigurationTarget.Workspace);
+    const api = await activateWatchdog();
+
+    await setupEchoOnlyHost(api, { requireApproval: false });
     await cfg.update('pingIntervalMs', 2000, vscode.ConfigurationTarget.Workspace);
     await cfg.update('degradedAlertDelayMs', 2500, vscode.ConfigurationTarget.Workspace);
     await cfg.update('notify', 'failures', vscode.ConfigurationTarget.Workspace);
-    await cfg.update(
-      'perServer',
-      { memory: { enabled: false }, filesystem: { enabled: false } },
-      vscode.ConfigurationTarget.Workspace,
-    );
-
-    const ext = vscode.extensions.getExtension(EXT_ID);
-    const api = (await ext!.activate()) as McpWatchdogApi;
     await vscode.commands.executeCommand('mcpWatchdog.refresh');
 
     const healthyDeadline = Date.now() + 45_000;
     while (Date.now() < healthyDeadline) {
-      if (api.getStatuses().some((s) => s.name === TARGET && s.state === 'healthy')) {
+      if (api.getStatuses().some((s) => s.name === ECHO && s.state === 'healthy')) {
         break;
       }
-      await new Promise((r) => setTimeout(r, 500));
+      await delay(500);
     }
     assert.ok(
-      api.getStatuses().some((s) => s.name === TARGET && s.state === 'healthy'),
+      api.getStatuses().some((s) => s.name === ECHO && s.state === 'healthy'),
       `echo should be healthy; statuses=${JSON.stringify(api.getStatuses())}`,
     );
+
+    // Keep killing so persistent reconnect cannot race back to healthy before
+    // the degraded delay (or max-retries → failed) can emit an alert.
+    killEchoServer();
+    const killTimer = setInterval(killEchoServer, 400);
+
     try {
-      execSync("pkill -9 -f 'echo-server.js'", { stdio: 'ignore' });
-    } catch {
-      // already dead — next ping should still fail
-    }
-    await new Promise((r) => setTimeout(r, 500));
+      const observeDeadline = Date.now() + 40_000;
+      let sawBad = false;
+      let alert = matchingEchoAlert(api);
 
-    const degradeDeadline = Date.now() + 20_000;
-    while (Date.now() < degradeDeadline) {
-      const s = api.getStatuses().find((x) => x.name === TARGET);
-      if (s && (s.state === 'degraded' || s.state === 'failed')) {
-        break;
+      while (Date.now() < observeDeadline) {
+        const echo = api.getStatuses().find((x) => x.name === ECHO);
+        if (echo && (echo.state === 'degraded' || echo.state === 'failed')) {
+          sawBad = true;
+        }
+        alert = matchingEchoAlert(api);
+        if (sawBad && alert) {
+          break;
+        }
+        await delay(400);
       }
-      await new Promise((r) => setTimeout(r, 500));
-    }
-    const afterKill = api.getStatuses().find((x) => x.name === TARGET);
-    assert.ok(
-      afterKill && (afterKill.state === 'degraded' || afterKill.state === 'failed'),
-      `echo should be degraded/failed; got ${JSON.stringify(afterKill)}`,
-    );
 
-    const alertDeadline = Date.now() + 30_000;
-    let alert = api.getLastAlert();
-    while (Date.now() < alertDeadline) {
-      alert = api.getLastAlert();
-      if (
-        alert &&
-        alert.server === TARGET &&
-        (alert.kind === 'error' || alert.kind === 'warning') &&
-        alert.actions.includes('Reconnect') &&
-        alert.actions.includes('Reload Window')
-      ) {
-        break;
-      }
-      await new Promise((r) => setTimeout(r, 500));
+      assert.ok(
+        sawBad,
+        `echo should be degraded/failed at least once; statuses=${JSON.stringify(api.getStatuses())}`,
+      );
+      assert.ok(
+        alert,
+        `expected echo alert; last=${JSON.stringify(api.getLastAlert())}; statuses=${JSON.stringify(api.getStatuses())}`,
+      );
+      assert.strictEqual(alert!.server, ECHO);
+      assert.ok(alert!.actions.includes('Reconnect') && alert!.actions.includes('Reload Window'));
+      assert.match(alert!.message, /echo/i);
+    } finally {
+      clearInterval(killTimer);
     }
-
-    assert.ok(alert, `expected alert; statuses=${JSON.stringify(api.getStatuses())}`);
-    assert.strictEqual(alert!.server, TARGET);
-    assert.ok(alert!.actions.includes('Reconnect') && alert!.actions.includes('Reload Window'));
-    assert.match(alert!.message, /echo/i);
   });
 });

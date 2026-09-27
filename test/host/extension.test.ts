@@ -1,18 +1,13 @@
 import * as assert from 'assert';
 import * as vscode from 'vscode';
-
-const EXT_ID = 'mcp-watchdog.mcp-watchdog';
-
-interface McpWatchdogApi {
-  getStatuses(): Array<{ name: string; state: string }>;
-}
+import { activateWatchdog, delay, ECHO, setupEchoOnlyHost, type McpWatchdogApi } from './helpers';
 
 suite('MCP Watchdog extension host', () => {
   test('extension is present and activates', async () => {
-    const ext = vscode.extensions.getExtension(EXT_ID);
-    assert.ok(ext, 'extension should be installed');
-    await ext!.activate();
-    assert.ok(ext!.isActive);
+    const api = await activateWatchdog();
+    assert.ok(api);
+    const ext = vscode.extensions.getExtension('mcp-watchdog.mcp-watchdog');
+    assert.ok(ext?.isActive);
   });
 
   test('commands are registered', async () => {
@@ -34,20 +29,19 @@ suite('MCP Watchdog extension host', () => {
   });
 
   test('echo server reaches healthy within 15s', async () => {
-    const ext = vscode.extensions.getExtension(EXT_ID);
-    const api = (await ext!.activate()) as McpWatchdogApi;
-    await vscode.commands.executeCommand('mcpWatchdog.refresh');
+    const api = await activateWatchdog();
+    await setupEchoOnlyHost(api, { requireApproval: false });
 
     const deadline = Date.now() + 30_000;
     let healthy = false;
     let lastStatuses: ReturnType<McpWatchdogApi['getStatuses']> = [];
     while (Date.now() < deadline) {
       lastStatuses = api.getStatuses();
-      if (lastStatuses.some((s) => s.name === 'echo' && s.state === 'healthy')) {
+      if (lastStatuses.some((s) => s.name === ECHO && s.state === 'healthy')) {
         healthy = true;
         break;
       }
-      await new Promise((r) => setTimeout(r, 500));
+      await delay(500);
     }
     assert.ok(
       healthy,

@@ -1,32 +1,27 @@
 import * as assert from 'assert';
 import * as vscode from 'vscode';
-
-const EXT_ID = 'mcp-watchdog.mcp-watchdog';
-
-interface McpWatchdogApi {
-  getStatuses(): Array<{ name: string; state: string; lastError?: string }>;
-  revokeTrustForTests(): Promise<void>;
-}
+import { activateWatchdog, delay, setupEchoOnlyHost } from './helpers';
 
 suite('MCP Watchdog trust gate (host)', () => {
   test('requireApproval=true blocks monitoring until trusted', async () => {
     const cfg = vscode.workspace.getConfiguration('mcpWatchdog');
-    const ext = vscode.extensions.getExtension(EXT_ID);
-    const api = (await ext!.activate()) as McpWatchdogApi;
+    const api = await activateWatchdog();
 
     try {
-      await api.revokeTrustForTests();
-      await cfg.update('requireApproval', true, vscode.ConfigurationTarget.Workspace);
-      await vscode.commands.executeCommand('mcpWatchdog.refresh');
-      await new Promise((r) => setTimeout(r, 1500));
+      // Gate on first, then revoke so reload sees an empty trust store.
+      await setupEchoOnlyHost(api, { requireApproval: true });
+      await delay(1000);
 
       const statuses = api.getStatuses();
       const echo = statuses.find((s) => s.name === 'echo');
-      assert.ok(echo, 'echo server should appear as placeholder');
+      assert.ok(
+        echo,
+        `echo server should appear as placeholder; statuses=${JSON.stringify(statuses)}`,
+      );
       assert.notEqual(echo!.state, 'healthy', 'echo must not be healthy without approval');
       assert.ok(
         echo!.lastError?.includes('Awaiting approval') || echo!.state === 'disconnected',
-        'untrusted placeholder expected',
+        `untrusted placeholder expected; got ${JSON.stringify(echo)}`,
       );
     } finally {
       await cfg.update('requireApproval', false, vscode.ConfigurationTarget.Workspace);

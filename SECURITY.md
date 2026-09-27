@@ -2,7 +2,7 @@
 
 ## Supported versions
 
-We address security issues in the **latest minor release** on `main` (currently **0.1.x**). Older versions may not receive backports unless noted in a GitHub Security Advisory.
+We address security issues in the **latest minor release** on `main` (currently **0.2.x**). Older versions may not receive backports unless noted in a GitHub Security Advisory.
 
 ## Reporting a vulnerability
 

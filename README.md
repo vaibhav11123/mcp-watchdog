@@ -47,7 +47,7 @@ Most Cursor installs pull extensions from **Open VSX**, not the VS Marketplace:
 |--------|-----|-----|
 | **[Open VSX](https://open-vsx.org/extension/mcp-watchdog/mcp-watchdog)** | **Cursor, Windsurf, VSCodium, Trae**, most VS Code forks | Extensions search, or link above |
 | **[VS Marketplace](https://marketplace.visualstudio.com/items?itemName=mcp-watchdog.mcp-watchdog)** | VS Code (Microsoft build) | Extensions search → `mcp-watchdog.mcp-watchdog` |
-| **[GitHub Releases](https://github.com/vaibhav11123/mcp-watchdog/releases)** | Airgapped / manual | Download `.vsix` → **Install from VSIX…**, or `cursor --install-extension mcp-watchdog-0.2.0.vsix` |
+| **[GitHub Releases](https://github.com/vaibhav11123/mcp-watchdog/releases)** | Airgapped / manual | Download `.vsix` → **Install from VSIX…**, or `cursor --install-extension mcp-watchdog-0.2.1.vsix` |
 
 After install, **reload** the window. Open the **activity bar** MCP Watchdog icon (not the Extensions detail page).
 
@@ -188,6 +188,7 @@ npm run build
 - **Run Extension** / **Run Extension (mcp-watchdog-test workspace)** from `.vscode/launch.json`.
 - Fixture: `mcp-watchdog-test/` (optional; not shipped in VSIX).
 - Headless smoke: `npm run smoke`.
+- Deep dive: [docs/TECHNICAL.md](./docs/TECHNICAL.md) — architecture, design decisions, state machine, trust model, and testing.
 
 See [CHANGELOG.md](./CHANGELOG.md).
 

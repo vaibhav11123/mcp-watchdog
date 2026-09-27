@@ -2,8 +2,19 @@
   "mcpWatchdog.requireApproval": false,
   "mcpWatchdog.probeMode": "persistent",
   "mcpWatchdog.perServer": {
-    "echo": { "probeMode": "persistent" },
-    "memory": { "probeMode": "persistent" }
+    "exa": {
+      "enabled": false
+    },
+    "echo": {
+      "enabled": true,
+      "probeMode": "persistent"
+    },
+    "memory": {
+      "enabled": false
+    },
+    "filesystem": {
+      "enabled": false
+    }
   },
   "mcpWatchdog.pingIntervalMs": 2000,
   "mcpWatchdog.notify": "failures",
