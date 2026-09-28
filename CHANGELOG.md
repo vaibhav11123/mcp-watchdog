@@ -16,7 +16,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - Host-fixture CI isolation: disable noisy `npx` memory/filesystem servers in `mcp-watchdog-test` settings; host suites use `test/host/helpers.ts` to disable any merged global MCP servers (e.g. `~/.cursor`) except `echo`.
 - [SECURITY.md](./SECURITY.md): supported versions line updated to **0.2.x**.
 - TypeScript configs: `module`/`moduleResolution` → `Node16` (replaces deprecated `node10`).
-- README: lead with [Open VSX](https://open-vsx.org/extension/mcp-watchdog/mcp-watchdog) install link and live download-count badge (primary Cursor channel).
+- README: lead with [Open VSX](https://open-vsx.org/extension/mcp-watchdog/mcp-watchdog) install link and live download-count badge (primary Cursor channel); VS Marketplace live installs badge via vsmarketplacebadges.dev (Shields.io Marketplace badges remain retired).
 
 ## [0.2.1] - 2026-06-10
 
