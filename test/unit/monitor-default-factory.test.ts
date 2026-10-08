@@ -1,4 +1,4 @@
-import { describe, expect, it, vi } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 const mocks = vi.hoisted(() => {
   const mockConnect = vi.fn(async () => {});
@@ -12,6 +12,7 @@ const mocks = vi.hoisted(() => {
     mockClient,
     StdioClientTransport: vi.fn(),
     StreamableHTTPClientTransport: vi.fn(),
+    SSEClientTransport: vi.fn(),
     Client: vi.fn(() => mockClient),
   };
 });
@@ -26,6 +27,10 @@ vi.mock('@modelcontextprotocol/sdk/client/stdio.js', () => ({
 
 vi.mock('@modelcontextprotocol/sdk/client/streamableHttp.js', () => ({
   StreamableHTTPClientTransport: mocks.StreamableHTTPClientTransport,
+}));
+
+vi.mock('@modelcontextprotocol/sdk/client/sse.js', () => ({
+  SSEClientTransport: mocks.SSEClientTransport,
 }));
 
 import { ServerMonitor } from '../../src/monitor';
@@ -43,6 +48,10 @@ const options = {
 };
 
 describe('ServerMonitor default client factory', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
   it('builds stdio transport from config', async () => {
     const config: McpServerConfig = {
       type: 'stdio',
@@ -92,6 +101,25 @@ describe('ServerMonitor default client factory', () => {
 
     const call = mocks.StreamableHTTPClientTransport.mock.calls.at(-1);
     expect(call?.[1]).not.toHaveProperty('requestInit');
+    await monitor.stop();
+  });
+
+  it('builds SSE transport for type sse', async () => {
+    const config: McpServerConfig = {
+      type: 'sse',
+      url: 'http://localhost:3000/sse',
+      headers: { Authorization: 'secret' },
+    };
+    const monitor = new ServerMonitor('sse', config, options, vi.fn(), vi.fn());
+    await monitor.start();
+
+    expect(mocks.SSEClientTransport).toHaveBeenCalledWith(
+      expect.any(URL),
+      expect.objectContaining({
+        requestInit: { headers: { Authorization: 'secret' } },
+      }),
+    );
+    expect(mocks.StreamableHTTPClientTransport).not.toHaveBeenCalled();
     await monitor.stop();
   });
 });

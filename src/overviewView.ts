@@ -1,6 +1,7 @@
 import * as vscode from 'vscode';
 import type { ServerStatus, ServerState } from './monitor';
 import type { McpConfigStatus } from './config';
+import { sparklineSvg } from './latencyHistory';
 import { STATE_PRESENTATION } from './ui/statePresentation';
 
 export class OverviewViewProvider implements vscode.WebviewViewProvider {
@@ -20,7 +21,7 @@ export class OverviewViewProvider implements vscode.WebviewViewProvider {
       localResourceRoots: [this.extensionUri],
     };
 
-    webview.html = this.renderHtml(statusesSnapshot([], { kind: 'no_workspace' }));
+    webview.html = this.renderHtml(statusesSnapshot([], { kind: 'no_workspace' }, {}));
 
     webview.onDidReceiveMessage((msg: { type?: string }) => {
       switch (msg.type) {
@@ -51,9 +52,15 @@ export class OverviewViewProvider implements vscode.WebviewViewProvider {
     });
   }
 
-  update(statuses: ServerStatus[], configStatus: McpConfigStatus): void {
+  update(
+    statuses: ServerStatus[],
+    configStatus: McpConfigStatus,
+    latencyByServer: Record<string, number[]> = {},
+  ): void {
     if (!this.view) return;
-    this.view.webview.html = this.renderHtml(statusesSnapshot(statuses, configStatus));
+    this.view.webview.html = this.renderHtml(
+      statusesSnapshot(statuses, configStatus, latencyByServer),
+    );
     if (statuses.some((s) => s.state === 'failed' || s.state === 'degraded')) {
       this.view.description = 'Needs attention';
     } else if (statuses.length > 0 && statuses.every((s) => s.state === 'healthy')) {
@@ -165,6 +172,13 @@ export class OverviewViewProvider implements vscode.WebviewViewProvider {
       margin-top: 4px;
       word-break: break-word;
     }
+    .sparkline {
+      display: inline-block;
+      vertical-align: middle;
+      margin-left: 6px;
+      color: var(--vscode-descriptionForeground);
+      opacity: 0.9;
+    }
     .actions {
       display: flex;
       flex-wrap: wrap;
@@ -238,12 +252,16 @@ interface OverviewSnapshot {
     dotClass: string;
     mode?: string;
     disabled?: boolean;
+    toolCount?: number;
+    failureContext?: string;
+    sparkline?: string;
   }>;
 }
 
 function statusesSnapshot(
   statuses: ServerStatus[],
   configStatus: McpConfigStatus,
+  latencyByServer: Record<string, number[]>,
 ): OverviewSnapshot {
   const servers = statuses.map((s) => {
     const p = STATE_PRESENTATION[s.state];
@@ -255,6 +273,8 @@ function statusesSnapshot(
           : s.state === 'connecting' || s.state === 'degraded'
             ? 'warn'
             : 'muted';
+    const samples = latencyByServer[s.name] ?? [];
+    const spark = sparklineSvg(samples);
     return {
       name: s.name,
       state: s.state,
@@ -269,6 +289,11 @@ function statusesSnapshot(
             ? 'persistent'
             : undefined,
       disabled: s.disabled,
+      toolCount: s.toolCount,
+      failureContext: s.failureContext
+        ? s.failureContext.split('\n').slice(-3).join('\n')
+        : undefined,
+      sparkline: spark || undefined,
     };
   });
 
@@ -351,9 +376,10 @@ function renderDashboard(data: OverviewSnapshot): string {
     <li>
       <span class="dot ${s.dotClass}" aria-hidden="true"></span>
       <div style="flex:1;min-width:0">
-        <div class="server-name">${escapeHtml(s.name)}</div>
-        <div class="server-meta">${escapeHtml(s.label)} · ${escapeHtml(s.ping)}${s.mode ? ` · ${escapeHtml(s.mode)}` : ''}${s.disabled ? ' · disabled' : ''}</div>
+        <div class="server-name">${escapeHtml(s.name)}${s.sparkline ? `<span class="sparkline">${s.sparkline}</span>` : ''}</div>
+        <div class="server-meta">${escapeHtml(s.label)} · ${escapeHtml(s.ping)}${s.mode ? ` · ${escapeHtml(s.mode)}` : ''}${s.toolCount !== undefined ? ` · ${s.toolCount} tools` : ''}${s.disabled ? ' · disabled' : ''}</div>
         ${s.error ? `<div class="server-error">${escapeHtml(s.error)}</div>` : ''}
+        ${s.failureContext ? `<pre class="server-error" style="white-space:pre-wrap;margin:4px 0 0;font-size:11px">${escapeHtml(s.failureContext)}</pre>` : ''}
         ${
           s.state === 'failed' || s.state === 'degraded'
             ? `<div class="actions" style="margin-top:6px"><button class="link" data-action="reconnect" data-server="${escapeHtml(s.name)}">Reconnect</button></div>`

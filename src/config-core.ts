@@ -10,6 +10,11 @@ export type McpServerConfig =
       type: 'http';
       url: string;
       headers?: Record<string, string>;
+    }
+  | {
+      type: 'sse';
+      url: string;
+      headers?: Record<string, string>;
     };
 
 export interface McpConfig {
@@ -38,17 +43,48 @@ export interface ConfigLayer {
 }
 
 const WORKSPACE_FOLDER = /\$\{workspaceFolder\}/g;
+const USER_HOME = /\$\{userHome\}/g;
+const ENV_VAR = /\$\{env:([A-Za-z_][A-Za-z0-9_]*)\}/g;
 
-/** Same placeholder VS Code substitutes for MCP; watchdog reads JSON from disk, so expand explicitly. */
-export function expandWorkspaceVars<V>(value: V, workspaceRoot: string | undefined): V {
-  if (!workspaceRoot) return value;
-  if (typeof value === 'string') return value.replace(WORKSPACE_FOLDER, workspaceRoot) as V;
-  if (Array.isArray(value))
-    return value.map((item) => expandWorkspaceVars(item, workspaceRoot)) as V;
+export interface ExpandVarsContext {
+  workspaceRoot?: string;
+  userHome?: string;
+  env?: NodeJS.ProcessEnv;
+}
+
+/**
+ * Expand VS Code-style placeholders used in mcp.json.
+ * Supports `${workspaceFolder}`, `${userHome}`, `${env:NAME}`.
+ * Missing env vars are left as the literal `${env:NAME}` (never logged as values elsewhere).
+ * `${input:…}` is intentionally not expanded.
+ */
+export function expandWorkspaceVars<V>(
+  value: V,
+  workspaceRootOrCtx: string | undefined | ExpandVarsContext,
+): V {
+  const ctx: ExpandVarsContext =
+    typeof workspaceRootOrCtx === 'object' && workspaceRootOrCtx !== null
+      ? workspaceRootOrCtx
+      : { workspaceRoot: workspaceRootOrCtx };
+
+  const expandString = (s: string): string => {
+    let out = s;
+    if (ctx.workspaceRoot) out = out.replace(WORKSPACE_FOLDER, ctx.workspaceRoot);
+    if (ctx.userHome) out = out.replace(USER_HOME, ctx.userHome);
+    const env = ctx.env ?? process.env;
+    out = out.replace(ENV_VAR, (match, name: string) => {
+      const v = env[name];
+      return v !== undefined && v !== '' ? v : match;
+    });
+    return out;
+  };
+
+  if (typeof value === 'string') return expandString(value) as V;
+  if (Array.isArray(value)) return value.map((item) => expandWorkspaceVars(item, ctx)) as V;
   if (value !== null && typeof value === 'object') {
     const o = value as Record<string, unknown>;
     const out: Record<string, unknown> = {};
-    for (const key of Object.keys(o)) out[key] = expandWorkspaceVars(o[key], workspaceRoot);
+    for (const key of Object.keys(o)) out[key] = expandWorkspaceVars(o[key], ctx);
     return out as V;
   }
   return value;
@@ -67,13 +103,20 @@ export function normalizeServerEntry(entry: unknown): McpServerConfig | null {
   const e = entry as Record<string, unknown>;
 
   const explicitType = e.type;
-  if (explicitType === 'http' || (typeof e.url === 'string' && e.url.length > 0)) {
-    const url = typeof e.url === 'string' ? e.url : '';
+  const transport = typeof e.transport === 'string' ? e.transport : undefined;
+  const wantsSse = explicitType === 'sse' || transport === 'sse';
+  const hasUrl = typeof e.url === 'string' && e.url.length > 0;
+
+  if (explicitType === 'http' || explicitType === 'sse' || hasUrl) {
+    const url = hasUrl ? (e.url as string) : '';
     if (!url) return null;
     const headers =
       e.headers && typeof e.headers === 'object' && !Array.isArray(e.headers)
         ? (e.headers as Record<string, string>)
         : undefined;
+    if (wantsSse) {
+      return { type: 'sse', url, headers };
+    }
     return { type: 'http', url, headers };
   }
 
@@ -92,7 +135,11 @@ export function normalizeServerEntry(entry: unknown): McpServerConfig | null {
   };
 }
 
-export function parseConfigFile(raw: string, workspaceRoot?: string): ParseConfigResult {
+export function parseConfigFile(
+  raw: string,
+  workspaceRoot?: string,
+  expandCtx?: Omit<ExpandVarsContext, 'workspaceRoot'>,
+): ParseConfigResult {
   let parsed: unknown;
   try {
     parsed = JSON.parse(raw);
@@ -103,11 +150,17 @@ export function parseConfigFile(raw: string, workspaceRoot?: string): ParseConfi
   const block = extractServersBlock(parsed);
   if (!block) return { ok: false, error: 'no_block' };
 
+  const ctx: ExpandVarsContext = {
+    workspaceRoot,
+    userHome: expandCtx?.userHome,
+    env: expandCtx?.env,
+  };
+
   const servers: Record<string, McpServerConfig> = {};
   for (const key of Object.keys(block)) {
     const normalized = normalizeServerEntry(block[key]);
     if (normalized) {
-      servers[key] = expandWorkspaceVars(normalized, workspaceRoot);
+      servers[key] = expandWorkspaceVars(normalized, ctx);
     }
   }
   return { ok: true, servers };
@@ -132,9 +185,9 @@ export function emptyViewMessage(status: McpConfigStatus): string {
     case 'no_workspace':
       return 'Open a folder to monitor MCP servers.';
     case 'no_config':
-      return 'Add MCP config: .vscode/mcp.json (VS Code) or .cursor/mcp.json (Cursor). Global: ~/.cursor/mcp.json';
+      return 'Add MCP config: .vscode/mcp.json or .cursor/mcp.json (workspace), or globals ~/.cursor/mcp.json, VS Code User mcp.json, Windsurf, Claude Code (~/.claude.json).';
     case 'empty_servers':
-      return 'mcp.json found but no valid servers. Use a "servers" or "mcpServers" object with stdio (command) or http (url) entries.';
+      return 'mcp.json found but no valid servers. Use a "servers" or "mcpServers" object with stdio (command), http (url), or sse (url) entries.';
     case 'untrusted':
       return 'Approval required before MCP Watchdog connects to your MCP servers. Run "Review Trusted Servers" or click the status bar.';
     default:

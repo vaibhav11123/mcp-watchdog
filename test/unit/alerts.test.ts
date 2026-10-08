@@ -22,7 +22,13 @@ describe('decideAlert', () => {
       emptyFlap,
     );
     expect(r.alert?.kind).toBe('error');
-    expect(r.alert?.actions).toEqual(['Reconnect', 'Show Log', 'Reload Window', 'Mute 1h']);
+    expect(r.alert?.actions).toEqual([
+      'Reconnect',
+      'Show Log',
+      'Reload Window',
+      'Quit Cursor',
+      'Mute 1h',
+    ]);
   });
 
   it('degraded with recovery in <60s emits no alert immediately', () => {

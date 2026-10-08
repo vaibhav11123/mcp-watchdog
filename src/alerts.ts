@@ -25,6 +25,15 @@ const FLAP_WINDOW_MS = 10 * 60 * 1000;
 const FLAP_THRESHOLD = 3;
 const DEFAULT_DEGRADED_ALERT_DELAY_MS = 60_000;
 
+/** Failed / sustained-degraded toast actions (Quit before Mute). */
+export const FAILURE_ALERT_ACTIONS = [
+  'Reconnect',
+  'Show Log',
+  'Reload Window',
+  'Quit Cursor',
+  'Mute 1h',
+] as const;
+
 export function decideAlert(
   prev: ServerStatus | undefined,
   next: ServerStatus,
@@ -111,7 +120,7 @@ export function decideAlert(
         kind: 'warning',
         server: next.name,
         message: `MCP server ${next.name} degraded: ${next.lastError ?? 'unreachable'}`,
-        actions: ['Reconnect', 'Show Log', 'Reload Window', 'Mute 1h'],
+        actions: [...FAILURE_ALERT_ACTIONS],
       },
       flap: outFlap,
       degradedSince,
@@ -128,7 +137,7 @@ export function decideAlert(
         kind: 'error',
         server: next.name,
         message: `MCP server ${next.name} failed: ${next.lastError ?? 'unknown'}`,
-        actions: ['Reconnect', 'Show Log', 'Reload Window', 'Mute 1h'],
+        actions: [...FAILURE_ALERT_ACTIONS],
       },
       flap: outFlap,
       degradedSince: undefined,

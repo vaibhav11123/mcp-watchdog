@@ -6,17 +6,36 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+### Added (lands in 0.4.0 / 0.5.0 next)
+
+- **0.4:** Incident timeline export; latency sparklines; VS Code user / Windsurf / Claude Code config paths; HTTP 401 → `Auth required`.
+- **0.5:** `detectToolDrift`; `passiveHttpProbe`; SSE transport; multi-root mcp.json merge.
+
+## [0.3.0] - 2026-10-08
+
 ### Added
 
-- Dense technical design document: [docs/TECHNICAL.md](./docs/TECHNICAL.md) (architecture, decisions, state machine, trust, alerts, testing, CI/distribution status).
-- Ops bench script `scripts/measure-ops.mjs` (median reconnect time, success rate, concurrent probe capacity).
+- **mcp.json Problems lint** (`mcpWatchdog.diagnostics.enabled`, default `true`).
+- **Failure context** on failed/degraded servers (tree, Overview, tooltip).
+- **`${env:VAR}` / `${userHome}`** expansion (`${input:…}` not expanded).
+- Toast action **Quit Cursor** alongside Reconnect / Show Log / Reload Window / Mute.
+- Opt-in **`mcpWatchdog.checkEmptyTools`** (`toolCount` advisory only).
+- One-time **review prompt** after `mcpWatchdog.reviewAfterRecoveries` (default `3`).
+- Status bar tooltip reachability disclaimer; `images/demo.gif` in README (absolute URL).
+- Dense technical design document: [docs/TECHNICAL.md](./docs/TECHNICAL.md).
+- Ops bench script `scripts/measure-ops.mjs`.
 
 ### Changed
 
-- Host-fixture CI isolation: disable noisy `npx` memory/filesystem servers in `mcp-watchdog-test` settings; host suites use `test/host/helpers.ts` to disable any merged global MCP servers (e.g. `~/.cursor`) except `echo`.
-- [SECURITY.md](./SECURITY.md): supported versions line updated to **0.2.x**.
-- TypeScript configs: `module`/`moduleResolution` → `Node16` (replaces deprecated `node10`).
-- README: lead with [Open VSX](https://open-vsx.org/extension/mcp-watchdog/mcp-watchdog) install link and live download-count badge (primary Cursor channel); VS Marketplace live installs badge via vsmarketplacebadges.dev (Shields.io Marketplace badges remain retired).
+- Host-fixture CI isolation for global MCP servers in host tests.
+- [SECURITY.md](./SECURITY.md): supported versions **0.3.x**.
+- TypeScript `module`/`moduleResolution` → `Node16`.
+- README: Open VSX-first; Marketplace packaging uses Shields badges only (no untrusted SVG).
+
+### Fixed
+
+- `vsce package` blocked by untrusted Marketplace SVG badge / embedded SVG logo in README.
+- Tool-drift advisory uses `toolDriftNote` (not `lastError`) so healthy servers do not look failed.
 
 ## [0.2.1] - 2026-06-10
 

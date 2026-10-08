@@ -82,6 +82,10 @@ suite('MCP Watchdog alerts (host)', () => {
       );
       assert.strictEqual(alert!.server, ECHO);
       assert.ok(alert!.actions.includes('Reconnect') && alert!.actions.includes('Reload Window'));
+      assert.ok(
+        alert!.actions.includes('Quit Cursor'),
+        `actions=${JSON.stringify(alert!.actions)}`,
+      );
       assert.match(alert!.message, /echo/i);
     } finally {
       clearInterval(killTimer);

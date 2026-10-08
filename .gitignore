@@ -3,6 +3,7 @@ node_modules
 *.vsix
 *.local.md
 launch/
+media/
 .DS_Store
 .vscode-test/
 out-test/

@@ -1,8 +1,8 @@
 {
   "name": "mcp-watchdog",
   "displayName": "MCP Watchdog",
-  "description": "Alerts when MCP servers silently disconnect in Cursor, VS Code, and forks. Status bar, reconnect toasts, interval health probes, trust gate.",
-  "version": "0.2.1",
+  "description": "Status bar and toasts when MCP goes Not connected in Cursor/VS Code. Reconnect, Reload, or Quit — parallel health probes with a trust gate.",
+  "version": "0.3.0",
   "publisher": "mcp-watchdog",
   "license": "MIT",
   "keywords": [
@@ -33,13 +33,18 @@
   "engines": {
     "vscode": "^1.105.0"
   },
-  "categories": ["AI", "Other"],
+  "categories": [
+    "AI",
+    "Other"
+  ],
   "icon": "images/icon.png",
   "galleryBanner": {
     "color": "#1e1e1e",
     "theme": "dark"
   },
-  "activationEvents": ["onStartupFinished"],
+  "activationEvents": [
+    "onStartupFinished"
+  ],
   "main": "./dist/extension.js",
   "contributes": {
     "commands": [
@@ -79,6 +84,10 @@
       {
         "command": "mcpWatchdog.reviewTrust",
         "title": "MCP Watchdog: Review Trusted Servers"
+      },
+      {
+        "command": "mcpWatchdog.exportIncidentMarkdown",
+        "title": "MCP Watchdog: Export Incident Timeline (Markdown)"
       }
     ],
     "menus": {
@@ -121,13 +130,17 @@
               "image": "images/screenshot-servers-view.png",
               "altText": "MCP Watchdog Servers tree in the sidebar"
             },
-            "completionEvents": ["onView:mcpWatchdog.overview"]
+            "completionEvents": [
+              "onView:mcpWatchdog.overview"
+            ]
           },
           {
             "id": "addMcpConfig",
             "title": "Add MCP config",
             "description": "Use **.cursor/mcp.json** (Cursor) or **.vscode/mcp.json** (VS Code). Cursor often uses a `mcpServers` block.\n\n[Open or create MCP config](command:mcpWatchdog.openMcpConfig)",
-            "completionEvents": ["onCommand:mcpWatchdog.openMcpConfig"]
+            "completionEvents": [
+              "onCommand:mcpWatchdog.openMcpConfig"
+            ]
           },
           {
             "id": "statusBar",
@@ -137,7 +150,9 @@
               "image": "images/screenshot-status-bar.png",
               "altText": "MCP Watchdog status bar indicator"
             },
-            "completionEvents": ["onCommand:mcpWatchdog.showStatus"]
+            "completionEvents": [
+              "onCommand:mcpWatchdog.showStatus"
+            ]
           }
         ]
       }
@@ -216,7 +231,10 @@
         },
         "mcpWatchdog.probeMode": {
           "type": "string",
-          "enum": ["interval", "persistent"],
+          "enum": [
+            "interval",
+            "persistent"
+          ],
           "default": "interval",
           "description": "interval: connect → ping → close each cycle (no long-lived process). persistent: keep a client open between pings (legacy behavior)."
         },
@@ -227,7 +245,11 @@
         },
         "mcpWatchdog.notify": {
           "type": "string",
-          "enum": ["all", "failures", "none"],
+          "enum": [
+            "all",
+            "failures",
+            "none"
+          ],
           "default": "failures",
           "description": "Toast notifications: failures (default), all (includes recovery), none"
         },
@@ -238,11 +260,47 @@
           "additionalProperties": {
             "type": "object",
             "properties": {
-              "probeMode": { "type": "string", "enum": ["interval", "persistent"] },
-              "pingIntervalMs": { "type": "number" },
-              "enabled": { "type": "boolean" }
+              "probeMode": {
+                "type": "string",
+                "enum": [
+                  "interval",
+                  "persistent"
+                ]
+              },
+              "pingIntervalMs": {
+                "type": "number"
+              },
+              "enabled": {
+                "type": "boolean"
+              }
             }
           }
+        },
+        "mcpWatchdog.diagnostics.enabled": {
+          "type": "boolean",
+          "default": true,
+          "description": "Show mcp.json structure problems (invalid JSON, missing servers root, missing command/url) in the Problems panel."
+        },
+        "mcpWatchdog.checkEmptyTools": {
+          "type": "boolean",
+          "default": false,
+          "description": "After a successful ping, call tools/list and show tool count (advisory only; 0 tools does not mark the server failed)."
+        },
+        "mcpWatchdog.detectToolDrift": {
+          "type": "boolean",
+          "default": false,
+          "description": "Fingerprint tool names after tools/list; when the set changes, set toolDrift (advisory info toast; does not mark failed). Also enables tools/list when checkEmptyTools is off."
+        },
+        "mcpWatchdog.passiveHttpProbe": {
+          "type": "boolean",
+          "default": false,
+          "description": "For HTTP servers in interval mode: HEAD/GET the URL before a full MCP connect. If the endpoint is reachable but MCP fails, mark degraded with an advisory lastError."
+        },
+        "mcpWatchdog.reviewAfterRecoveries": {
+          "type": "number",
+          "default": 3,
+          "minimum": 0,
+          "description": "After this many recoveries from failed/degraded to healthy, ask once for an Open VSX/Marketplace review. Set 0 to disable."
         }
       }
     }

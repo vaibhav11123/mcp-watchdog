@@ -1,4 +1,6 @@
 import * as vscode from 'vscode';
+import * as os from 'os';
+import * as path from 'path';
 import { ServerMonitor, ServerStatus, ServerState } from './monitor';
 import { emptyViewMessage, loadMcpConfig, McpConfigStatus, watchMcpConfig } from './config';
 import type { McpServerConfig } from './config-core';
@@ -10,8 +12,17 @@ import { STATE_PRESENTATION } from './ui/statePresentation';
 import { computeServerSetFingerprint, formatServerSummary, TrustStore } from './trust';
 import { AlertManager, type AlertDecision } from './alerts';
 import { debounce, resolveServerOptions, type MonitorOptions } from './options';
+import { ConfigDiagnostics } from './configDiagnostics';
+import { IncidentRingBuffer } from './incidents';
+import { LatencyHistory } from './latencyHistory';
 
 type StatusPickItem = vscode.QuickPickItem & { serverName: string };
+
+const ASKED_REVIEW_KEY = 'mcpWatchdog.askedReview';
+const RECOVERY_COUNT_KEY = 'mcpWatchdog.recoveryCount';
+const OPEN_VSX_REVIEW = 'https://open-vsx.org/extension/mcp-watchdog/mcp-watchdog';
+const MARKETPLACE_REVIEW =
+  'https://marketplace.visualstudio.com/items?itemName=mcp-watchdog.mcp-watchdog';
 
 const monitors = new Map<string, ServerMonitor>();
 let statusBar: McpStatusBar;
@@ -29,16 +40,25 @@ let pendingFingerprint: string | null = null;
 let trustPromptShown = false;
 let alertManager: AlertManager;
 let lastAlertForTest: AlertDecision | undefined;
+let configDiagnostics: ConfigDiagnostics | undefined;
+const incidentBuffer = new IncidentRingBuffer();
+const latencyHistory = new LatencyHistory();
 
+/** Joined sorted folder paths — trust key covers the full multi-root workspace. */
 function workspacePath(): string {
-  return vscode.workspace.workspaceFolders?.[0]?.uri.fsPath ?? '';
+  const folders = vscode.workspace.workspaceFolders;
+  if (!folders?.length) return '';
+  return folders
+    .map((f) => f.uri.fsPath)
+    .sort()
+    .join('\0');
 }
 
 function refreshAllUi(): void {
   const list = [...statuses.values()];
   statusBar.update(list, lastConfigStatus);
   serversTreeProvider?.refresh();
-  overviewProvider?.update(list, lastConfigStatus);
+  overviewProvider?.update(list, lastConfigStatus, latencyHistory.snapshot());
   if (serversView) {
     serversView.message = emptyViewMessage(lastConfigStatus);
   }
@@ -49,6 +69,7 @@ function resetConfigWatcher(): void {
   configWatcher = watchMcpConfig(() => {
     logger.info('[Watchdog] MCP config changed — reloading servers');
     trustPromptShown = false;
+    configDiagnostics?.refresh();
     void reloadServers();
   });
 }
@@ -77,11 +98,54 @@ function setUntrustedPlaceholders(
 }
 
 function onServerStatus(name: string, s: ServerStatus): void {
+  const prev = statuses.get(name);
+  incidentBuffer.recordChange(name, prev?.state, s.state, s.lastError);
+  if (s.state === 'healthy' && s.lastPingMs !== undefined) {
+    latencyHistory.push(name, s.lastPingMs);
+  }
   const withFlap = { ...s, flapping: alertManager.getFlapping(name) };
   statuses.set(name, withFlap);
   alertManager.onStatusChange(withFlap);
   statuses.set(name, { ...withFlap, flapping: alertManager.getFlapping(name) });
+  if (s.toolDrift) {
+    const note =
+      s.toolDriftNote ??
+      `tools changed${s.toolCount !== undefined ? ` (${s.toolCount} tools)` : ''}`;
+    void vscode.window.showInformationMessage(`MCP Watchdog: ${name} — ${note}`);
+  }
+  if (
+    withFlap.state === 'healthy' &&
+    prev &&
+    (prev.state === 'failed' || prev.state === 'degraded')
+  ) {
+    void maybeAskForReview();
+  }
   refreshAllUi();
+}
+
+async function maybeAskForReview(): Promise<void> {
+  const threshold = vscode.workspace
+    .getConfiguration('mcpWatchdog')
+    .get<number>('reviewAfterRecoveries', 3);
+  if (threshold <= 0) return;
+  if (extensionContext.globalState.get<boolean>(ASKED_REVIEW_KEY)) return;
+
+  const count = (extensionContext.globalState.get<number>(RECOVERY_COUNT_KEY) ?? 0) + 1;
+  await extensionContext.globalState.update(RECOVERY_COUNT_KEY, count);
+  if (count < threshold) return;
+
+  await extensionContext.globalState.update(ASKED_REVIEW_KEY, true);
+  const pick = await vscode.window.showInformationMessage(
+    'MCP Watchdog helped recover a server. Leave a short review? It helps others find the extension.',
+    'Open VSX',
+    'Marketplace',
+    'Not now',
+  );
+  if (pick === 'Open VSX') {
+    await vscode.env.openExternal(vscode.Uri.parse(OPEN_VSX_REVIEW));
+  } else if (pick === 'Marketplace') {
+    await vscode.env.openExternal(vscode.Uri.parse(MARKETPLACE_REVIEW));
+  }
 }
 
 function startMonitor(name: string, serverConfig: McpServerConfig, opts: MonitorOptions): void {
@@ -119,6 +183,14 @@ async function emitAlert(decision: AlertDecision): Promise<void> {
     }
   } else if (picked === 'Reload Window') {
     await vscode.commands.executeCommand('workbench.action.reloadWindow');
+  } else if (picked === 'Quit Cursor') {
+    try {
+      await vscode.commands.executeCommand('workbench.action.quit');
+    } catch {
+      void vscode.window.showInformationMessage(
+        'Quit Cursor fully (File → Quit / Exit), then reopen — Reload Window alone is sometimes not enough for stuck MCP.',
+      );
+    }
   } else if (picked === 'Mute 1h') {
     alertManager.mute(decision.server, 60 * 60 * 1000);
   }
@@ -215,6 +287,8 @@ export async function activate(context: vscode.ExtensionContext): Promise<McpWat
   trustStore = new TrustStore(context.globalState, workspacePath());
 
   logger = new Logger();
+  configDiagnostics = new ConfigDiagnostics();
+  context.subscriptions.push(configDiagnostics);
   alertManager = new AlertManager(
     () =>
       vscode.workspace
@@ -240,6 +314,7 @@ export async function activate(context: vscode.ExtensionContext): Promise<McpWat
   serversView.message = emptyViewMessage({ kind: 'no_workspace' });
 
   context.subscriptions.push(logger, statusBar, serversView);
+  configDiagnostics.refresh();
 
   context.subscriptions.push(
     vscode.commands.registerCommand('mcpWatchdog.showStatus', showStatusPanel),
@@ -259,6 +334,7 @@ export async function activate(context: vscode.ExtensionContext): Promise<McpWat
     vscode.commands.registerCommand('mcpWatchdog.showOutput', () => logger.show()),
     vscode.commands.registerCommand('mcpWatchdog.refresh', () => reloadServers()),
     vscode.commands.registerCommand('mcpWatchdog.reviewTrust', reviewTrustQuickPick),
+    vscode.commands.registerCommand('mcpWatchdog.exportIncidentMarkdown', exportIncidentMarkdown),
   );
 
   context.subscriptions.push(
@@ -291,6 +367,9 @@ export async function activate(context: vscode.ExtensionContext): Promise<McpWat
   context.subscriptions.push(
     vscode.workspace.onDidChangeConfiguration((e) => {
       if (e.affectsConfiguration('mcpWatchdog')) {
+        if (e.affectsConfiguration('mcpWatchdog.diagnostics')) {
+          configDiagnostics?.refresh();
+        }
         debouncedSettingsReload();
       }
     }),
@@ -408,6 +487,9 @@ function getOptions(): MonitorOptions {
     initialBackoffMs: cfg.get<number>('initialBackoffMs', 1000),
     backoffMultiplier: cfg.get<number>('backoffMultiplier', 1.5),
     maxBackoffMs: cfg.get<number>('maxBackoffMs', 30000),
+    checkEmptyTools: cfg.get<boolean>('checkEmptyTools', false),
+    detectToolDrift: cfg.get<boolean>('detectToolDrift', false),
+    passiveHttpProbe: cfg.get<boolean>('passiveHttpProbe', false),
   };
 }
 
@@ -428,6 +510,25 @@ function startServer(name: string, serverConfig: McpServerConfig, globals: Monit
     return;
   }
   startMonitor(name, serverConfig, options);
+}
+
+async function exportIncidentMarkdown(): Promise<void> {
+  const md = incidentBuffer.exportToMarkdown();
+  const defaultUri = vscode.Uri.file(
+    path.join(os.homedir(), `mcp-watchdog-incidents-${new Date().toISOString().slice(0, 10)}.md`),
+  );
+  const uri = await vscode.window.showSaveDialog({
+    defaultUri,
+    filters: { Markdown: ['md'] },
+    saveLabel: 'Export incidents',
+  });
+  if (!uri) return;
+  await vscode.workspace.fs.writeFile(uri, Buffer.from(md, 'utf8'));
+  const doc = await vscode.workspace.openTextDocument(uri);
+  await vscode.window.showTextDocument(doc);
+  void vscode.window.showInformationMessage(
+    `MCP Watchdog: exported ${incidentBuffer.size} incident transition(s).`,
+  );
 }
 
 async function openMcpConfig(): Promise<void> {

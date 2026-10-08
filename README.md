@@ -1,10 +1,10 @@
 # MCP Watchdog
 
 [![Open VSX Downloads](https://img.shields.io/open-vsx/dt/mcp-watchdog/mcp-watchdog?color=3c1&label=Open%20VSX%20downloads)](https://open-vsx.org/extension/mcp-watchdog/mcp-watchdog)
-[![Open VSX](https://img.shields.io/badge/Open%20VSX-Install-3c1?style=flat-square&logo=data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIyNCIgaGVpZ2h0PSIyNCIgdmlld0JveD0iMCAwIDI0IDI0Ij48cGF0aCBmaWxsPSIjRkZGIiBkPSJNMTIgMkM2LjQ4IDIgMiA2LjQ4IDIgMTJzNC40OCAxMCAxMCAxMCAxMC00LjQ4IDEwLTEwUzE3LjUyIDIgMTIgMnptMCAxOGMtNC40MSAwLTgtMy41OS04LThzMy41OS04IDgtOCA4IDMuNTkgOCA4LTMuNTkgOC04IDh6Ii8+PC9zdmc+)](https://open-vsx.org/extension/mcp-watchdog/mcp-watchdog)
-[![VS Marketplace Installs](https://vsmarketplacebadges.dev/installs-short/mcp-watchdog.mcp-watchdog.svg)](https://marketplace.visualstudio.com/items?itemName=mcp-watchdog.mcp-watchdog)
+[![Open VSX](https://img.shields.io/badge/Open%20VSX-Install-3c1)](https://open-vsx.org/extension/mcp-watchdog/mcp-watchdog)
+[![VS Marketplace](https://img.shields.io/badge/VS%20Marketplace-Install-007ACC)](https://marketplace.visualstudio.com/items?itemName=mcp-watchdog.mcp-watchdog)
 [![CI](https://github.com/vaibhav11123/mcp-watchdog/actions/workflows/ci.yml/badge.svg)](https://github.com/vaibhav11123/mcp-watchdog/actions/workflows/ci.yml)
-[![GitHub release](https://img.shields.io/badge/release-v0.2.1-333?logo=github)](https://github.com/vaibhav11123/mcp-watchdog/releases)
+[![GitHub release](https://img.shields.io/github/v/release/vaibhav11123/mcp-watchdog?label=release)](https://github.com/vaibhav11123/mcp-watchdog/releases)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](./LICENSE)
 
 **Install (recommended for Cursor):** [MCP Watchdog on Open VSX](https://open-vsx.org/extension/mcp-watchdog/mcp-watchdog) — primary download channel for Cursor, Windsurf, VSCodium, and most VS Code forks.
@@ -23,16 +23,16 @@ Works in **Cursor**, **Windsurf**, **VS Code**, **VSCodium**, and other forks th
 
 ## Demo
 
-<!-- GIF shot list (record → save as images/demo.gif, ~15s):
+![MCP Watchdog demo — status bar and Servers view](https://raw.githubusercontent.com/vaibhav11123/mcp-watchdog/main/images/demo.gif)
+
+*Placeholder loop from existing screenshots (status bar → Servers). Re-record a live kill→toast→Reconnect clip per `launch/GIF-RECORDING.md` before major launch posts for best conversion.*
+
+<!-- Live GIF shot list (re-record → overwrite images/demo.gif, 12–18s):
   1. Activity bar → MCP Watchdog → Overview, status bar MCP: 1/1 healthy
-  2. Terminal: pkill -f server-memory (or your MCP server)
-  3. Toast: "MCP server … failed" with Reconnect / Reload Window
+  2. Terminal: kill -9 $(pgrep -f echo-server.js)
+  3. Toast with Reconnect / Show Log / Reload Window / Quit Cursor / Mute
   4. Click Reconnect → healthy again
 -->
-
-![MCP Watchdog — servers healthy in the activity bar sidebar](./images/screenshot-servers-view.png)
-
-*Replace with `images/demo.gif` when recorded (15s: kill server → failure toast → Reconnect → healthy).*
 
 ## Install
 
@@ -59,9 +59,13 @@ After install, **reload** the window. Open the **activity bar** MCP Watchdog ico
 - **VS Code** or **Cursor** with a compatible engine: this manifest declares **`engines.vscode`: `^1.105.0`** (adjust if you need a different floor after testing).
 - A **workspace folder** open in the editor.
 - MCP config in at least one of:
-  - **`.vscode/mcp.json`** — VS Code (`servers` object)
-  - **`.cursor/mcp.json`** — Cursor (`mcpServers` or `servers`)
-  - **`~/.cursor/mcp.json`** — Cursor global (merged with project config)
+  - **`.vscode/mcp.json`** — VS Code workspace (`servers` object)
+  - **`.cursor/mcp.json`** — Cursor workspace (`mcpServers` or `servers`)
+  - **`~/.cursor/mcp.json`** — Cursor global
+  - **VS Code user `mcp.json`** — e.g. `~/Library/Application Support/Code/User/mcp.json` on macOS
+  - **Windsurf** — `~/.codeium/windsurf/mcp_config.json`
+  - **Claude Code** — `~/.claude.json` (`mcpServers` block)
+  - Layers merge (workspace project files override globals).
 - In **multi-root** workspaces, only the **first** folder is used when resolving paths and **`${workspaceFolder}`**.
 
 ## Where is the UI?
@@ -125,6 +129,7 @@ By default (**`mcpWatchdog.requireApproval`**: `true`), Watchdog **does not** sp
 - **MCP Watchdog: Reconnect Server…**
 - **MCP Watchdog: Open Servers View** — Focus the **Servers** tree.
 - **MCP Watchdog: Open MCP Config** — Open or create `.cursor/mcp.json` / `.vscode/mcp.json`.
+- **MCP Watchdog: Export Incident Timeline (Markdown)** — Save recent state transitions as Markdown.
 
 ## Settings (`mcpWatchdog.*`)
 
@@ -141,10 +146,15 @@ By default (**`mcpWatchdog.requireApproval`**: `true`), Watchdog **does not** sp
 | `pingTimeoutMs` | `5000` | Ping/probe timeout (ms). |
 | `notify` | `failures` | Toasts: `failures` (default), `all` (+ recovery), `none`. |
 | `degradedAlertDelayMs` | `60000` | Wait before warning toast on sustained degraded state. |
+| `diagnostics.enabled` | `true` | mcp.json structure lint in the Problems panel. |
+| `checkEmptyTools` | `false` | After ping, `tools/list` → show tool count (advisory). |
+| `detectToolDrift` | `false` | Fingerprint tool names; info toast when the set changes (advisory). |
+| `passiveHttpProbe` | `false` | HTTP interval: HEAD/GET before MCP; reachable-but-MCP-fail → degraded advisory. |
+| `reviewAfterRecoveries` | `3` | After N recoveries, ask once for an Open VSX/Marketplace review (`0` = off). |
 
 ### Alerts
 
-When a server fails, Watchdog shows a notification with **Reconnect**, **Show Log**, **Reload Window**, and **Mute 1h**. Set `mcpWatchdog.notify` to `all` to also get recovery toasts. Repeated failures within 10 minutes collapse into a single **flapping** warning.
+When a server fails, Watchdog shows a notification with **Reconnect**, **Show Log**, **Reload Window**, **Quit Cursor**, and **Mute 1h**. Quit is for cases where Reload alone does not fix the editor’s MCP client. Set `mcpWatchdog.notify` to `all` to also get recovery toasts. Repeated failures within 10 minutes collapse into a single **flapping** warning.
 
 ### Probe modes
 
@@ -163,10 +173,11 @@ Settings changes apply within ~1s without reloading the window; **`mcp.json`** e
 
 ## Known limitations
 
-- Reads **`.vscode/mcp.json`**, **`.cursor/mcp.json`**, and **`~/.cursor/mcp.json`** (merged; project files override global). Does not read other user-global VS Code MCP paths yet.
+- Reads workspace **`.vscode/mcp.json`** / **`.cursor/mcp.json`** from **all** multi-root folders (later folders override same server names), plus globals **`~/.cursor/mcp.json`**, VS Code user **`mcp.json`**, Windsurf **`mcp_config.json`**, and Claude Code **`~/.claude.json`**. Global `${workspaceFolder}` expands using the **first** folder only.
 - **Independent of the editor’s MCP UI**: native MCP may show different state until the next Watchdog ping.
-- **HTTP transport** may combine SDK-level reconnection with Watchdog-level retries.
+- **HTTP transport** may combine SDK-level reconnection with Watchdog-level retries. **SSE** is supported via SDK `SSEClientTransport` but is deprecated upstream — prefer Streamable HTTP when possible.
 - **Malformed `mcp.json`**: invalid JSON shows an error notification; fix the file and save.
+- Tool-drift fingerprints are **name-only** (no schema hash); passive HTTP is a light HEAD/GET, not a substitute for MCP health.
 
 ## Troubleshooting
 
@@ -197,10 +208,12 @@ See [CHANGELOG.md](./CHANGELOG.md).
 
 ## Ship checklist (maintainers)
 
-1. Record **`images/demo.gif`** (see HTML comment in README Demo section).
-2. `npm test` && `npx vsce package` — confirm `vsce ls` has no `test/`, `*.local.md`.
-3. Set GitHub secrets: **`VSCE_PAT`**, **`OVSX_PAT`** (see [CONTRIBUTING.md](./CONTRIBUTING.md)).
-4. `./scripts/ship-release.sh` or push tag `v*` to run [release.yml](./.github/workflows/release.yml).
+1. Prefer a live **`images/demo.gif`** (kill→toast→Reconnect); placeholder GIF is already in-repo.
+2. Bump `package.json` version (maintainer only) + move CHANGELOG Unreleased → versioned section.
+3. `npm test` && `npx vsce package` — confirm `vsce ls` has no `test/`, `*.local.md`, `launch/`.
+4. Set GitHub secrets: **`VSCE_PAT`**, **`OVSX_PAT`** (see [CONTRIBUTING.md](./CONTRIBUTING.md)).
+5. `./scripts/ship-release.sh` or push tag `v*` to run [release.yml](./.github/workflows/release.yml) (Marketplace + Open VSX).
+6. Post GTM from gitignored `launch/` (X-THREAD, FORUM-PASTE, HN-SHOW, REDDIT, SCHEDULE).
 
 ```bash
 export VSCE_PAT=... OVSX_PAT=...   # one-time

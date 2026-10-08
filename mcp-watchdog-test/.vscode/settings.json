@@ -2,6 +2,9 @@
   "mcpWatchdog.requireApproval": false,
   "mcpWatchdog.probeMode": "persistent",
   "mcpWatchdog.perServer": {
+    "aws-mcp": {
+      "enabled": false
+    },
     "exa": {
       "enabled": false
     },

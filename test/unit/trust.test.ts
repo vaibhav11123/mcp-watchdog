@@ -64,6 +64,16 @@ describe('computeServerSetFingerprint', () => {
     expect(url).not.toBe(base);
   });
 
+  it('distinguishes http vs sse for the same url', () => {
+    const httpFp = computeServerSetFingerprint({
+      s: { type: 'http', url: 'http://localhost/x' },
+    });
+    const sseFp = computeServerSetFingerprint({
+      s: { type: 'sse', url: 'http://localhost/x' },
+    });
+    expect(httpFp).not.toBe(sseFp);
+  });
+
   it('does not change when only env or header values change', () => {
     const a = computeServerSetFingerprint({
       mem: {

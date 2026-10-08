@@ -12,7 +12,7 @@ export interface TrustApproval {
 }
 
 export function formatServerSummary(config: McpServerConfig): string {
-  if (config.type === 'http') {
+  if (config.type === 'http' || config.type === 'sse') {
     return config.url;
   }
   const args = config.args?.join(' ') ?? '';
@@ -24,6 +24,9 @@ function fingerprintEntry(name: string, config: McpServerConfig): string {
   if (config.type === 'stdio') {
     const args = (config.args ?? []).join('\0');
     return `${name}\0stdio\0${config.command}\0${args}`;
+  }
+  if (config.type === 'sse') {
+    return `${name}\0sse\0${config.url}`;
   }
   return `${name}\0http\0${config.url}`;
 }

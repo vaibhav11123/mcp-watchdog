@@ -18,8 +18,18 @@ class ServerTreeItem extends vscode.TreeItem {
     const flapping = status.flapping ? ' (flapping)' : '';
     const disabled = status.disabled ? ' (disabled)' : '';
     const modeSuffix = mode ? ` · ${mode}` : '';
+    const toolsSuffix =
+      status.toolCount === 0
+        ? ' · 0 tools'
+        : status.toolCount !== undefined
+          ? ` · ${status.toolCount} tools`
+          : '';
     this.description =
-      formatTreeDescription(status.state, status.lastPingMs) + modeSuffix + flapping + disabled;
+      formatTreeDescription(status.state, status.lastPingMs) +
+      modeSuffix +
+      toolsSuffix +
+      flapping +
+      disabled;
     this.contextValue = 'mcpWatchdogServer';
 
     const md = new vscode.MarkdownString();
@@ -31,6 +41,9 @@ class ServerTreeItem extends vscode.TreeItem {
     md.appendMarkdown(
       `Latency: ${status.lastPingMs !== undefined ? `${status.lastPingMs} ms` : '—'}\n\n`,
     );
+    if (status.toolCount !== undefined) {
+      md.appendMarkdown(`Tools: **${status.toolCount}**\n\n`);
+    }
     if (status.probeMode) {
       md.appendMarkdown(
         `Mode: **${status.probeMode === 'interval' ? 'interval probe' : 'persistent'}**\n\n`,
@@ -44,6 +57,10 @@ class ServerTreeItem extends vscode.TreeItem {
     }
     if (status.lastError) {
       md.appendMarkdown(`Error: ${status.lastError}\n\n`);
+    }
+    if (status.failureContext) {
+      const snippet = status.failureContext.split('\n').slice(-3).join('\n');
+      md.appendMarkdown('```\n' + snippet + '\n```\n\n');
     }
     const args = encodeURIComponent(JSON.stringify([serverName]));
     md.appendMarkdown(`[Reconnect](command:mcpWatchdog.reconnectOne?${args})`);

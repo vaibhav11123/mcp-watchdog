@@ -48,6 +48,30 @@ describe('parseConfigFile', () => {
     }
   });
 
+  it('normalizes type sse and url+transport sse', () => {
+    const typed = parseConfigFile(
+      JSON.stringify({
+        servers: { a: { type: 'sse', url: 'http://localhost:4000/sse' } },
+      }),
+    );
+    expect(typed.ok).toBe(true);
+    if (typed.ok)
+      expect(typed.servers.a).toMatchObject({ type: 'sse', url: 'http://localhost:4000/sse' });
+
+    const viaTransport = parseConfigFile(
+      JSON.stringify({
+        servers: { b: { url: 'http://localhost:4001/sse', transport: 'sse' } },
+      }),
+    );
+    expect(viaTransport.ok).toBe(true);
+    if (viaTransport.ok) {
+      expect(viaTransport.servers.b).toMatchObject({
+        type: 'sse',
+        url: 'http://localhost:4001/sse',
+      });
+    }
+  });
+
   it('drops entries missing command and url', () => {
     const raw = JSON.stringify({ servers: { bad: { type: 'stdio' }, good: { command: 'node' } } });
     const r = parseConfigFile(raw);
@@ -121,6 +145,55 @@ describe('mergeConfigLayers', () => {
 describe('expandWorkspaceVars', () => {
   it('leaves values unchanged without root', () => {
     expect(expandWorkspaceVars('${workspaceFolder}/x', undefined)).toBe('${workspaceFolder}/x');
+  });
+
+  it('expands ${userHome} and ${env:NAME}', () => {
+    const expanded = expandWorkspaceVars('${userHome}/bin:${env:TEST_WD_VAR}', {
+      userHome: '/Users/me',
+      env: { TEST_WD_VAR: 'hello' },
+    });
+    expect(expanded).toBe('/Users/me/bin:hello');
+  });
+
+  it('leaves missing ${env:NAME} literal', () => {
+    expect(
+      expandWorkspaceVars('${env:THIS_VAR_SHOULD_NOT_EXIST_WD}', {
+        env: {},
+      }),
+    ).toBe('${env:THIS_VAR_SHOULD_NOT_EXIST_WD}');
+  });
+
+  it('does not expand ${input:…}', () => {
+    expect(
+      expandWorkspaceVars('${input:apiKey}', {
+        workspaceRoot: '/p',
+        userHome: '/h',
+        env: {},
+      }),
+    ).toBe('${input:apiKey}');
+  });
+});
+
+describe('parseConfigFile env expansion', () => {
+  it('expands env in args via expandCtx', () => {
+    const raw = JSON.stringify({
+      servers: {
+        fs: {
+          command: 'node',
+          args: ['${env:HOME}/srv.js'],
+          cwd: '${userHome}/work',
+        },
+      },
+    });
+    const r = parseConfigFile(raw, '/proj', {
+      userHome: '/Users/me',
+      env: { HOME: '/Users/me' },
+    });
+    expect(r.ok).toBe(true);
+    if (r.ok) {
+      expect(r.servers.fs.args).toEqual(['/Users/me/srv.js']);
+      expect(r.servers.fs.cwd).toBe('/Users/me/work');
+    }
   });
 });
 

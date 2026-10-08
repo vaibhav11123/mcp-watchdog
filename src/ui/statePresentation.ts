@@ -1,17 +1,9 @@
 import * as vscode from 'vscode';
 import type { ServerState } from '../monitor';
+import { STATE_LABELS } from './stateLabels';
 
 /** Human-readable labels + ThemeIcon (codicons) — no emoji in UI. */
-export const STATE_PRESENTATION: Record<
-  ServerState,
-  { label: string; icon: string; themeColor?: string }
-> = {
-  healthy: { label: 'Healthy', icon: 'check', themeColor: 'testing.iconPassed' },
-  connecting: { label: 'Connecting', icon: 'sync~spin' },
-  degraded: { label: 'Reconnecting', icon: 'warning', themeColor: 'editorWarning.foreground' },
-  failed: { label: 'Failed', icon: 'error', themeColor: 'errorForeground' },
-  disconnected: { label: 'Offline', icon: 'circle-slash', themeColor: 'descriptionForeground' },
-};
+export const STATE_PRESENTATION = STATE_LABELS;
 
 export function stateThemeIcon(state: ServerState): vscode.ThemeIcon {
   const p = STATE_PRESENTATION[state];

@@ -298,4 +298,118 @@ describe('ServerMonitor', () => {
     await runHandler(wake!);
     expect(connect).toHaveBeenCalled();
   });
+
+  it('failed probe attaches failureContext from recent log', async () => {
+    const onStatus = vi.fn();
+    const clock = makeFakeClock();
+    const monitor = makeMonitor(
+      makeFactory(
+        makeMockClient({
+          connect: async () => {
+            throw new Error('boom');
+          },
+        }),
+      ),
+      clock,
+      onStatus,
+      vi.fn(),
+      { ...defaultOptions, maxRetries: 0 },
+    );
+
+    await monitor.start();
+    const failed = onStatus.mock.calls.map((c) => c[0]).find((s) => s.state === 'failed');
+    expect(failed?.failureContext).toBeTruthy();
+    expect(failed?.failureContext).toMatch(/boom|failed|Max retries/i);
+  });
+
+  it('checkEmptyTools: listTools [] stays healthy with toolCount 0', async () => {
+    const onStatus = vi.fn();
+    const clock = makeFakeClock();
+    const client: MonitorClient = {
+      connect: async () => {},
+      ping: async () => {},
+      listTools: async () => ({ tools: [] }),
+      close: async () => {},
+    };
+    const monitor = makeMonitor(makeFactory(client), clock, onStatus, vi.fn(), {
+      ...defaultOptions,
+      probeMode: 'interval',
+      checkEmptyTools: true,
+    });
+
+    await monitor.start();
+    const last = onStatus.mock.calls.at(-1)?.[0];
+    expect(last?.state).toBe('healthy');
+    expect(last?.toolCount).toBe(0);
+  });
+
+  it('detectToolDrift: toolDrift when listTools names change across probes', async () => {
+    const onStatus = vi.fn();
+    const clock = makeFakeClock();
+    let tools: { name: string }[] = [{ name: 'alpha' }, { name: 'beta' }];
+    const client: MonitorClient = {
+      connect: async () => {},
+      ping: async () => {},
+      listTools: async () => ({ tools: [...tools] }),
+      close: async () => {},
+    };
+    const monitor = makeMonitor(makeFactory(client), clock, onStatus, vi.fn(), {
+      ...defaultOptions,
+      probeMode: 'interval',
+      detectToolDrift: true,
+      maxRetries: 0,
+    });
+
+    await monitor.start();
+    const first = onStatus.mock.calls.at(-1)?.[0];
+    expect(first?.state).toBe('healthy');
+    expect(first?.toolCount).toBe(2);
+    expect(first?.toolDrift).toBe(false);
+
+    tools = [{ name: 'alpha' }];
+    const interval = clock.handlers.find((h) => h.ms === 30_000);
+    expect(interval).toBeTruthy();
+    await runHandler(interval!);
+
+    const second = onStatus.mock.calls.at(-1)?.[0];
+    expect(second?.state).toBe('healthy');
+    expect(second?.toolCount).toBe(1);
+    expect(second?.toolDrift).toBe(true);
+    expect(second?.lastError).toBeUndefined();
+    expect(second?.toolDriftNote).toBe('Tools changed (2 → 1)');
+  });
+
+  it('passiveHttpProbe: HEAD ok + MCP fail → degraded with reachable note', async () => {
+    const onStatus = vi.fn();
+    const clock = makeFakeClock();
+    const httpConfig: McpServerConfig = { type: 'http', url: 'http://localhost:9999/mcp' };
+    const factory: MonitorClientFactory = () => ({
+      client: makeMockClient({
+        connect: async () => {
+          throw new Error('session boom');
+        },
+      }),
+      transport: {},
+    });
+    const monitor = new ServerMonitor(
+      'http-svc',
+      httpConfig,
+      {
+        ...defaultOptions,
+        probeMode: 'interval',
+        passiveHttpProbe: true,
+        passiveHttpFetch: async () => ({ status: 200 }),
+        maxRetries: 0,
+      },
+      onStatus,
+      vi.fn(),
+      clock,
+      factory,
+    );
+
+    await monitor.start();
+    const degraded = onStatus.mock.calls.map((c) => c[0]).find((s) => s.state === 'degraded');
+    expect(degraded?.lastError).toMatch(/endpoint reachable/i);
+    expect(degraded?.lastError).toMatch(/session boom|MCP session failed/i);
+  });
 });

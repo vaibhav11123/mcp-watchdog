@@ -9,6 +9,7 @@ mcp-watchdog-test/**
 scripts/**
 test/**
 launch/**
+media/**
 out-test/**
 coverage/**
 esbuild.js

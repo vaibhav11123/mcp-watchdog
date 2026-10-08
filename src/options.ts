@@ -8,6 +8,20 @@ export interface MonitorOptions {
   initialBackoffMs: number;
   backoffMultiplier: number;
   maxBackoffMs: number;
+  /** After a successful ping, call listTools and expose toolCount (advisory only). */
+  checkEmptyTools?: boolean;
+  /**
+   * After listTools, fingerprint tool names and set toolDrift when the set changes.
+   * Also triggers listTools when checkEmptyTools is false.
+   */
+  detectToolDrift?: boolean;
+  /**
+   * Interval + HTTP only: HEAD/GET the URL before a full MCP connect.
+   * If the endpoint is reachable but MCP ping fails → degraded with an advisory lastError.
+   */
+  passiveHttpProbe?: boolean;
+  /** Injected for tests — defaults to global fetch. */
+  passiveHttpFetch?: import('./passiveHttp').FetchLike;
   /** Injected for tests — defaults to Math.random. Use () => 0.5 for no jitter. */
   jitterRand?: () => number;
 }

@@ -129,7 +129,7 @@ These are deliberate constraints, not accidents:
 | **MCP** | Model Context Protocol — standard for AI tools talking to external servers |
 | **stdio transport** | Editor/Watchdog spawns a local process (`command` + `args`) and talks over stdin/stdout |
 | **HTTP / Streamable HTTP** | Remote (or local HTTP) MCP endpoint via URL (+ optional headers) |
-| **SSE** | Older Server-Sent Events transport; Watchdog does **not** use a dedicated SSE client — URL entries normalize to HTTP/streamable |
+| **SSE** | Older Server-Sent Events transport; Watchdog uses SDK `SSEClientTransport` when `type: "sse"` or `transport: "sse"` (deprecated upstream; prefer Streamable HTTP) |
 | **Probe** | One health check cycle (connect + `ping`, possibly close) |
 | **Interval mode** | Connect → ping → close each cycle (default) |
 | **Persistent mode** | Keep one client open; ping on a timer (legacy 0.1.x behavior) |
@@ -226,7 +226,7 @@ Each row is a deliberate choice. “Alternative rejected” captures what we exp
 | D13 | Activity bar UI (not Extensions page) | Extensions detail page is only Marketplace README — users thought the product was “blank” | Rely on Extensions sidebar alone |
 | D14 | Merge three Cursor/VS Code config paths | Meet Cursor users where config actually lives (0.1.3 fix) | Only `.vscode/mcp.json` |
 | D15 | Accept both `servers` and `mcpServers` | VS Code vs Cursor JSON shapes | Force one schema |
-| D16 | Multi-root = **first folder only** | Simple, predictable `${workspaceFolder}` | Half-implemented multi-root |
+| D16 | Multi-root = **merge all folders**; trust key = sorted joined `fsPath`s; globals expand `${workspaceFolder}` via **first** folder | Cover multi-root projects without per-folder trust UI | First-folder-only load (pre-v0.5) |
 | D17 | ±10% **jitter** on timers | Avoid thundering herd when many servers share interval | Exact simultaneous pings |
 | D18 | Window **focus → wakeUp (500ms)** | Faster recovery after sleep / context switch | Wait for next 30s tick only |
 | D19 | Live settings reload (500ms debounce) | No window reload for tuning intervals/modes | Require reload for settings |
@@ -282,11 +282,13 @@ Later layers **override** earlier layers for the same server name:
 
 | Priority | Path | Typical audience |
 |---------:|------|------------------|
-| 1 (lowest) | `~/.cursor/mcp.json` | Cursor global |
-| 2 | `<workspace>/.vscode/mcp.json` | VS Code project |
-| 3 (highest) | `<workspace>/.cursor/mcp.json` | Cursor project |
+| 1 (lowest) | VS Code user `mcp.json` (platform path) | VS Code global |
+| 2 | `~/.codeium/windsurf/mcp_config.json` | Windsurf global |
+| 3 | `~/.claude.json` (`mcpServers`) | Claude Code global |
+| 4 | `~/.cursor/mcp.json` | Cursor global |
+| 5… | Per workspace folder (in order): `<folder>/.vscode/mcp.json` then `<folder>/.cursor/mcp.json` | Multi-root; source labels include folder name |
 
-Workspace root = **first** `workspaceFolders[0]` entry only.
+Global layers expand `${workspaceFolder}` using **`workspaceFolders[0]`** only. Each workspace layer expands using that folder’s path. Same server name across folders: **later folder wins**. Trust `workspacePath` joins all folder `fsPath`s sorted with `\0`.
 
 ### 8.2 Accepted JSON shapes
 
@@ -301,31 +303,37 @@ Each entry normalizes to:
 // stdio
 { type: 'stdio', command: string, args?: string[], env?: Record<string,string>, cwd?: string }
 
-// http
+// http (Streamable HTTP)
 { type: 'http', url: string, headers?: Record<string,string> }
+
+// sse (legacy SSE client transport)
+{ type: 'sse', url: string, headers?: Record<string,string> }
 ```
 
 Normalization rules (`normalizeServerEntry`):
 
-- Treated as HTTP if `type === 'http'` **or** a non-empty `url` is present.
+- Treated as URL transport if `type === 'http'|'sse'` **or** a non-empty `url` is present.
+- **SSE** when `type === 'sse'` **or** `transport === 'sse'`; otherwise HTTP/streamable.
 - Else treated as stdio if a non-empty `command` is present.
 - Entries missing both command and url are **dropped** (not fatal).
-- Explicit `type: "http"` without `url` is dropped.
-
-**SSE note:** even if an editor config used `type: "sse"`, Watchdog normalizes URL-bearing entries to **`http`** and uses `StreamableHTTPClientTransport`. There is no `SSEClientTransport` path.
+- Explicit `type: "http"|"sse"` without `url` is dropped.
 
 ### 8.3 Variable expansion
 
-Only **`${workspaceFolder}`** is expanded (recursively through strings/arrays/objects).
+Expanded recursively through strings/arrays/objects:
 
-Why: VS Code substitutes this for its own MCP loader; Watchdog reads JSON from disk, so it must expand explicitly. **`${env:…}`** and **`${input:…}`** are **not** supported yet (known limitation).
+- **`${workspaceFolder}`** — workspace root (first folder for global layers)
+- **`${userHome}`** — `os.homedir()`
+- **`${env:NAME}`** — `process.env[NAME]`; missing vars left as the literal placeholder
+
+**`${input:…}`** is **not** expanded (needs interactive UI). Never log or render resolved env/header **values**.
 
 ### 8.4 Load statuses (`McpConfigStatus`)
 
 | Kind | Meaning | Empty-view message (summary) |
 |------|---------|------------------------------|
 | `no_workspace` | No folder open | Open a folder… |
-| `no_config` | No readable layer | Add `.vscode` / `.cursor` / `~/.cursor` mcp.json |
+| `no_config` | No readable layer | Add workspace or global MCP config (Cursor / VS Code / Windsurf / Claude Code) |
 | `empty_servers` | Files found, zero valid servers | Need `servers`/`mcpServers` with command or url |
 | `untrusted` | Config OK, approval pending | Run Review Trusted Servers / click status bar |
 | `ok` | Ready to monitor (subject to allowlist) | (empty) |
@@ -334,7 +342,7 @@ Invalid JSON in a layer → error notification naming the file; that layer is sk
 
 ### 8.5 File watching
 
-`watchMcpConfig` registers VS Code `FileSystemWatcher`s for all three paths (change/create/delete). On change: clear trust-prompt latch → `reloadServers()`. Workspace folder changes rebuild `TrustStore` and watchers.
+`watchMcpConfig` registers VS Code `FileSystemWatcher`s for workspace + global layers (change/create/delete). On change: clear trust-prompt latch → `reloadServers()`. Workspace folder changes rebuild `TrustStore` and watchers.
 
 ### 8.6 Open / scaffold config
 
@@ -474,6 +482,7 @@ Client identity: `{ name: 'mcp-watchdog', version: '1.0.0' }`, empty capabilitie
 |--------|-----------|-------|
 | stdio | `StdioClientTransport` | `command`, `args`, `env`, `cwd` |
 | http | `StreamableHTTPClientTransport` | URL + optional headers via `requestInit` |
+| sse | `SSEClientTransport` | URL + optional headers; SDK marks SSE deprecated |
 
 HTTP also receives SDK `reconnectionOptions` mapped from Watchdog backoff settings. README notes possible **double-retry** interaction (SDK + Watchdog).
 
@@ -807,24 +816,24 @@ That sequencing encodes priority: **testability → safety → light probes → 
 
 ### 19.1 Documented limitations (shipped)
 
-- Does not read other VS Code user-global MCP paths beyond the three listed.
+- Multi-editor globals (VS Code user / Windsurf / Claude Code / Cursor) are merged; some editor-specific formats may still be incomplete.
 - Independent of editor MCP UI — states can disagree until next probe / reload.
-- HTTP may combine SDK reconnection with Watchdog retries.
+- HTTP may combine SDK reconnection with Watchdog retries; SSE uses deprecated `SSEClientTransport` (no OAuth UI).
 - Malformed JSON surfaces an error toast; fix and save.
-- Multi-root: first folder only.
-- No `${env:}` / `${input:}` expansion.
-- Missing `images/demo.gif` (README may reference a demo animation that is not in-repo yet).
+- Multi-root: all folders merged; global `${workspaceFolder}` still uses **first** folder; same server name across folders → later wins (no per-folder namespacing).
+- `${input:…}` is not expanded; `${env:}` / `${userHome}` are.
+- Tool-drift fingerprints are **name-only** (no input/output schema hash).
+- Passive HTTP is HEAD/GET reachability only — not an MCP session substitute.
+- `images/demo.gif` ships as a short screenshot loop; prefer a live kill→toast recording for launch marketing.
 
 ### 19.2 Explicitly deferred / out of scope (for now)
 
 From product planning (not shipped):
 
-- VS Code user-profile `mcp.json`, Claude Code / Windsurf config paths
-- Full multi-root per-folder monitoring
-- Dedicated SSE transport + OAuth-aware “auth required” state
-- Latency/uptime history, sparklines, incident timeline export
-- Tool-drift (`listTools` schema diff)
-- Passive-HTTP probe without MCP session
+- Per-folder server namespacing / dedicated multi-root trust UI
+- OAuth UI for HTTP/SSE (HTTP 401 already surfaces via `lastError`)
+- Tool-drift schema hashing (beyond sorted names)
+- Persistent latency/uptime history across reloads (in-memory sparklines + incident export shipped)
 - Acting as MCP gateway/proxy
 - Team SaaS / fleet monitoring
 - Replacing the editor MCP client (impossible without editor APIs)
