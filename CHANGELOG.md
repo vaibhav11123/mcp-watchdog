@@ -6,10 +6,14 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
-### Added (lands in 0.4.0 / 0.5.0 next)
+## [0.4.0] - 2026-10-08
 
-- **0.4:** Incident timeline export; latency sparklines; VS Code user / Windsurf / Claude Code config paths; HTTP 401 → `Auth required`.
-- **0.5:** `detectToolDrift`; `passiveHttpProbe`; SSE transport; multi-root mcp.json merge.
+### Added
+
+- **Incident timeline:** ring buffer of state transitions; command **MCP Watchdog: Export Incident Timeline (Markdown)**.
+- **Latency sparklines:** Overview SVG sparkline from the last ~40 healthy ping samples per server.
+- Extra MCP config layers: VS Code user `mcp.json`, Windsurf `mcp_config.json`, Claude Code `~/.claude.json`.
+- HTTP **401 / Unauthorized** → `lastError: Auth required (HTTP 401)` (still `failed` / `degraded`; no new state).
 
 ## [0.3.0] - 2026-10-08
 
