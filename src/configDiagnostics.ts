@@ -3,6 +3,7 @@ import * as os from 'os';
 import * as path from 'path';
 import * as vscode from 'vscode';
 import { claudeCodeMcpPath, vscodeUserMcpPath, windsurfMcpPath } from './config';
+import { projectMcpJsonPaths } from './config-core';
 import { lintMcpJsonRaw } from './config-lint';
 
 const SOURCE = 'mcpWatchdog';
@@ -67,10 +68,7 @@ function configPaths(): string[] {
     claudeCodeMcpPath(home),
     path.join(home, '.cursor', 'mcp.json'),
   ];
-  const folders = vscode.workspace.workspaceFolders;
-  if (folders?.length) {
-    const root = folders[0].uri.fsPath;
-    paths.push(path.join(root, '.vscode', 'mcp.json'), path.join(root, '.cursor', 'mcp.json'));
-  }
+  const folders = vscode.workspace.workspaceFolders ?? [];
+  paths.push(...projectMcpJsonPaths(folders.map((f) => f.uri.fsPath)));
   return paths;
 }

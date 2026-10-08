@@ -1,3 +1,5 @@
+import * as path from 'path';
+
 export type McpServerConfig =
   | {
       type: 'stdio';
@@ -16,6 +18,15 @@ export type McpServerConfig =
       url: string;
       headers?: Record<string, string>;
     };
+
+/** Project mcp.json paths for every workspace folder root (multi-root safe). */
+export function projectMcpJsonPaths(folderRoots: string[]): string[] {
+  const out: string[] = [];
+  for (const root of folderRoots) {
+    out.push(path.join(root, '.vscode', 'mcp.json'), path.join(root, '.cursor', 'mcp.json'));
+  }
+  return out;
+}
 
 export interface McpConfig {
   servers: Record<string, McpServerConfig>;

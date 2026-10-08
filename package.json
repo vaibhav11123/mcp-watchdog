@@ -2,7 +2,7 @@
   "name": "mcp-watchdog",
   "displayName": "MCP Watchdog",
   "description": "Status bar and toasts when MCP goes Not connected in Cursor/VS Code. Reconnect, Reload, or Quit — parallel health probes with a trust gate.",
-  "version": "0.5.0",
+  "version": "0.5.1",
   "publisher": "mcp-watchdog",
   "license": "MIT",
   "keywords": [

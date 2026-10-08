@@ -820,7 +820,7 @@ That sequencing encodes priority: **testability → safety → light probes → 
 - Independent of editor MCP UI — states can disagree until next probe / reload.
 - HTTP may combine SDK reconnection with Watchdog retries; SSE uses deprecated `SSEClientTransport` (no OAuth UI).
 - Malformed JSON surfaces an error toast; fix and save.
-- Multi-root: all folders merged; global `${workspaceFolder}` still uses **first** folder; same server name across folders → later wins (no per-folder namespacing).
+- Multi-root: all folders merged; global `${workspaceFolder}` still uses **first** folder; same server name across folders → later wins (no per-folder namespacing). Problems lint covers project mcp.json in **all** folders; Open MCP Config prompts for folder when multi-root.
 - `${input:…}` is not expanded; `${env:}` / `${userHome}` are.
 - Tool-drift fingerprints are **name-only** (no input/output schema hash).
 - Passive HTTP is HEAD/GET reachability only — not an MCP session substitute.

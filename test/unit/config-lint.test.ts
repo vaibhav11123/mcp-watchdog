@@ -96,4 +96,23 @@ describe('lintMcpJsonRaw', () => {
       ),
     ).toEqual([]);
   });
+
+  it('accepts type sse with url', () => {
+    expect(
+      lintMcpJsonRaw(
+        JSON.stringify({
+          servers: { remote: { type: 'sse', url: 'http://localhost:4000/sse' } },
+        }),
+      ),
+    ).toEqual([]);
+  });
+
+  it('errors for type sse without url', () => {
+    expect(lintMcpJsonRaw(JSON.stringify({ servers: { remote: { type: 'sse' } } }))).toEqual([
+      expect.objectContaining({
+        severity: 'error',
+        message: 'Server "remote" is missing both "command" and "url"',
+      }),
+    ]);
+  });
 });

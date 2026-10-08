@@ -540,7 +540,21 @@ async function openMcpConfig(): Promise<void> {
     return;
   }
 
-  const root = folders[0].uri;
+  let folder = folders[0];
+  if (folders.length > 1) {
+    const picked = await vscode.window.showQuickPick(
+      folders.map((f) => ({
+        label: f.name,
+        description: f.uri.fsPath,
+        folder: f,
+      })),
+      { placeHolder: 'Select workspace folder for MCP config' },
+    );
+    if (!picked) return;
+    folder = picked.folder;
+  }
+
+  const root = folder.uri;
   const candidates = [
     vscode.Uri.joinPath(root, '.cursor', 'mcp.json'),
     vscode.Uri.joinPath(root, '.vscode', 'mcp.json'),

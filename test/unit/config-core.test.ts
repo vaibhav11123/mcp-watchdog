@@ -1,9 +1,11 @@
+import * as path from 'path';
 import { describe, expect, it } from 'vitest';
 import {
   emptyViewMessage,
   expandWorkspaceVars,
   mergeConfigLayers,
   parseConfigFile,
+  projectMcpJsonPaths,
 } from '../../src/config-core';
 
 describe('parseConfigFile', () => {
@@ -194,6 +196,22 @@ describe('parseConfigFile env expansion', () => {
       expect(r.servers.fs.args).toEqual(['/Users/me/srv.js']);
       expect(r.servers.fs.cwd).toBe('/Users/me/work');
     }
+  });
+});
+
+describe('projectMcpJsonPaths', () => {
+  it('returns vscode and cursor paths for every folder root', () => {
+    const paths = projectMcpJsonPaths([path.join('a'), path.join('b')]);
+    expect(paths).toEqual([
+      path.join('a', '.vscode', 'mcp.json'),
+      path.join('a', '.cursor', 'mcp.json'),
+      path.join('b', '.vscode', 'mcp.json'),
+      path.join('b', '.cursor', 'mcp.json'),
+    ]);
+  });
+
+  it('returns empty for no folders', () => {
+    expect(projectMcpJsonPaths([])).toEqual([]);
   });
 });
 

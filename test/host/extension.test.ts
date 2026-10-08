@@ -22,6 +22,7 @@ suite('MCP Watchdog extension host', () => {
       'mcpWatchdog.showOutput',
       'mcpWatchdog.refresh',
       'mcpWatchdog.reviewTrust',
+      'mcpWatchdog.exportIncidentMarkdown',
     ];
     for (const id of expected) {
       assert.ok(all.includes(id), `missing command ${id}`);

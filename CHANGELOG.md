@@ -6,6 +6,15 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [0.5.1] - 2026-10-08
+
+### Fixed
+
+- **Multi-root Problems lint:** Diagnostics now cover `.vscode`/`.cursor` mcp.json in **all** workspace folders (not only the first).
+- **Open MCP Config:** In multi-root workspaces, pick which folder to open or scaffold.
+- Host tests assert `mcpWatchdog.exportIncidentMarkdown` is registered.
+- Config lint coverage for `type: "sse"` (with/without `url`).
+
 ## [0.5.0] - 2026-10-08
 
 ### Added
