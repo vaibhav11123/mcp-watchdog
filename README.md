@@ -50,7 +50,7 @@ Most Cursor installs pull extensions from **Open VSX**, not the VS Marketplace:
 |--------|-----|-----|
 | **[Open VSX](https://open-vsx.org/extension/mcp-watchdog/mcp-watchdog)** (recommended) | **Cursor, Windsurf, VSCodium, Trae**, most VS Code forks | [Install on Open VSX](https://open-vsx.org/extension/mcp-watchdog/mcp-watchdog) or Extensions search |
 | **[VS Marketplace](https://marketplace.visualstudio.com/items?itemName=mcp-watchdog.mcp-watchdog)** | VS Code (Microsoft build) | Extensions search → `mcp-watchdog.mcp-watchdog` |
-| **[GitHub Releases](https://github.com/vaibhav11123/mcp-watchdog/releases)** | Airgapped / manual | Download `.vsix` → **Install from VSIX…**, or `cursor --install-extension mcp-watchdog-0.2.1.vsix` |
+| **[GitHub Releases](https://github.com/vaibhav11123/mcp-watchdog/releases)** | Airgapped / manual | Download the `.vsix` from the latest Release → **Install from VSIX…**, or `cursor --install-extension path/to/mcp-watchdog-*.vsix` |
 
 After install, **reload** the window. Open the **activity bar** MCP Watchdog icon (not the Extensions detail page).
 
@@ -66,7 +66,7 @@ After install, **reload** the window. Open the **activity bar** MCP Watchdog ico
   - **Windsurf** — `~/.codeium/windsurf/mcp_config.json`
   - **Claude Code** — `~/.claude.json` (`mcpServers` block)
   - Layers merge (workspace project files override globals).
-- In **multi-root** workspaces, only the **first** folder is used when resolving paths and **`${workspaceFolder}`**.
+- In **multi-root** workspaces, workspace **`.vscode/mcp.json`** / **`.cursor/mcp.json`** are merged from **every** folder (later folder wins on the same server name). `${workspaceFolder}` on **global** layers uses the **first** folder only; each workspace layer expands with that folder’s path.
 
 ## Where is the UI?
 
@@ -75,7 +75,7 @@ VS Code has **two different sidebars**:
 | Place | What you see |
 |--------|----------------|
 | **Extensions** (puzzle piece) → click **MCP Watchdog** | Marketplace **README** only—the same for almost every extension. This is **not** the live dashboard. |
-| **Activity bar** → **MCP Watchdog** icon | **Overview** dashboard (metrics + actions) and **Servers** tree (per-server detail). This is the real UI. |
+| **Activity bar** → **MCP Watchdog** icon | **Overview** dashboard (metrics, latency sparklines, failure snippets, actions) and **Servers** tree (per-server detail). This is the real UI. |
 
 Other extensions that “show UI when opened” usually either (1) open their **own activity bar panel** (GitLens, Docker, etc.), (2) add a **Getting Started walkthrough** (first install), or (3) use a **webview** in the sidebar. MCP Watchdog uses (1) + a walkthrough on first install.
 
@@ -117,9 +117,37 @@ After install, run **Help → Welcome → MCP Watchdog: Get started** (walkthrou
 
 **Security:** only configure servers you trust. This extension runs **`command`** (e.g. `npx`, `node`) and opens **HTTP(S)** URLs you specify.
 
+Config strings expand **`${workspaceFolder}`**, **`${userHome}`**, and **`${env:NAME}`** (see below). A third transport is **SSE**: `type: "sse"` (or `url` plus `transport: "sse"`); prefer Streamable HTTP when the server supports it.
+
 ### Trust & consent
 
 By default (**`mcpWatchdog.requireApproval`**: `true`), Watchdog **does not** spawn stdio processes or open HTTP connections until you approve. On first load (or after `mcp.json` changes), you get a notification with **Review & Allow** / **Not now**. **Review & Allow** opens a multi-select list of every server (`name — command args` or `name — url`); only the subset you confirm is monitored. Approval is stored per workspace folder and survives reloads. Changing a command, arg, or URL in config re-prompts. **Not now** leaves the status bar at `$(shield) MCP: untrusted` — click it to review again. Set **`requireApproval`** to `false` on a trusted single-user machine to auto-connect like 0.1.x.
+
+### Config lint
+
+With **`mcpWatchdog.diagnostics.enabled`** (default `true`), Watchdog reports `mcp.json` structure issues in the **Problems** panel: invalid JSON, a missing `servers` / `mcpServers` root, and entries that have neither `command` nor `url`.
+
+### Variable expansion
+
+In config strings (and nested arrays/objects), Watchdog expands:
+
+- **`${workspaceFolder}`** — that layer’s workspace folder (first folder for global layers)
+- **`${userHome}`** — the OS home directory
+- **`${env:NAME}`** — environment variable; if unset, the literal `${env:NAME}` is left in place
+
+**`${input:…}`** is not expanded (needs interactive UI). Env and header **values** are never logged or rendered in the UI.
+
+### Failure context and auth
+
+Failed or degraded servers show a short recent-log snippet on the **Servers** tooltip, **Overview**, and status-bar tooltip. HTTP **401** / Unauthorized surfaces as **`Auth required (HTTP 401)`** and stays in `failed` or `degraded` — Watchdog does not add a separate auth state or complete OAuth for you.
+
+### Overview sparklines
+
+The **Overview** webview draws a small latency sparkline from the last ~40 healthy ping samples per server, next to the server name.
+
+### Incident timeline
+
+Watchdog keeps an in-memory ring of the last ~200 state transitions (not written to disk until you export). Use **MCP Watchdog: Export Incident Timeline (Markdown)** to save that buffer as a Markdown file.
 
 ## Commands
 
@@ -129,7 +157,7 @@ By default (**`mcpWatchdog.requireApproval`**: `true`), Watchdog **does not** sp
 - **MCP Watchdog: Reconnect Server…**
 - **MCP Watchdog: Open Servers View** — Focus the **Servers** tree.
 - **MCP Watchdog: Open MCP Config** — Open or create `.cursor/mcp.json` / `.vscode/mcp.json`.
-- **MCP Watchdog: Export Incident Timeline (Markdown)** — Save recent state transitions as Markdown.
+- **MCP Watchdog: Export Incident Timeline (Markdown)** — Save the in-memory incident ring (~200 transitions) as Markdown.
 
 ## Settings (`mcpWatchdog.*`)
 
@@ -151,6 +179,14 @@ By default (**`mcpWatchdog.requireApproval`**: `true`), Watchdog **does not** sp
 | `detectToolDrift` | `false` | Fingerprint tool names; info toast when the set changes (advisory). |
 | `passiveHttpProbe` | `false` | HTTP interval: HEAD/GET before MCP; reachable-but-MCP-fail → degraded advisory. |
 | `reviewAfterRecoveries` | `3` | After N recoveries, ask once for an Open VSX/Marketplace review (`0` = off). |
+
+### Opt-in advisories
+
+These never force a server into `failed` on their own:
+
+- **`checkEmptyTools`** — after a successful ping, call `tools/list` and show a tool count on Overview / tree.
+- **`detectToolDrift`** — fingerprint sorted tool **names**; when the set changes, show an info toast via `toolDriftNote` (kept out of `lastError` so healthy servers do not look failed).
+- **`passiveHttpProbe`** — for HTTP servers in interval mode, HEAD/GET the URL before a full MCP connect; if the endpoint answers but MCP fails, mark **degraded** with an advisory message.
 
 ### Alerts
 
@@ -188,6 +224,9 @@ Settings changes apply within ~1s without reloading the window; **`mcp.json`** e
 | **No servers** / **0/n** | `servers` key missing or empty; path is wrong root in multi-root. |
 | **Connecting** forever | `npx`/network blocked; stdio command wrong; HTTP URL/firewall. |
 | `Ping failed: Not connected` then retry | Expected after killing a server or network blip; Watchdog should reconnect within your backoff settings. |
+| Problems on `mcp.json` | Confirm `mcpWatchdog.diagnostics.enabled` is on. Fix invalid JSON, a missing `servers`/`mcpServers` root, or an entry with neither `command` nor `url`. |
+| **Auth required (HTTP 401)** | Token or header on that HTTP/SSE server is missing or expired. Watchdog does not complete OAuth. |
+| Status bar **`MCP: untrusted`** | Run **MCP Watchdog: Review Trusted Servers** (or click the status bar) and approve the servers you want monitored. |
 
 See **Screenshots** above for the Marketplace / README visuals.
 
