@@ -6,6 +6,15 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [0.5.0] - 2026-10-08
+
+### Added
+
+- Opt-in **`mcpWatchdog.detectToolDrift`**: fingerprint sorted tool names; info toast on change (never forces `failed`).
+- Opt-in **`mcpWatchdog.passiveHttpProbe`**: HTTP HEAD/GET before MCP; reachable-but-MCP-fail → degraded advisory.
+- **SSE transport:** `type: "sse"` or `url` + `transport: "sse"`.
+- **Multi-root workspaces:** merge mcp.json from all folders; trust key joins sorted paths.
+
 ## [0.4.0] - 2026-10-08
 
 ### Added
