@@ -2,7 +2,7 @@
   "name": "mcp-watchdog",
   "displayName": "MCP Watchdog",
   "description": "Status bar and toasts when MCP goes Not connected in Cursor/VS Code. Reconnect, Reload, or Quit — parallel health probes with a trust gate.",
-  "version": "0.5.1",
+  "version": "0.5.2",
   "publisher": "mcp-watchdog",
   "license": "MIT",
   "keywords": [
@@ -32,6 +32,12 @@
   "homepage": "https://github.com/vaibhav11123/mcp-watchdog#readme",
   "engines": {
     "vscode": "^1.105.0"
+  },
+  "capabilities": {
+    "untrustedWorkspaces": {
+      "supported": false,
+      "description": "MCP Watchdog launches user-configured stdio commands and opens HTTP/SSE endpoints after its own approval gate; it does not run in Restricted Mode."
+    }
   },
   "categories": [
     "AI",

@@ -16,3 +16,5 @@ We aim to acknowledge reports within a few business days. Thank you for helping 
 ## Scope
 
 This extension runs **user-defined** commands and connects to **user-configured** MCP endpoints (`stdio` / HTTP). Review `.vscode/mcp.json` in shared repos before trusting it.
+
+It does **not** support VS Code **Restricted Mode** (`capabilities.untrustedWorkspaces.supported: false`). Trust the workspace in the editor, then use Watchdog’s own server approval gate before monitoring.

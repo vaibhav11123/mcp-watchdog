@@ -115,7 +115,7 @@ After install, run **Help → Welcome → MCP Watchdog: Get started** (walkthrou
 }
 ```
 
-**Security:** only configure servers you trust. This extension runs **`command`** (e.g. `npx`, `node`) and opens **HTTP(S)** URLs you specify.
+**Security:** only configure servers you trust. This extension runs **`command`** (e.g. `npx`, `node`) and opens **HTTP(S)** URLs you specify. It declares **`untrustedWorkspaces.supported: false`**, so it does **not** activate in VS Code **Restricted Mode**; open a trusted folder (and use Watchdog’s own approval gate) before monitoring.
 
 Config strings expand **`${workspaceFolder}`**, **`${userHome}`**, and **`${env:NAME}`** (see below). A third transport is **SSE**: `type: "sse"` (or `url` plus `transport: "sse"`); prefer Streamable HTTP when the server supports it.
 

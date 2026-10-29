@@ -6,6 +6,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [0.5.2] - 2026-10-29
+
+### Changed
+
+- Declare **`capabilities.untrustedWorkspaces.supported: false`**: the extension does not activate in VS Code Restricted Mode (it launches user-configured MCP commands/URLs after its own trust gate).
+
 ## [0.5.1] - 2026-10-08
 
 ### Fixed
