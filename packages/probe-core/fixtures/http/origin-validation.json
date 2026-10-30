@@ -1,0 +1,9 @@
+{
+  "id": "origin-validation",
+  "pack": "conformance",
+  "title": "foreign Origin 403",
+  "expectedStatus": [
+    403
+  ],
+  "cite": "mcp-http-probe / MCP 2025-11-25 (re-derived)"
+}

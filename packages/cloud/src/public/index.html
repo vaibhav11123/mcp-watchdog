@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>Watchdog Cloud</title>
+  <style>
+    :root { --bg: #0f1419; --fg: #e7ecf1; --muted: #8b9aab; --accent: #3d8bfd; --ok: #3dd68c; --bad: #f07178; }
+    * { box-sizing: border-box; }
+    body { margin: 0; font-family: "IBM Plex Sans", "Segoe UI", sans-serif; background: radial-gradient(1200px 600px at 10% -10%, #1a2740, var(--bg)); color: var(--fg); min-height: 100vh; }
+    main { max-width: 920px; margin: 0 auto; padding: 3rem 1.5rem; }
+    h1 { font-size: 2.4rem; letter-spacing: -0.03em; margin: 0 0 0.35rem; }
+    .tag { color: var(--muted); margin-bottom: 2rem; }
+    form { display: flex; gap: 0.5rem; flex-wrap: wrap; margin-bottom: 1.5rem; }
+    input { background: #182230; border: 1px solid #2a3a4d; color: var(--fg); padding: 0.6rem 0.75rem; border-radius: 6px; min-width: 12rem; }
+    button { background: var(--accent); color: #fff; border: 0; padding: 0.6rem 1rem; border-radius: 6px; cursor: pointer; font-weight: 600; }
+    table { width: 100%; border-collapse: collapse; }
+    th, td { text-align: left; padding: 0.55rem 0.4rem; border-bottom: 1px solid #243246; font-size: 0.95rem; }
+    .ok { color: var(--ok); } .bad { color: var(--bad); }
+    h2 { margin-top: 2.5rem; font-size: 1.15rem; color: var(--muted); font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em; }
+  </style>
+</head>
+<body>
+  <main>
+    <h1>Watchdog Cloud</h1>
+    <p class="tag">Author monitor + policy/trust plane — not a proxy gateway.</p>
+    <form id="add">
+      <input name="name" placeholder="Server name" required />
+      <input name="url" placeholder="http://127.0.0.1:3921" required style="flex:1;min-width:18rem" />
+      <button type="submit">Watch</button>
+    </form>
+    <table>
+      <thead><tr><th>Name</th><th>State</th><th>URL</th><th></th></tr></thead>
+      <tbody id="rows"></tbody>
+    </table>
+    <h2>Dual-truth bridge</h2>
+    <pre id="bridge" style="background:#182230;padding:1rem;border-radius:8px;overflow:auto;font-size:0.85rem"></pre>
+    <h2>Policy audit</h2>
+    <pre id="audit" style="background:#182230;padding:1rem;border-radius:8px;overflow:auto;font-size:0.85rem"></pre>
+  </main>
+  <script>
+    async function refresh() {
+      const servers = await fetch('/v1/servers').then(r => r.json());
+      document.getElementById('rows').innerHTML = servers.map(s => `
+        <tr>
+          <td>${s.name}</td>
+          <td class="${s.lastState === 'healthy' ? 'ok' : 'bad'}">${s.lastState || '—'}</td>
+          <td>${s.url}</td>
+          <td><button data-id="${s.id}" class="poll">Poll</button></td>
+        </tr>`).join('');
+      document.querySelectorAll('.poll').forEach(btn => btn.onclick = async () => {
+        await fetch('/v1/servers/' + btn.dataset.id + '/poll-now', { method: 'POST' });
+        refresh();
+      });
+      document.getElementById('bridge').textContent = JSON.stringify(await fetch('/v1/bridge/incidents').then(r => r.json()), null, 2);
+      document.getElementById('audit').textContent = JSON.stringify(await fetch('/v1/policy/audit').then(r => r.json()), null, 2);
+    }
+    document.getElementById('add').onsubmit = async (e) => {
+      e.preventDefault();
+      const fd = new FormData(e.target);
+      await fetch('/v1/servers', { method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name: fd.get('name'), url: fd.get('url') }) });
+      e.target.reset();
+      refresh();
+    };
+    refresh();
+  </script>
+</body>
+</html>

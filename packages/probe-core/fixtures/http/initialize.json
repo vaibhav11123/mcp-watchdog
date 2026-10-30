@@ -1,0 +1,9 @@
+{
+  "id": "initialize",
+  "pack": "liveness",
+  "title": "initialize succeeds",
+  "expectedStatus": [
+    200
+  ],
+  "cite": "mcp-http-probe / MCP 2025-11-25 (re-derived)"
+}

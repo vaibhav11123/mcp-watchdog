@@ -8,6 +8,9 @@
     "exa": {
       "enabled": false
     },
+    "rea": {
+      "enabled": false
+    },
     "echo": {
       "enabled": true,
       "probeMode": "persistent"

@@ -1,0 +1,46 @@
+{
+  "id": "reorder-only",
+  "before": [
+    {
+      "name": "b",
+      "description": "d",
+      "inputSchema": {
+        "type": "object",
+        "properties": {},
+        "required": []
+      }
+    },
+    {
+      "name": "a",
+      "description": "d",
+      "inputSchema": {
+        "type": "object",
+        "properties": {},
+        "required": []
+      }
+    }
+  ],
+  "after": [
+    {
+      "name": "a",
+      "description": "d",
+      "inputSchema": {
+        "type": "object",
+        "properties": {},
+        "required": []
+      }
+    },
+    {
+      "name": "b",
+      "description": "d",
+      "inputSchema": {
+        "type": "object",
+        "properties": {},
+        "required": []
+      }
+    }
+  ],
+  "expectBreaking": [],
+  "expectInfo": [],
+  "expectPatch": []
+}

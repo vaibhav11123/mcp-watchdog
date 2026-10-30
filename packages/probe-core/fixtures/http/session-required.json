@@ -1,0 +1,9 @@
+{
+  "id": "session-required",
+  "pack": "session",
+  "title": "missing session 400",
+  "expectedStatus": [
+    400
+  ],
+  "cite": "mcp-http-probe / MCP 2025-11-25 (re-derived)"
+}

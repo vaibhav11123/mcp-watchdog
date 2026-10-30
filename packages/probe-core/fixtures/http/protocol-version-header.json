@@ -1,0 +1,9 @@
+{
+  "id": "protocol-version-header",
+  "pack": "conformance",
+  "title": "bad protocol version",
+  "expectedStatus": [
+    400
+  ],
+  "cite": "mcp-http-probe / MCP 2025-11-25 (re-derived)"
+}

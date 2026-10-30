@@ -1,0 +1,38 @@
+{
+  "id": "output-schema-added",
+  "before": [
+    {
+      "name": "a",
+      "description": "d",
+      "inputSchema": {
+        "type": "object",
+        "properties": {},
+        "required": []
+      }
+    }
+  ],
+  "after": [
+    {
+      "name": "a",
+      "description": "d",
+      "inputSchema": {
+        "type": "object",
+        "properties": {},
+        "required": []
+      },
+      "outputSchema": {
+        "type": "object",
+        "properties": {
+          "r": {
+            "type": "string"
+          }
+        },
+        "required": []
+      }
+    }
+  ],
+  "expectBreaking": [],
+  "expectInfo": [
+    "tool.output_schema.added"
+  ]
+}

@@ -12,7 +12,7 @@ const healthy = (name = 'echo'): ServerStatus => ({
 describe('buildStatusBarModel', () => {
   it('shows healthy count and reachability disclaimer', () => {
     const m = buildStatusBarModel([healthy()]);
-    expect(m.text).toContain('MCP: 1/1');
+    expect(m.text).toContain('Watchdog: 1/1');
     expect(m.severity).toBe('none');
     expect(m.tooltipLines[0]).toMatch(/Watchdog reachability/i);
   });
@@ -23,7 +23,7 @@ describe('buildStatusBarModel', () => {
       { name: 'bad', state: 'failed', retryCount: 2, lastError: 'down' },
     ]);
     expect(m.severity).toBe('error');
-    expect(m.text).toContain('MCP: 1/2');
+    expect(m.text).toContain('Watchdog: 1/2');
   });
 
   it('untrusted uses warning shield', () => {

@@ -1,0 +1,51 @@
+{
+  "name": "mcp-http-probe",
+  "top_keys": [
+    "evidence_id",
+    "subject",
+    "provider",
+    "analysis_profile",
+    "predicate_type",
+    "operation",
+    "parameters",
+    "raw_result",
+    "normalized_result",
+    "confidence",
+    "authority",
+    "environment",
+    "limitations",
+    "relationship_coverage",
+    "locations",
+    "evidence_links"
+  ],
+  "nr_keys": [
+    "input_path",
+    "format",
+    "root_artifact_sha256",
+    "inventory_manifest_id",
+    "inventory_graph_sha256",
+    "integrity_contradictions",
+    "graph",
+    "summary",
+    "statistics",
+    "limitations",
+    "semantic_graph"
+  ],
+  "module_paths_sample": [
+    "examples/reference-server.ts",
+    "scripts/summary.mjs",
+    "src/cli.ts",
+    "src/index.ts",
+    "test/probe.test.ts"
+  ],
+  "module_path_count": 5,
+  "mentions_Mcp-Session-Id": 0,
+  "mentions_origin-validation": 0,
+  "mentions_diffTools": 0,
+  "mentions_breaking": 0,
+  "mentions_inputSchema": 14,
+  "mentions_BullMQ": 0,
+  "mentions_tools/list": 0,
+  "mentions_initialize": 189,
+  "mentions_severity": 0
+}

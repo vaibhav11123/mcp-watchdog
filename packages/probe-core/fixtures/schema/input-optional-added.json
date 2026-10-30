@@ -1,0 +1,40 @@
+{
+  "id": "input-optional-added",
+  "before": [
+    {
+      "name": "a",
+      "description": "d",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "x": {
+            "type": "string"
+          }
+        },
+        "required": []
+      }
+    }
+  ],
+  "after": [
+    {
+      "name": "a",
+      "description": "d",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "x": {
+            "type": "string"
+          },
+          "y": {
+            "type": "string"
+          }
+        },
+        "required": []
+      }
+    }
+  ],
+  "expectBreaking": [],
+  "expectInfo": [
+    "schema.property.added"
+  ]
+}

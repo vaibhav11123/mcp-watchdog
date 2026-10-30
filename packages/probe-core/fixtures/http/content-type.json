@@ -1,0 +1,7 @@
+{
+  "id": "content-type",
+  "pack": "liveness",
+  "title": "json or event-stream",
+  "expectedStatus": [],
+  "cite": "mcp-http-probe / MCP 2025-11-25 (re-derived)"
+}

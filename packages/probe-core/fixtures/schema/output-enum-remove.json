@@ -1,0 +1,54 @@
+{
+  "id": "output-enum-remove",
+  "before": [
+    {
+      "name": "a",
+      "description": "d",
+      "inputSchema": {
+        "type": "object",
+        "properties": {},
+        "required": []
+      },
+      "outputSchema": {
+        "type": "object",
+        "properties": {
+          "r": {
+            "type": "string",
+            "enum": [
+              "a",
+              "b"
+            ]
+          }
+        },
+        "required": []
+      }
+    }
+  ],
+  "after": [
+    {
+      "name": "a",
+      "description": "d",
+      "inputSchema": {
+        "type": "object",
+        "properties": {},
+        "required": []
+      },
+      "outputSchema": {
+        "type": "object",
+        "properties": {
+          "r": {
+            "type": "string",
+            "enum": [
+              "a"
+            ]
+          }
+        },
+        "required": []
+      }
+    }
+  ],
+  "expectBreaking": [],
+  "expectInfo": [
+    "schema.enum.value.removed"
+  ]
+}

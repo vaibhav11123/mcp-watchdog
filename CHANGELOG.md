@@ -6,6 +6,29 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [0.5.3] - 2026-10-30
+
+### Fixed
+
+- Overview no longer shows **Open a folder** when trust is pending: cache last webview HTML and re-apply on resolve/visibility; untrusted always shows **Review & allow**.
+- Overview summary no longer claims “All N servers healthy” when some rows are Offline/disabled.
+- Extension Host F5: `--disable-extensions` + `--profile-temp` to avoid duplicate view-id registration with marketplace/local copies.
+- Host tests on macOS: bump `@vscode/test-electron` so the launcher resolves `Code` (not missing `Electron`).
+
+### Changed
+
+- Status bar chip prefix **`Watchdog:`** (was `MCP:`) so it does not collide with the editor’s MCP chip.
+- Demo GIF: live EH still of Watchdog sidebar + illustrated kill→toast→Reconnect story; host suite covers real echo kill→alert.
+
+### Added
+
+- Docs: [docs/EXECUTION.md](docs/EXECUTION.md), [docs/GTM-PUBLISH.md](docs/GTM-PUBLISH.md), [docs/PAID-BOUNDARY.md](docs/PAID-BOUNDARY.md).
+- `packages/probe-core` — HTTP pack fixtures, covenant-accurate `diffTools`, bridge scrub (names-only).
+- `packages/cloud` — Watchdog Cloud MVP (monitor, bridge ingest, policy/trust plane, dashboard).
+- Opt-in settings `mcpWatchdog.cloudBridge.enabled` / `.url` (default off).
+- Direction scripts: `npm run t0`, `npm run t2`; fixture MCP server.
+- CLA draft + CONTRIBUTING.
+
 ## [0.5.2] - 2026-10-29
 
 ### Changed

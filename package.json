@@ -1,8 +1,8 @@
 {
   "name": "mcp-watchdog",
   "displayName": "MCP Watchdog",
-  "description": "Status bar and toasts when MCP goes Not connected in Cursor/VS Code. Reconnect, Reload, or Quit — parallel health probes with a trust gate.",
-  "version": "0.5.2",
+  "description": "Status bar (Watchdog: n/m) and toasts when MCP goes Not connected in Cursor/VS Code. Reconnect, Reload, or Quit — parallel health probes with a trust gate.",
+  "version": "0.5.3",
   "publisher": "mcp-watchdog",
   "license": "MIT",
   "keywords": [
@@ -307,17 +307,34 @@
           "default": 3,
           "minimum": 0,
           "description": "After this many recoveries from failed/degraded to healthy, ask once for an Open VSX/Marketplace review. Set 0 to disable."
+        },
+        "mcpWatchdog.cloudBridge.enabled": {
+          "type": "boolean",
+          "default": false,
+          "tags": [
+            "usesOnlineServices"
+          ],
+          "description": "Opt-in: post names-only incident summaries to Watchdog Cloud (never env/header values). Off by default."
+        },
+        "mcpWatchdog.cloudBridge.url": {
+          "type": "string",
+          "default": "",
+          "description": "Watchdog Cloud base URL (e.g. http://127.0.0.1:8787). Used only when cloudBridge.enabled is true."
         }
       }
     }
   },
   "scripts": {
     "vscode:prepublish": "npm run build",
-    "build": "esbuild src/extension.ts --bundle --outfile=dist/extension.js --external:vscode --format=cjs --platform=node",
+    "build": "esbuild src/extension.ts --bundle --outfile=dist/extension.js --external:vscode --format=cjs --platform=node --alias:@mcp-watchdog/probe-core=./packages/probe-core/src/index.ts",
     "watch": "npm run build -- --watch",
     "compile": "tsc --noEmit",
     "smoke": "node scripts/smoke-connect.mjs",
     "test:unit": "vitest run",
+    "t0": "tsx scripts/t0-probe-live.ts",
+    "t2": "tsx scripts/t2-bridge-dry-run.ts",
+    "fixture-mcp": "tsx scripts/fixture-mcp-server.ts",
+    "policy-demo": "tsx scripts/policy-audit-demo.ts",
     "test:host": "tsc -p tsconfig.test.json && vscode-test",
     "lint": "eslint src test",
     "format:check": "prettier --check \"src/**/*.ts\" \"test/**/*.ts\"",
@@ -330,11 +347,12 @@
     "@types/vscode": "^1.105.0",
     "@vitest/coverage-v8": "^3.2.4",
     "@vscode/test-cli": "^0.0.10",
-    "@vscode/test-electron": "^2.4.1",
+    "@vscode/test-electron": "^3.1.0",
     "esbuild": "^0.20.2",
     "eslint": "^9.28.0",
     "mocha": "^11.2.2",
     "prettier": "^3.5.3",
+    "tsx": "^4.23.15",
     "typescript": "^5.6.3",
     "typescript-eslint": "^8.33.0",
     "vitest": "^3.2.4"

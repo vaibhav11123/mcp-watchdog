@@ -1,0 +1,12 @@
+
+> mcp-watchdog@0.5.2 test:host
+> tsc -p tsconfig.test.json && vscode-test
+
+- Resolving version...
+✔ Validated version: 1.144.0
+- Found at https://update.code.visualstudio.com/1.144.0/darwin-arm64/stable?released=true
+✔ Found at https://update.code.visualstudio.com/1.144.0/darwin-arm64/stable?released=true
+- Downloading (334.30 MB)
+✔ Downloaded VS Code into /Users/vaibhavsingh/Desktop/mcp-watchdog/.vscode-test/vscode-darwin-arm64-1.144.0
+Test error: Error: spawn /Users/vaibhavsingh/Desktop/mcp-watchdog/.vscode-test/vscode-darwin-arm64-1.144.0/Visual Studio Code.app/Contents/MacOS/Electron ENOENT
+Exit code:   -2

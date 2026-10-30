@@ -1,0 +1,43 @@
+{
+  "id": "output-prop-removed",
+  "before": [
+    {
+      "name": "a",
+      "description": "d",
+      "inputSchema": {
+        "type": "object",
+        "properties": {},
+        "required": []
+      },
+      "outputSchema": {
+        "type": "object",
+        "properties": {
+          "r": {
+            "type": "string"
+          }
+        },
+        "required": []
+      }
+    }
+  ],
+  "after": [
+    {
+      "name": "a",
+      "description": "d",
+      "inputSchema": {
+        "type": "object",
+        "properties": {},
+        "required": []
+      },
+      "outputSchema": {
+        "type": "object",
+        "properties": {},
+        "required": []
+      }
+    }
+  ],
+  "expectBreaking": [
+    "schema.property.removed"
+  ],
+  "expectInfo": []
+}

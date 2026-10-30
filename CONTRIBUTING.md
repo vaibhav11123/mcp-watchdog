@@ -1,43 +1,31 @@
 # Contributing
 
+## License
+
+Outbound license is **MIT** ([LICENSE](./LICENSE)). Contributions are accepted under the same terms and the project **CLA** ([docs/CLA.md](./docs/CLA.md)).
+
 ## Development
 
 ```bash
-npm ci
-npm run compile && npm run build
+npm install
+npm run compile
 npm run test:unit
-npm run smoke
+npm run build
 ```
 
-Full suite: `npm test` (compile, build, unit, smoke, integration).
+- `packages/probe-core` — vscode-free probe/diff/bridge scrub
+- `packages/cloud` — Watchdog Cloud (monitor + policy/trust plane)
+- Unit tests must pass with **no network**
+- Never log or commit env/header **values**
 
-Host tests (needs display / xvfb on Linux): `npm run test:host`
+## Extension Host / F5
 
-## Release secrets
+Marketplace, a local install, and Extension Development Host can all register the same view IDs (`mcpWatchdog.overview` / `mcpWatchdog.servers`). That causes **Cannot register multiple views** / activation failure.
 
-The `release.yml` workflow expects GitHub repo secrets:
+Use the launch configs in [`.vscode/launch.json`](./.vscode/launch.json), which pass `--disable-extensions` and `--profile-temp`. Prefer **Run Extension (mcp-watchdog-test workspace)**.
 
-| Secret | How to get it |
-|--------|----------------|
-| `VSCE_PAT` | [Marketplace publisher](https://marketplace.visualstudio.com/manage) → Personal Access Token with **Marketplace (Publish)** scope |
-| `OVSX_PAT` | [open-vsx.org](https://open-vsx.org) → log in → Profile → **Access Tokens** → generate |
+Before F5, uninstall or disable other copies of **MCP Watchdog** (publisher `mcp-watchdog`) from Extensions. Host tests also pass `--disable-extensions` via [`.vscode-test.mjs`](./.vscode-test.mjs).
 
-Add both under **GitHub → repo → Settings → Secrets and variables → Actions**, or run:
+## CLA
 
-```bash
-chmod +x scripts/setup-github-secrets.sh
-./scripts/setup-github-secrets.sh
-```
-
-(`VSCE_PAT` must be a **new** Azure DevOps PAT with **Marketplace (Publish)** — `vsce login` stores a token locally but does not expose it for GitHub.)
-
-Then ship:
-
-```bash
-export VSCE_PAT=... OVSX_PAT=...
-./scripts/ship-release.sh
-```
-
-Or push tag `v0.2.0` to trigger `release.yml`.
-
-Launch copy drafts (forum replies, HN, blog) live in `launch/` locally (gitignored). Post discovery only after Open VSX is live and `images/demo.gif` is recorded — see `launch/GIF-RECORDING.md`.
+Sign [docs/CLA.md](./docs/CLA.md) before large external PRs (individual or entity). Maintainer may require CLA assistant on GitHub.

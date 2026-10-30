@@ -1,0 +1,49 @@
+{
+  "id": "output-required-relaxed",
+  "before": [
+    {
+      "name": "a",
+      "description": "d",
+      "inputSchema": {
+        "type": "object",
+        "properties": {},
+        "required": []
+      },
+      "outputSchema": {
+        "type": "object",
+        "properties": {
+          "r": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "r"
+        ]
+      }
+    }
+  ],
+  "after": [
+    {
+      "name": "a",
+      "description": "d",
+      "inputSchema": {
+        "type": "object",
+        "properties": {},
+        "required": []
+      },
+      "outputSchema": {
+        "type": "object",
+        "properties": {
+          "r": {
+            "type": "string"
+          }
+        },
+        "required": []
+      }
+    }
+  ],
+  "expectBreaking": [
+    "schema.property.required.relaxed"
+  ],
+  "expectInfo": []
+}

@@ -45,7 +45,7 @@ Sometimes those helpers **die quietly**. The laptop sleeps. An `npx` process cra
 
 **MCP Watchdog** is a **smoke detector for those helpers**. It sits next to your editor’s own MCP client and periodically asks: “Can *I* still reach this server?” If not, it:
 
-- updates a status-bar count (`MCP: healthy/total`),
+- updates a status-bar count (`Watchdog: healthy/total`),
 - shows per-server detail in an activity-bar panel,
 - toasts with **Reconnect**, **Show Log**, **Reload Window**, or **Mute 1h**.
 
@@ -362,7 +362,7 @@ Before 0.2.0, activation could **immediately spawn every stdio command** and ope
 2. Compute fingerprint of the server set.
 3. If stored approval fingerprint does not match:
    - Do **not** start monitors.
-   - Show untrusted UI (`$(shield) MCP: untrusted`).
+   - Show untrusted UI (`$(shield) Watchdog: untrusted`).
    - Toast once: **Review & Allow** / **Not now**.
 4. **Review & Allow** → multi-select QuickPick (`name — command args` or `name — url`).
 5. Persist `{ fingerprint, allowedServers }` in `globalState` under  
@@ -575,8 +575,8 @@ First install: globalState key `mcpWatchdog.didRevealServersView` → focus Over
 
 ### 12.2 Status bar (`McpStatusBar`)
 
-- Aggregate `MCP: healthy/total` with severity backgrounds.
-- Untrusted: `$(shield) MCP: untrusted`.
+- Aggregate `Watchdog: healthy/total` with severity backgrounds.
+- Untrusted: `$(shield) Watchdog: untrusted`.
 - Empty: `$(circle-slash) MCP`.
 - Click → `mcpWatchdog.showStatus` (or re-offer trust).
 
@@ -824,7 +824,7 @@ That sequencing encodes priority: **testability → safety → light probes → 
 - `${input:…}` is not expanded; `${env:}` / `${userHome}` are.
 - Tool-drift fingerprints are **name-only** (no input/output schema hash).
 - Passive HTTP is HEAD/GET reachability only — not an MCP session substitute.
-- `images/demo.gif` ships as a short screenshot loop; prefer a live kill→toast recording for launch marketing.
+- `images/demo.gif` ships a live EH Watchdog UI + kill→toast story (see `docs/media/GIF-RECORDING.md`).
 
 ### 19.2 Explicitly deferred / out of scope (for now)
 

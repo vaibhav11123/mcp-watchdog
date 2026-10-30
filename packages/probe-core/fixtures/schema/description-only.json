@@ -1,0 +1,30 @@
+{
+  "id": "description-only",
+  "before": [
+    {
+      "name": "a",
+      "description": "old",
+      "inputSchema": {
+        "type": "object",
+        "properties": {},
+        "required": []
+      }
+    }
+  ],
+  "after": [
+    {
+      "name": "a",
+      "description": "new",
+      "inputSchema": {
+        "type": "object",
+        "properties": {},
+        "required": []
+      }
+    }
+  ],
+  "expectBreaking": [],
+  "expectInfo": [],
+  "expectPatch": [
+    "tool.description.changed"
+  ]
+}

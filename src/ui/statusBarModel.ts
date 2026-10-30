@@ -20,7 +20,7 @@ export function buildStatusBarModel(
 ): StatusBarModel {
   if (configStatus?.kind === 'untrusted') {
     return {
-      text: '$(shield) MCP: untrusted',
+      text: '$(shield) Watchdog: untrusted',
       tooltipLines: [
         `${configStatus.serverCount} server(s) awaiting approval — click to review`,
         REACHABILITY,
@@ -32,7 +32,7 @@ export function buildStatusBarModel(
   const total = statuses.length;
   if (total === 0) {
     return {
-      text: '$(circle-slash) MCP',
+      text: '$(circle-slash) Watchdog',
       tooltipLines: ['No MCP servers monitored — open MCP Watchdog sidebar', REACHABILITY],
       severity: 'none',
     };
@@ -46,16 +46,16 @@ export function buildStatusBarModel(
   let text: string;
   let severity: StatusBarSeverity;
   if (healthy === total) {
-    text = `$(check) MCP: ${healthy}/${total}`;
+    text = `$(check) Watchdog: ${healthy}/${total}`;
     severity = 'none';
   } else if (failed > 0) {
-    text = `$(error) MCP: ${healthy}/${total}`;
+    text = `$(error) Watchdog: ${healthy}/${total}`;
     severity = 'error';
   } else if (connecting > 0 || degraded) {
-    text = `$(sync~spin) MCP: ${healthy}/${total}`;
+    text = `$(sync~spin) Watchdog: ${healthy}/${total}`;
     severity = 'warning';
   } else {
-    text = `$(circle-slash) MCP: ${healthy}/${total}`;
+    text = `$(circle-slash) Watchdog: ${healthy}/${total}`;
     severity = 'none';
   }
 

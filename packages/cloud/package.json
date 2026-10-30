@@ -1,0 +1,11 @@
+{
+  "name": "@mcp-watchdog/cloud",
+  "version": "0.1.0",
+  "private": true,
+  "license": "MIT",
+  "description": "Watchdog Cloud — author monitor + policy/trust plane (OSS)",
+  "scripts": {
+    "start": "npx --yes tsx src/server.ts",
+    "migrate": "npx --yes tsx src/db/migrate.ts"
+  }
+}

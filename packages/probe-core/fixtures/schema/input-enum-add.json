@@ -1,0 +1,44 @@
+{
+  "id": "input-enum-add",
+  "before": [
+    {
+      "name": "a",
+      "description": "d",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "x": {
+            "type": "string",
+            "enum": [
+              "a"
+            ]
+          }
+        },
+        "required": []
+      }
+    }
+  ],
+  "after": [
+    {
+      "name": "a",
+      "description": "d",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "x": {
+            "type": "string",
+            "enum": [
+              "a",
+              "b"
+            ]
+          }
+        },
+        "required": []
+      }
+    }
+  ],
+  "expectBreaking": [],
+  "expectInfo": [
+    "schema.enum.value.added"
+  ]
+}

@@ -1,0 +1,10 @@
+{
+  "id": "accept-header",
+  "pack": "conformance",
+  "title": "Accept miss",
+  "expectedStatus": [
+    406,
+    400
+  ],
+  "cite": "mcp-http-probe / MCP 2025-11-25 (re-derived)"
+}

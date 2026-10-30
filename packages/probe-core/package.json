@@ -1,0 +1,11 @@
+{
+  "name": "@mcp-watchdog/probe-core",
+  "version": "0.1.0",
+  "private": true,
+  "license": "MIT",
+  "type": "commonjs",
+  "main": "./src/index.ts",
+  "exports": {
+    ".": "./src/index.ts"
+  }
+}

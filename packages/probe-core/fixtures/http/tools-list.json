@@ -1,0 +1,9 @@
+{
+  "id": "tools-list",
+  "pack": "liveness",
+  "title": "tools array",
+  "expectedStatus": [
+    200
+  ],
+  "cite": "mcp-http-probe / MCP 2025-11-25 (re-derived)"
+}

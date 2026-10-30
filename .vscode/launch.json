@@ -5,7 +5,11 @@
       "name": "Run Extension",
       "type": "extensionHost",
       "request": "launch",
-      "args": ["--extensionDevelopmentPath=${workspaceFolder}"],
+      "args": [
+        "--extensionDevelopmentPath=${workspaceFolder}",
+        "--disable-extensions",
+        "--profile-temp"
+      ],
       "outFiles": ["${workspaceFolder}/dist/**/*.js"],
       "preLaunchTask": "${defaultBuildTask}"
     },
@@ -15,6 +19,8 @@
       "request": "launch",
       "args": [
         "--extensionDevelopmentPath=${workspaceFolder}",
+        "--disable-extensions",
+        "--profile-temp",
         "${workspaceFolder}/mcp-watchdog-test"
       ],
       "outFiles": ["${workspaceFolder}/dist/**/*.js"],

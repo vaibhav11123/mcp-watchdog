@@ -1,0 +1,7 @@
+{
+  "id": "tool-input-schema",
+  "pack": "liveness",
+  "title": "inputSchema object",
+  "expectedStatus": [],
+  "cite": "mcp-http-probe / MCP 2025-11-25 (re-derived)"
+}

@@ -15,7 +15,7 @@
 
 **Your editor drops MCP servers silently.** After sleep, a flaky `npx` child, or a network blip, Cursor and VS Code often keep showing tools as available while the underlying MCP connection is dead. You only notice when a tool call fails mid-task.
 
-**MCP Watchdog** is a parallel health layer: it probes your configured servers on a schedule, shows **`MCP: healthy/total`** in the status bar, **notifies you when something fails**, and offers **one-click Reconnect** (or **Reload Window** when the editor’s own MCP client is stuck).
+**MCP Watchdog** is a parallel health layer: it probes your configured servers on a schedule, shows **`Watchdog: healthy/total`** in the status bar, **notifies you when something fails**, and offers **one-click Reconnect** (or **Reload Window** when the editor’s own MCP client is stuck).
 
 **Honest scope:** this does **not** replace the editor’s built-in MCP integration. Watchdog opens its **own** read-only health connections to measure reachability and latency — it cannot fix editor-internal MCP state without you reloading.
 
@@ -23,16 +23,9 @@ Works in **Cursor**, **Windsurf**, **VS Code**, **VSCodium**, and other forks th
 
 ## Demo
 
-![MCP Watchdog demo — status bar and Servers view](https://raw.githubusercontent.com/vaibhav11123/mcp-watchdog/main/images/demo.gif)
+![MCP Watchdog demo — status bar kill→toast→Reconnect](https://raw.githubusercontent.com/vaibhav11123/mcp-watchdog/main/images/demo.gif)
 
-*Placeholder loop from existing screenshots (status bar → Servers). Re-record a live kill→toast→Reconnect clip per `launch/GIF-RECORDING.md` before major launch posts for best conversion.*
-
-<!-- Live GIF shot list (re-record → overwrite images/demo.gif, 12–18s):
-  1. Activity bar → MCP Watchdog → Overview, status bar MCP: 1/1 healthy
-  2. Terminal: kill -9 $(pgrep -f echo-server.js)
-  3. Toast with Reconnect / Show Log / Reload Window / Quit Cursor / Mute
-  4. Click Reconnect → healthy again
--->
+Live kill→toast→Reconnect on the local echo fixture (status chip **`Watchdog: n/m`**). Shot list: [docs/media/GIF-RECORDING.md](./docs/media/GIF-RECORDING.md).
 
 ## Install
 
@@ -84,12 +77,12 @@ After install, run **Help → Welcome → MCP Watchdog: Get started** (walkthrou
 ## Quick start
 
 1. Add MCP config (see examples below). Command: **MCP Watchdog: Open MCP Config**.
-2. Open that folder. Click the **MCP Watchdog** icon in the **activity bar** → **Servers** (not the Extensions panel). The **status bar** shows **`MCP: n/n`** when servers are monitored.
+2. Open that folder. Click the **MCP Watchdog** icon in the **activity bar** → **Servers** (not the Extensions panel). The **status bar** shows **`Watchdog: n/n`** when servers are monitored.
 3. Optional: **View → Output → MCP Watchdog** for detailed logs.
 
 ## Screenshots
 
-**Status bar** — aggregate health (`MCP: healthy / total`) on the bottom right:
+**Status bar** — aggregate health (`Watchdog: healthy / total`) on the bottom right (distinct from the editor’s own MCP chip):
 
 ![MCP Watchdog status bar showing MCP healthy count](./images/screenshot-status-bar.png)
 
@@ -121,7 +114,7 @@ Config strings expand **`${workspaceFolder}`**, **`${userHome}`**, and **`${env:
 
 ### Trust & consent
 
-By default (**`mcpWatchdog.requireApproval`**: `true`), Watchdog **does not** spawn stdio processes or open HTTP connections until you approve. On first load (or after `mcp.json` changes), you get a notification with **Review & Allow** / **Not now**. **Review & Allow** opens a multi-select list of every server (`name — command args` or `name — url`); only the subset you confirm is monitored. Approval is stored per workspace folder and survives reloads. Changing a command, arg, or URL in config re-prompts. **Not now** leaves the status bar at `$(shield) MCP: untrusted` — click it to review again. Set **`requireApproval`** to `false` on a trusted single-user machine to auto-connect like 0.1.x.
+By default (**`mcpWatchdog.requireApproval`**: `true`), Watchdog **does not** spawn stdio processes or open HTTP connections until you approve. On first load (or after `mcp.json` changes), you get a notification with **Review & Allow** / **Not now**. **Review & Allow** opens a multi-select list of every server (`name — command args` or `name — url`); only the subset you confirm is monitored. Approval is stored per workspace folder and survives reloads. Changing a command, arg, or URL in config re-prompts. **Not now** leaves the status bar at `$(shield) Watchdog: untrusted` — click it to review again. Set **`requireApproval`** to `false` on a trusted single-user machine to auto-connect like 0.1.x.
 
 ### Config lint
 
@@ -226,7 +219,7 @@ Settings changes apply within ~1s without reloading the window; **`mcp.json`** e
 | `Ping failed: Not connected` then retry | Expected after killing a server or network blip; Watchdog should reconnect within your backoff settings. |
 | Problems on `mcp.json` | Confirm `mcpWatchdog.diagnostics.enabled` is on. Fix invalid JSON, a missing `servers`/`mcpServers` root, or an entry with neither `command` nor `url`. |
 | **Auth required (HTTP 401)** | Token or header on that HTTP/SSE server is missing or expired. Watchdog does not complete OAuth. |
-| Status bar **`MCP: untrusted`** | Run **MCP Watchdog: Review Trusted Servers** (or click the status bar) and approve the servers you want monitored. |
+| Status bar **`Watchdog: untrusted`** | Run **MCP Watchdog: Review Trusted Servers** (or click the status bar) and approve the servers you want monitored. |
 
 See **Screenshots** above for the Marketplace / README visuals.
 
@@ -242,12 +235,16 @@ npm run build
 - Fixture: `mcp-watchdog-test/` (optional; not shipped in VSIX).
 - Headless smoke: `npm run smoke`.
 - Deep dive: [docs/TECHNICAL.md](./docs/TECHNICAL.md) — architecture, design decisions, state machine, trust model, and testing.
+- Execution bible: [docs/EXECUTION.md](./docs/EXECUTION.md) · GTM/publish: [docs/GTM-PUBLISH.md](./docs/GTM-PUBLISH.md).
+- Product lock: [docs/PRODUCT-DECISION.md](./docs/PRODUCT-DECISION.md) — IDE wedge + Watchdog Cloud (monitor + **policy/trust plane**); MIT OSS, hosted later.
+- Cloud self-host: [packages/cloud/README.md](./packages/cloud/README.md).
+- Validation notes: [docs/CUSTOMER-VALIDATION.md](./docs/CUSTOMER-VALIDATION.md).
 
 See [CHANGELOG.md](./CHANGELOG.md).
 
 ## Ship checklist (maintainers)
 
-1. Prefer a live **`images/demo.gif`** (kill→toast→Reconnect); placeholder GIF is already in-repo.
+1. Live **`images/demo.gif`** ships (EH Watchdog UI + kill→toast story per [docs/media/GIF-RECORDING.md](./docs/media/GIF-RECORDING.md)); re-record before major announce if UI changes.
 2. Bump `package.json` version (maintainer only) + move CHANGELOG Unreleased → versioned section.
 3. `npm test` && `npx vsce package` — confirm `vsce ls` has no `test/`, `*.local.md`, `launch/`.
 4. Set GitHub secrets: **`VSCE_PAT`**, **`OVSX_PAT`** (see [CONTRIBUTING.md](./CONTRIBUTING.md)).

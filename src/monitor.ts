@@ -2,6 +2,12 @@ import { Client } from '@modelcontextprotocol/sdk/client/index.js';
 import { StdioClientTransport } from '@modelcontextprotocol/sdk/client/stdio.js';
 import { StreamableHTTPClientTransport } from '@modelcontextprotocol/sdk/client/streamableHttp.js';
 import { SSEClientTransport } from '@modelcontextprotocol/sdk/client/sse.js';
+import {
+  computeToolsFingerprint,
+  diffTools,
+  toolsSnapshotHash,
+  type ToolDefinition,
+} from '../packages/probe-core/src/index';
 import { classifyProbeError } from './authError';
 import type { McpServerConfig } from './config-core';
 import { jittered, type MonitorOptions } from './options';
@@ -22,6 +28,10 @@ export interface ServerStatus {
   toolDrift?: boolean;
   /** Human note for tool drift toast (not an error — keep out of lastError). */
   toolDriftNote?: string;
+  /** True when schema hash changed; severity from diffTools (breaking vs info). */
+  schemaDrift?: boolean;
+  /** Highest schema change severity when schemaDrift is set. */
+  schemaDriftSeverity?: 'breaking' | 'info' | 'patch';
   retryCount: number;
   lastConnectedAt?: Date;
   lastFailedAt?: Date;
@@ -54,22 +64,7 @@ const defaultClock: MonitorClock = {
   now: () => Date.now(),
 };
 
-/** Name-only tool fingerprint (sorted names joined). Schema hashing deferred. */
-export function computeToolsFingerprint(tools: unknown[]): {
-  fingerprint: string;
-  count: number;
-  names: string[];
-} {
-  const names: string[] = [];
-  for (const t of tools) {
-    if (t && typeof t === 'object' && 'name' in t) {
-      const n = (t as { name: unknown }).name;
-      if (typeof n === 'string' && n.length > 0) names.push(n);
-    }
-  }
-  names.sort();
-  return { fingerprint: names.join('\0'), count: names.length, names };
-}
+export { computeToolsFingerprint };
 
 function defaultClientFactory(
   config: McpServerConfig,
@@ -120,6 +115,8 @@ export class ServerMonitor {
   private readonly recentLog: string[] = [];
   private lastToolFingerprint: string | undefined;
   private lastToolCount: number | undefined;
+  private lastSchemaHash: string | undefined;
+  private lastToolsSnapshot: ToolDefinition[] | undefined;
 
   constructor(
     private readonly name: string,
@@ -215,6 +212,8 @@ export class ServerMonitor {
     toolCount?: number;
     toolDrift?: boolean;
     driftNote?: string;
+    schemaDrift?: boolean;
+    schemaDriftSeverity?: 'breaking' | 'info' | 'patch';
   }> {
     if (!this.wantsListTools() || !client.listTools) return {};
     try {
@@ -233,7 +232,23 @@ export class ServerMonitor {
       }
       this.lastToolFingerprint = fingerprint;
       this.lastToolCount = count;
-      return { toolCount: count, toolDrift, driftNote };
+
+      const asDefs = tools as ToolDefinition[];
+      const hash = toolsSnapshotHash(asDefs);
+      let schemaDrift = false;
+      let schemaDriftSeverity: 'breaking' | 'info' | 'patch' | undefined;
+      if (this.lastSchemaHash !== undefined && this.lastSchemaHash !== hash) {
+        schemaDrift = true;
+        const diff = diffTools(this.lastToolsSnapshot ?? [], asDefs);
+        if (diff.breaking.length) schemaDriftSeverity = 'breaking';
+        else if (diff.info.length) schemaDriftSeverity = 'info';
+        else schemaDriftSeverity = 'patch';
+        this.recordLog(`[${this.name}] schema drift (${schemaDriftSeverity})`);
+      }
+      this.lastSchemaHash = hash;
+      this.lastToolsSnapshot = asDefs;
+
+      return { toolCount: count, toolDrift, driftNote, schemaDrift, schemaDriftSeverity };
     } catch (err) {
       const msg = err instanceof Error ? err.message : String(err);
       this.recordLog(`[${this.name}] tools/list failed: ${msg}`);
@@ -290,6 +305,8 @@ export class ServerMonitor {
         toolCount: listed.toolCount,
         toolDrift: listed.toolDrift === true,
         toolDriftNote: listed.driftNote,
+        schemaDrift: listed.schemaDrift === true,
+        schemaDriftSeverity: listed.schemaDriftSeverity,
       });
       this.scheduleIntervalProbe();
     } catch (err) {
@@ -373,6 +390,8 @@ export class ServerMonitor {
         toolCount: listed.toolCount,
         toolDrift: listed.toolDrift === true,
         toolDriftNote: listed.driftNote,
+        schemaDrift: listed.schemaDrift === true,
+        schemaDriftSeverity: listed.schemaDriftSeverity,
       });
       this.schedulePing();
     } catch (err) {

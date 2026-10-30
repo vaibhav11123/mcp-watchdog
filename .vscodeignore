@@ -2,6 +2,8 @@
 .github/**
 .cursor/**
 src/**
+packages/**
+docs/**
 node_modules/**
 **/node_modules/**
 mcp-watchdog-test/**

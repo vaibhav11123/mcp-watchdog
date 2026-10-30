@@ -1,0 +1,9 @@
+{
+  "id": "session-terminated",
+  "pack": "session",
+  "title": "terminated session 404",
+  "expectedStatus": [
+    404
+  ],
+  "cite": "mcp-http-probe / MCP 2025-11-25 (re-derived)"
+}

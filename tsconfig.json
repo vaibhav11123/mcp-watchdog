@@ -4,13 +4,16 @@
     "target": "ES2022",
     "lib": ["ES2022"],
     "moduleResolution": "node16",
-    "rootDir": "src",
+    "rootDir": ".",
     "strict": true,
     "noEmit": true,
     "esModuleInterop": true,
     "skipLibCheck": true,
-    "forceConsistentCasingInFileNames": true
+    "forceConsistentCasingInFileNames": true,
+    "paths": {
+      "@mcp-watchdog/probe-core": ["./packages/probe-core/src/index.ts"]
+    }
   },
-  "include": ["src/**/*.ts"],
+  "include": ["src/**/*.ts", "packages/probe-core/src/**/*.ts"],
   "exclude": ["node_modules", "dist"]
 }

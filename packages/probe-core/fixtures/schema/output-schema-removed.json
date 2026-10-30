@@ -1,0 +1,38 @@
+{
+  "id": "output-schema-removed",
+  "before": [
+    {
+      "name": "a",
+      "description": "d",
+      "inputSchema": {
+        "type": "object",
+        "properties": {},
+        "required": []
+      },
+      "outputSchema": {
+        "type": "object",
+        "properties": {
+          "r": {
+            "type": "string"
+          }
+        },
+        "required": []
+      }
+    }
+  ],
+  "after": [
+    {
+      "name": "a",
+      "description": "d",
+      "inputSchema": {
+        "type": "object",
+        "properties": {},
+        "required": []
+      }
+    }
+  ],
+  "expectBreaking": [
+    "tool.output_schema.removed"
+  ],
+  "expectInfo": []
+}

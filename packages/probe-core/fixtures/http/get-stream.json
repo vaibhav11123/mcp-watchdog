@@ -1,0 +1,10 @@
+{
+  "id": "get-stream",
+  "pack": "conformance",
+  "title": "GET SSE or 405",
+  "expectedStatus": [
+    200,
+    405
+  ],
+  "cite": "mcp-http-probe / MCP 2025-11-25 (re-derived)"
+}
