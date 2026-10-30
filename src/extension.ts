@@ -15,8 +15,22 @@ import { debounce, resolveServerOptions, type MonitorOptions } from './options';
 import { ConfigDiagnostics } from './configDiagnostics';
 import { IncidentRingBuffer } from './incidents';
 import { LatencyHistory } from './latencyHistory';
+import {
+  RESTART_EDITOR_MCP_ACTION,
+  editorMcpCommandsAvailable,
+  failureAlertActionsWithEditorMcp,
+  tryRestartEditorMcp,
+  type EditorMcpHost,
+} from './editorMcp';
 
 type StatusPickItem = vscode.QuickPickItem & { serverName: string };
+
+const vscodeEditorMcpHost: EditorMcpHost = {
+  getCommands: (filterInternal) => vscode.commands.getCommands(filterInternal),
+  executeCommand: (command, ...rest) => vscode.commands.executeCommand(command, ...rest),
+};
+
+let editorMcpHintShown = false;
 
 const ASKED_REVIEW_KEY = 'mcpWatchdog.askedReview';
 const RECOVERY_COUNT_KEY = 'mcpWatchdog.recoveryCount';
@@ -160,6 +174,47 @@ function startMonitor(name: string, serverConfig: McpServerConfig, opts: Monitor
   void monitor.start();
 }
 
+async function notifyEditorMcpResult(
+  result: Awaited<ReturnType<typeof tryRestartEditorMcp>>,
+): Promise<void> {
+  if (result.ok) {
+    logger.info(`[Watchdog] Editor MCP restart via ${result.method}${result.detail ? ` (${result.detail})` : ''}`);
+    if (!editorMcpHintShown) {
+      editorMcpHintShown = true;
+      void vscode.window.showInformationMessage(
+        'MCP Watchdog: attempted editor MCP restart (host workbench.mcp commands).',
+      );
+    }
+    return;
+  }
+  logger.info(
+    `[Watchdog] Editor MCP restart not completed (${result.method})${result.detail ? `: ${result.detail}` : ''}`,
+  );
+  if (result.method === 'unavailable' && !editorMcpHintShown) {
+    editorMcpHintShown = true;
+    void vscode.window.showInformationMessage(
+      'Editor MCP commands not available on this host — use Reload Window if the editor client is stuck.',
+    );
+  } else if (result.method === 'listServer') {
+    void vscode.window.showInformationMessage(
+      result.detail ?? 'Opened MCP: List Servers — choose Restart on the stuck server.',
+    );
+  }
+}
+
+/** Watchdog probe reconnect + best-effort editor MCP restart. */
+async function reconnectWatchdogAndEditor(serverName?: string): Promise<void> {
+  if (serverName) {
+    await monitors.get(serverName)?.forceReconnect();
+  } else {
+    for (const monitor of monitors.values()) {
+      await monitor.forceReconnect();
+    }
+  }
+  const result = await tryRestartEditorMcp(vscodeEditorMcpHost, serverName);
+  await notifyEditorMcpResult(result);
+}
+
 async function emitAlert(decision: AlertDecision): Promise<void> {
   lastAlertForTest = decision;
   const show =
@@ -169,11 +224,27 @@ async function emitAlert(decision: AlertDecision): Promise<void> {
         ? vscode.window.showWarningMessage
         : vscode.window.showInformationMessage;
 
-  const picked = await show(decision.message, ...decision.actions);
+  let actions = decision.actions;
+  if (decision.actions.includes('Reconnect') || decision.actions.includes('Reload Window')) {
+    try {
+      const cmds = await vscode.commands.getCommands(true);
+      actions = failureAlertActionsWithEditorMcp(editorMcpCommandsAvailable(cmds));
+    } catch {
+      actions = decision.actions;
+    }
+  }
+
+  const picked = await show(decision.message, ...actions);
   if (!picked) return;
 
   if (picked === 'Reconnect') {
-    await monitors.get(decision.server)?.forceReconnect();
+    await reconnectWatchdogAndEditor(decision.server);
+  } else if (picked === RESTART_EDITOR_MCP_ACTION) {
+    const result = await tryRestartEditorMcp(vscodeEditorMcpHost, decision.server);
+    await notifyEditorMcpResult(result);
+    if (!result.ok && result.method === 'unavailable') {
+      // Fall through hint already shown; offer Reload as next step via info only.
+    }
   } else if (picked === 'Show Log') {
     logger.show();
     const recent = monitors.get(decision.server)?.getRecentLog() ?? [];
@@ -327,7 +398,7 @@ export async function activate(context: vscode.ExtensionContext): Promise<McpWat
           : arg && typeof arg === 'object' && 'serverName' in arg
             ? String((arg as { serverName: string }).serverName)
             : undefined;
-      if (name) await monitors.get(name)?.forceReconnect();
+      if (name) await reconnectWatchdogAndEditor(name);
     }),
     vscode.commands.registerCommand('mcpWatchdog.focusServersView', focusServersView),
     vscode.commands.registerCommand('mcpWatchdog.openMcpConfig', openMcpConfig),
@@ -606,10 +677,8 @@ async function reconnectAll(): Promise<void> {
     await offerTrustPrompt();
     return;
   }
-  for (const monitor of monitors.values()) {
-    await monitor.forceReconnect();
-  }
   void vscode.window.showInformationMessage('MCP Watchdog: reconnecting all servers…');
+  await reconnectWatchdogAndEditor();
 }
 
 async function reconnectServer(): Promise<void> {
@@ -628,7 +697,7 @@ async function reconnectServer(): Promise<void> {
     placeHolder: 'Select a server to reconnect',
   });
   if (picked) {
-    await monitors.get(picked)?.forceReconnect();
+    await reconnectWatchdogAndEditor(picked);
   }
 }
 
@@ -672,8 +741,8 @@ async function showStatusPanel(): Promise<void> {
     canPickMany: false,
   });
   if (!item) return;
-  await monitors.get(item.serverName)?.forceReconnect();
   void vscode.window.showInformationMessage(`Reconnecting ${item.serverName}…`);
+  await reconnectWatchdogAndEditor(item.serverName);
 }
 
 export async function deactivate(): Promise<void> {

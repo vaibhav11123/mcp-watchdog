@@ -1,0 +1,20 @@
+{
+  "servers": {
+    "echo": {
+      "type": "stdio",
+      "command": "node",
+      "args": ["fixtures/echo-server.js"],
+      "cwd": "${workspaceFolder}/mcp-watchdog-test"
+    },
+    "memory": {
+      "type": "stdio",
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-memory"]
+    },
+    "filesystem": {
+      "type": "stdio",
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-filesystem", "${workspaceFolder}"]
+    }
+  }
+}

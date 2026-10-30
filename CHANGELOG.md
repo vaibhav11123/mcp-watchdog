@@ -6,6 +6,14 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+### Added
+
+- Best-effort **editor MCP restart** via `workbench.mcp.restartServer` / `startServer` / `listServer` on Reconnect and a **Restart editor MCP** toast action when those commands exist (Reload Window remains the fallback).
+
+### Changed
+
+- Demo GIF: live Cursor capture (`Watchdog: 5/6`, aws-mcp offline) with real failure toast + Reconnect.
+
 ## [0.5.3] - 2026-10-30
 
 ### Fixed

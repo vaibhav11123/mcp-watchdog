@@ -49,7 +49,7 @@ Sometimes those helpers **die quietly**. The laptop sleeps. An `npx` process cra
 - shows per-server detail in an activity-bar panel,
 - toasts with **Reconnect**, **Show Log**, **Reload Window**, or **Mute 1h**.
 
-It does **not** replace the editor’s MCP integration. It cannot reach into Cursor’s private connection and “fix” it. When the editor itself is stuck, the honest remediation is **Reload Window** — and Watchdog puts that action on the failure toast.
+It does **not** replace the editor’s MCP integration. On **Reconnect** it restarts Watchdog’s probe and **best-effort** calls VS Code `workbench.mcp.restartServer` / `startServer` / `listServer` when those commands exist. Cursor and some forks may omit them — then **Reload Window** (toast action) remains the honest editor remediation.
 
 Think of three layers:
 
@@ -836,7 +836,7 @@ From product planning (not shipped):
 - Persistent latency/uptime history across reloads (in-memory sparklines + incident export shipped)
 - Acting as MCP gateway/proxy
 - Team SaaS / fleet monitoring
-- Replacing the editor MCP client (impossible without editor APIs)
+- Fully replacing the editor MCP client (we only best-effort call `workbench.mcp.*` when present)
 - Opt-in telemetry
 
 Strategic bet: ship **trust + light probes + useful alerts + Open VSX** before depth features.
@@ -903,7 +903,7 @@ If you remember only four sentences:
 1. **Watchdog is a parallel smoke detector**, not the editor’s MCP client.
 2. **Interval probing is the default** so we don’t leave duplicate servers running.
 3. **Nothing connects until you approve** (unless you turn the gate off).
-4. **When the editor itself is stuck, Reload Window is the honest fix** — and we put it on the toast.
+4. **Reconnect attempts editor MCP restart when `workbench.mcp.*` exists; otherwise Reload Window is the honest fix** — both are on the toast.
 
 For day-to-day usage, see the [README](../README.md). For what shipped when, see the [CHANGELOG](../CHANGELOG.md). For vulnerability reporting, see [SECURITY.md](../SECURITY.md).
 

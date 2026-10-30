@@ -15,9 +15,9 @@
 
 **Your editor drops MCP servers silently.** After sleep, a flaky `npx` child, or a network blip, Cursor and VS Code often keep showing tools as available while the underlying MCP connection is dead. You only notice when a tool call fails mid-task.
 
-**MCP Watchdog** is a parallel health layer: it probes your configured servers on a schedule, shows **`Watchdog: healthy/total`** in the status bar, **notifies you when something fails**, and offers **one-click Reconnect** (or **Reload Window** when the editor’s own MCP client is stuck).
+**MCP Watchdog** is a parallel health layer: it probes your configured servers on a schedule, shows **`Watchdog: healthy/total`** in the status bar, **notifies you when something fails**, and offers **one-click Reconnect** (Watchdog probe + best-effort editor MCP restart when the host exposes `workbench.mcp.*`).
 
-**Honest scope:** this does **not** replace the editor’s built-in MCP integration. Watchdog opens its **own** read-only health connections to measure reachability and latency — it cannot fix editor-internal MCP state without you reloading.
+**Honest scope:** this does **not** replace the editor’s built-in MCP integration. Watchdog opens its **own** read-only health connections to measure reachability and latency. On Reconnect it **attempts** editor MCP restart via VS Code’s `workbench.mcp.restartServer` / `startServer` when those commands exist; **Cursor and some forks may not expose them** — then use **Reload Window** (or Quit) if the editor client stays stuck.
 
 Works in **Cursor**, **Windsurf**, **VS Code**, **VSCodium**, and other forks that install from [Open VSX](https://open-vsx.org/).
 
@@ -25,7 +25,7 @@ Works in **Cursor**, **Windsurf**, **VS Code**, **VSCodium**, and other forks th
 
 ![MCP Watchdog demo — status bar kill→toast→Reconnect](https://raw.githubusercontent.com/vaibhav11123/mcp-watchdog/main/images/demo.gif)
 
-Live kill→toast→Reconnect on the local echo fixture (status chip **`Watchdog: n/m`**). Shot list: [docs/media/GIF-RECORDING.md](./docs/media/GIF-RECORDING.md).
+Live Cursor capture: **`Watchdog: 5/6`** (aws-mcp offline), real failure toast with **Reconnect**. Shot list: [docs/media/GIF-RECORDING.md](./docs/media/GIF-RECORDING.md).
 
 ## Install
 
@@ -183,7 +183,7 @@ These never force a server into `failed` on their own:
 
 ### Alerts
 
-When a server fails, Watchdog shows a notification with **Reconnect**, **Show Log**, **Reload Window**, **Quit Cursor**, and **Mute 1h**. Quit is for cases where Reload alone does not fix the editor’s MCP client. Set `mcpWatchdog.notify` to `all` to also get recovery toasts. Repeated failures within 10 minutes collapse into a single **flapping** warning.
+When a server fails, Watchdog shows a notification with **Reconnect**, **Restart editor MCP** (when `workbench.mcp.*` is available), **Show Log**, **Reload Window**, **Quit Cursor**, and **Mute 1h**. Reconnect always restarts Watchdog’s probe and best-effort restarts the editor MCP; Reload/Quit remain the fallback when the host has no MCP commands. Set `mcpWatchdog.notify` to `all` to also get recovery toasts. Repeated failures within 10 minutes collapse into a single **flapping** warning.
 
 ### Probe modes
 

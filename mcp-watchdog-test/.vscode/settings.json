@@ -2,27 +2,15 @@
   "mcpWatchdog.requireApproval": false,
   "mcpWatchdog.probeMode": "persistent",
   "mcpWatchdog.perServer": {
-    "aws-mcp": {
-      "enabled": false
-    },
-    "exa": {
-      "enabled": false
-    },
-    "rea": {
-      "enabled": false
-    },
-    "echo": {
-      "enabled": true,
-      "probeMode": "persistent"
-    },
-    "memory": {
-      "enabled": false
-    },
-    "filesystem": {
-      "enabled": false
-    }
+    "aws-mcp": { "enabled": true },
+    "exa": { "enabled": true },
+    "rea": { "enabled": true },
+    "echo": { "enabled": true, "probeMode": "persistent" },
+    "memory": { "enabled": true },
+    "filesystem": { "enabled": true }
   },
   "mcpWatchdog.pingIntervalMs": 2000,
   "mcpWatchdog.notify": "failures",
-  "mcpWatchdog.degradedAlertDelayMs": 2500
+  "mcpWatchdog.degradedAlertDelayMs": 2500,
+  "mcpWatchdog.maxRetries": 0
 }

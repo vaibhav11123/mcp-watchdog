@@ -361,8 +361,9 @@ function renderDashboard(data: OverviewSnapshot): string {
       <button class="secondary" data-action="showOutput">Logs</button>
     </div>
     <p class="server-meta" style="margin-top:12px">
-      <strong>Recover:</strong> Reconnect = Watchdog’s probe client only.
-      Reload Window = editor MCP host. Quit = last resort when the host is wedged.
+      <strong>Recover:</strong> Reconnect = Watchdog probe + best-effort editor MCP restart
+      (<code>workbench.mcp.*</code> when the host exposes it). Reload Window if the editor client stays stuck.
+      Quit = last resort when the host is wedged.
     </p>
     <p class="server-meta" style="margin-top:8px">
       <strong>Dual-truth:</strong> IDE state above is Watchdog’s probe.
