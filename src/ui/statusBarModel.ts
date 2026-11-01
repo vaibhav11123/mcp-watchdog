@@ -12,7 +12,7 @@ export interface StatusBarModel {
 }
 
 const REACHABILITY =
-  'Watchdog reachability (editor MCP may differ). Reconnect also best-effort restarts editor MCP when workbench.mcp.* exists.';
+  'Watchdog reachability (its own probe; the editor MCP client may differ). Retry probe does not restart that client, and Watchdog does not read its state.';
 
 export function buildStatusBarModel(
   statuses: ServerStatus[],

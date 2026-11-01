@@ -7,25 +7,15 @@
 [![GitHub release](https://img.shields.io/github/v/release/vaibhav11123/mcp-watchdog?label=release)](https://github.com/vaibhav11123/mcp-watchdog/releases)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](./LICENSE)
 
-**Install (recommended for Cursor):** [MCP Watchdog on Open VSX](https://open-vsx.org/extension/mcp-watchdog/mcp-watchdog) — primary download channel for Cursor, Windsurf, VSCodium, and most VS Code forks.
+**Know which MCP servers are responding.**
 
-**Repository:** [github.com/vaibhav11123/mcp-watchdog](https://github.com/vaibhav11123/mcp-watchdog)
-
-## Why
-
-**Your editor drops MCP servers silently.** After sleep, a flaky `npx` child, or a network blip, Cursor and VS Code often keep showing tools as available while the underlying MCP connection is dead. You only notice when a tool call fails mid-task.
-
-**MCP Watchdog** is a parallel health layer: it probes your configured servers on a schedule, shows **`Watchdog: healthy/total`** in the status bar, **notifies you when something fails**, and offers **one-click Reconnect** (Watchdog probe + best-effort editor MCP restart when the host exposes `workbench.mcp.*`).
-
-**Honest scope:** this does **not** replace the editor’s built-in MCP integration. Watchdog opens its **own** read-only health connections to measure reachability and latency. On Reconnect it **attempts** editor MCP restart via VS Code’s `workbench.mcp.restartServer` / `startServer` when those commands exist; **Cursor and some forks may not expose them** — then use **Reload Window** (or Quit) if the editor client stays stuck.
+The editor can still show tools after a server has gone quiet — after idle, sleep, or a network drop. MCP Watchdog is an independent check of the servers you approved. It shows status, latency, and failure details, then offers a next step.
 
 Works in **Cursor**, **Windsurf**, **VS Code**, **VSCodium**, and other forks that install from [Open VSX](https://open-vsx.org/).
 
-## Demo
+**Install (recommended for Cursor):** [MCP Watchdog on Open VSX](https://open-vsx.org/extension/mcp-watchdog/mcp-watchdog) — primary download channel for Cursor, Windsurf, VSCodium, and most VS Code forks.
 
-![MCP Watchdog demo — status bar kill→toast→Reconnect](https://raw.githubusercontent.com/vaibhav11123/mcp-watchdog/main/images/demo.gif)
-
-Live Cursor capture: **`Watchdog: 5/6`** (aws-mcp offline), real failure toast with **Reconnect**. Shot list: [docs/media/GIF-RECORDING.md](./docs/media/GIF-RECORDING.md).
+**Repository:** [github.com/vaibhav11123/mcp-watchdog](https://github.com/vaibhav11123/mcp-watchdog)
 
 ## Install
 
@@ -46,6 +36,28 @@ Most Cursor installs pull extensions from **Open VSX**, not the VS Marketplace:
 | **[GitHub Releases](https://github.com/vaibhav11123/mcp-watchdog/releases)** | Airgapped / manual | Download the `.vsix` from the latest Release → **Install from VSIX…**, or `cursor --install-extension path/to/mcp-watchdog-*.vsix` |
 
 After install, **reload** the window. Open the **activity bar** MCP Watchdog icon (not the Extensions detail page).
+
+## Editor
+
+Watchdog opens its own connection to each approved server. The status bar shows **`Watchdog: healthy/total`**. Overview and the Servers tree show latency and a short failure snippet.
+
+That result is Watchdog’s probe. It does not read the editor’s MCP client, so a green Watchdog row does not mean the editor’s own session is healthy.
+
+When a check fails, the next steps are separate:
+
+- **Retry probe** — run Watchdog’s check again.
+- **Restart editor MCP** — only on the failure toast, and only when the host exposes `workbench.mcp.*`. Cursor and some forks do not.
+- **Reload Window** — when the editor client stays stuck. **Quit Cursor** is the last resort.
+
+## Watchdog Cloud (preview)
+
+Watchdog Cloud (preview) adds remote health checks, schema change alerts, and configuration policy checks with an audit trail. Its policy decisions run outside the MCP tool-call path.
+
+The extension does not post incidents to Cloud yet, and it does not compare the two probes. Self-host notes: [packages/cloud/README.md](./packages/cloud/README.md).
+
+## Demo
+
+The live failure clip is not in this build. The shot list — stop a server, show the Watchdog result, then **Retry probe** and **Restart editor MCP** as different actions — is [docs/media/GIF-RECORDING.md](./docs/media/GIF-RECORDING.md). A recording of that list is required before announce.
 
 ## Requirements
 
@@ -146,8 +158,8 @@ Watchdog keeps an in-memory ring of the last ~200 state transitions (not written
 
 - **MCP Watchdog: Show Server Status** — Quick pick with per-server state.
 - **MCP Watchdog: Review Trusted Servers** — Change the approved subset or revoke trust.
-- **MCP Watchdog: Reconnect All Servers**
-- **MCP Watchdog: Reconnect Server…**
+- **MCP Watchdog: Retry All Probes**
+- **MCP Watchdog: Retry Probe…**
 - **MCP Watchdog: Open Servers View** — Focus the **Servers** tree.
 - **MCP Watchdog: Open MCP Config** — Open or create `.cursor/mcp.json` / `.vscode/mcp.json`.
 - **MCP Watchdog: Export Incident Timeline (Markdown)** — Save the in-memory incident ring (~200 transitions) as Markdown.
@@ -183,7 +195,7 @@ These never force a server into `failed` on their own:
 
 ### Alerts
 
-When a server fails, Watchdog shows a notification with **Reconnect**, **Restart editor MCP** (when `workbench.mcp.*` is available), **Show Log**, **Reload Window**, **Quit Cursor**, and **Mute 1h**. Reconnect always restarts Watchdog’s probe and best-effort restarts the editor MCP; Reload/Quit remain the fallback when the host has no MCP commands. Set `mcpWatchdog.notify` to `all` to also get recovery toasts. Repeated failures within 10 minutes collapse into a single **flapping** warning.
+When a server fails, Watchdog shows a notification with **Retry probe**, **Restart editor MCP** (when `workbench.mcp.*` is available), **Show Log**, **Reload Window**, **Quit Cursor**, and **Mute 1h**. Retry probe only restarts Watchdog’s check. Restart editor MCP is the separate action for the editor’s client. Reload Window and Quit remain the fallback when the host has no MCP commands. Set `mcpWatchdog.notify` to `all` to also get recovery toasts. Repeated failures within 10 minutes collapse into a single **flapping** warning.
 
 ### Probe modes
 
@@ -216,7 +228,7 @@ Settings changes apply within ~1s without reloading the window; **`mcp.json`** e
 | No **MCP Watchdog** in Output / no status | Folder open? MCP config present? Try **Developer: Show Running Extensions** → **MCP Watchdog** activated. |
 | **No servers** / **0/n** | `servers` key missing or empty; path is wrong root in multi-root. |
 | **Connecting** forever | `npx`/network blocked; stdio command wrong; HTTP URL/firewall. |
-| `Ping failed: Not connected` then retry | Expected after killing a server or network blip; Watchdog should reconnect within your backoff settings. |
+| `Ping failed: Not connected` then retry | Expected after killing a server or a network blip; Watchdog retries its own probe within your backoff settings. |
 | Problems on `mcp.json` | Confirm `mcpWatchdog.diagnostics.enabled` is on. Fix invalid JSON, a missing `servers`/`mcpServers` root, or an entry with neither `command` nor `url`. |
 | **Auth required (HTTP 401)** | Token or header on that HTTP/SSE server is missing or expired. Watchdog does not complete OAuth. |
 | Status bar **`Watchdog: untrusted`** | Run **MCP Watchdog: Review Trusted Servers** (or click the status bar) and approve the servers you want monitored. |
@@ -236,7 +248,7 @@ npm run build
 - Headless smoke: `npm run smoke`.
 - Deep dive: [docs/TECHNICAL.md](./docs/TECHNICAL.md) — architecture, design decisions, state machine, trust model, and testing.
 - Execution bible: [docs/EXECUTION.md](./docs/EXECUTION.md) · GTM/publish: [docs/GTM-PUBLISH.md](./docs/GTM-PUBLISH.md).
-- Product lock: [docs/PRODUCT-DECISION.md](./docs/PRODUCT-DECISION.md) — IDE wedge + Watchdog Cloud (monitor + **policy/trust plane**); MIT OSS, hosted later.
+- Product lock: [docs/PRODUCT-DECISION.md](./docs/PRODUCT-DECISION.md) — editor health checks plus Watchdog Cloud preview (remote health, schema changes, configuration policy checks).
 - Cloud self-host: [packages/cloud/README.md](./packages/cloud/README.md).
 - Validation notes: [docs/CUSTOMER-VALIDATION.md](./docs/CUSTOMER-VALIDATION.md).
 
@@ -244,7 +256,7 @@ See [CHANGELOG.md](./CHANGELOG.md).
 
 ## Ship checklist (maintainers)
 
-1. Live **`images/demo.gif`** ships (EH Watchdog UI + kill→toast story per [docs/media/GIF-RECORDING.md](./docs/media/GIF-RECORDING.md)); re-record before major announce if UI changes.
+1. Record the live clip in [docs/media/GIF-RECORDING.md](./docs/media/GIF-RECORDING.md) (server stop, Watchdog result, **Retry probe**, then **Restart editor MCP** as a different action) and put it in `images/demo.gif` before announce. Do not ship the old Reconnect GIF with a caption that calls it live.
 2. Bump `package.json` version (maintainer only) + move CHANGELOG Unreleased → versioned section.
 3. `npm test` && `npx vsce package` — confirm `vsce ls` has no `test/`, `*.local.md`, `launch/`.
 4. Set GitHub secrets: **`VSCE_PAT`**, **`OVSX_PAT`** (see [CONTRIBUTING.md](./CONTRIBUTING.md)).

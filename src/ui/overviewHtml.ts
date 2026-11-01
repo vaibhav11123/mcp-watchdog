@@ -338,7 +338,7 @@ function renderDashboard(data: OverviewSnapshot): string {
         ${s.failureContext ? `<pre class="server-error" style="white-space:pre-wrap;margin:4px 0 0;font-size:11px">${escapeHtml(s.failureContext)}</pre>` : ''}
         ${
           s.state === 'failed' || s.state === 'degraded'
-            ? `<div class="actions" style="margin-top:6px"><button class="link" data-action="reconnect" data-server="${escapeHtml(s.name)}">Reconnect</button></div>`
+            ? `<div class="actions" style="margin-top:6px"><button class="link" data-action="reconnect" data-server="${escapeHtml(s.name)}">Retry probe</button></div>`
             : ''
         }
       </div>
@@ -356,18 +356,18 @@ function renderDashboard(data: OverviewSnapshot): string {
     </div>
     <ul>${rows}</ul>
     <div class="actions">
-      <button data-action="reconnectAll">Reconnect all</button>
+      <button data-action="reconnectAll">Retry all probes</button>
       <button class="secondary" data-action="openConfig">MCP config</button>
       <button class="secondary" data-action="showOutput">Logs</button>
     </div>
     <p class="server-meta" style="margin-top:12px">
-      <strong>Recover:</strong> Reconnect = Watchdog probe + best-effort editor MCP restart
-      (<code>workbench.mcp.*</code> when the host exposes it). Reload Window if the editor client stays stuck.
-      Quit = last resort when the host is wedged.
+      <strong>Next step:</strong> Retry probe checks Watchdog’s own connection again.
+      Restart editor MCP is a separate failure-toast action when the host exposes <code>workbench.mcp.*</code>.
+      Reload Window if the editor client stays stuck.
     </p>
     <p class="server-meta" style="margin-top:8px">
-      <strong>Dual-truth:</strong> IDE state above is Watchdog’s probe.
-      Cloud probe (when <code>mcpWatchdog.cloudBridge</code> is enabled) may differ — that mismatch is intentional signal, not a bug.
+      <strong>What this shows:</strong> these rows are Watchdog’s probe, not the editor’s MCP client.
+      Watchdog Cloud is a preview and is not connected from this extension yet.
     </p>`;
 }
 

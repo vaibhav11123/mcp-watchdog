@@ -8,11 +8,19 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Added
 
-- Best-effort **editor MCP restart** via `workbench.mcp.restartServer` / `startServer` / `listServer` on Reconnect and a **Restart editor MCP** toast action when those commands exist (Reload Window remains the fallback).
+- **Restart editor MCP** toast action when the host exposes `workbench.mcp.*`. It does not run as part of Retry probe. Reload Window remains the fallback.
+
+### Fixed
+
+- Failure toast when `maxRetries` is 0: emit on **degraded→failed** (previously only healthy/connecting→failed), so host CI / fast give-up paths still notify.
+- Prettier formatting so `format:check` passes in CI.
 
 ### Changed
 
-- Demo GIF: live Cursor capture (`Watchdog: 5/6`, aws-mcp offline) with real failure toast + Reconnect.
+- Public category is MCP reliability and diagnostics. Marketplace summary leads with Cursor and VS Code health checks. Keywords drop auto-reconnect.
+- Failure action **Retry probe** only restarts Watchdog’s probe. Degraded label is **Retrying**.
+- Watchdog Cloud is labeled preview. The extension does not post incidents and does not read the editor MCP client.
+- README Demo: live Cursor capture (`Watchdog: 5/6`, aws offline OK). Shot list: [docs/media/GIF-RECORDING.md](docs/media/GIF-RECORDING.md).
 
 ## [0.5.3] - 2026-10-30
 

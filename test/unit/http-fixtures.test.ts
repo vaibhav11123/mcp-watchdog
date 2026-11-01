@@ -27,9 +27,9 @@ describe('HTTP pack fixtures', () => {
   });
 
   it('session-unknown expects 404 not 400', () => {
-    const fix = JSON.parse(
-      readFileSync(join(FIXTURE_DIR, 'session-unknown.json'), 'utf8'),
-    ) as { expectedStatus: number[] };
+    const fix = JSON.parse(readFileSync(join(FIXTURE_DIR, 'session-unknown.json'), 'utf8')) as {
+      expectedStatus: number[];
+    };
     expect(fix.expectedStatus).toEqual([404]);
   });
 });

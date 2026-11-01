@@ -11,11 +11,7 @@ export const EDITOR_MCP_RESET_TOOLS = 'workbench.mcp.resetCachedTools';
 
 export const RESTART_EDITOR_MCP_ACTION = 'Restart editor MCP';
 
-export type EditorMcpMethod =
-  | 'restartServer'
-  | 'startServer'
-  | 'listServer'
-  | 'unavailable';
+export type EditorMcpMethod = 'restartServer' | 'startServer' | 'listServer' | 'unavailable';
 
 export interface EditorMcpResult {
   ok: boolean;
@@ -30,9 +26,7 @@ export interface EditorMcpHost {
 
 export function editorMcpCommandsAvailable(commands: readonly string[]): boolean {
   const set = new Set(commands);
-  return (
-    set.has(EDITOR_MCP_RESTART) || set.has(EDITOR_MCP_START) || set.has(EDITOR_MCP_LIST)
-  );
+  return set.has(EDITOR_MCP_RESTART) || set.has(EDITOR_MCP_START) || set.has(EDITOR_MCP_LIST);
 }
 
 /** Candidate definition ids to try with workbench.mcp.restartServer (name first). */
@@ -46,13 +40,7 @@ export function editorMcpRestartIdCandidates(serverName: string): string[] {
 
 export function failureAlertActionsWithEditorMcp(
   commandsAvailable: boolean,
-  base: readonly string[] = [
-    'Reconnect',
-    'Show Log',
-    'Reload Window',
-    'Quit Cursor',
-    'Mute 1h',
-  ],
+  base: readonly string[] = ['Retry probe', 'Show Log', 'Reload Window', 'Quit Cursor', 'Mute 1h'],
 ): string[] {
   if (!commandsAvailable) return [...base];
   const actions = [...base];

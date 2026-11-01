@@ -1,6 +1,6 @@
 # Brand + media kit
 
-Product: **MCP Watchdog** (IDE) / **Watchdog Cloud** (monitor + policy/trust plane).
+Product: **MCP Watchdog** — editor health checks, plus **Watchdog Cloud (preview)** for remote health, schema changes, and configuration policy checks.
 
 ## Visual rules
 
@@ -14,7 +14,7 @@ Product: **MCP Watchdog** (IDE) / **Watchdog Cloud** (monitor + policy/trust pla
 | Asset | Path | Owner step |
 |---|---|---|
 | Marketplace icon | `images/icon.png` | exists |
-| Demo GIF | `images/demo.gif` | G1 live re-record |
+| Demo GIF | `images/demo.gif` | Record [GIF-RECORDING.md](./GIF-RECORDING.md) before announce |
 | Demo MP4 | `docs/media/demo-x.mp4` | G1 |
 | connecting | `docs/media/states/connecting.png` | E6 |
 | healthy | `docs/media/states/healthy.png` | E6 |

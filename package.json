@@ -1,18 +1,17 @@
 {
   "name": "mcp-watchdog",
   "displayName": "MCP Watchdog",
-  "description": "Status bar (Watchdog: n/m) and toasts when MCP goes Not connected in Cursor/VS Code. Reconnect, Reload, or Quit — parallel health probes with a trust gate.",
+  "description": "Independent MCP server health checks for Cursor and VS Code. See status, latency, and failure details, then retry Watchdog’s probe or restart the editor’s MCP connection.",
   "version": "0.5.3",
   "publisher": "mcp-watchdog",
   "license": "MIT",
   "keywords": [
     "mcp",
     "model context protocol",
+    "MCP server health",
     "cursor mcp disconnect",
     "mcp not connected",
-    "mcp auto reconnect",
-    "keepalive",
-    "reconnect",
+    "VS Code MCP",
     "monitor",
     "health",
     "cursor",
@@ -60,15 +59,15 @@
       },
       {
         "command": "mcpWatchdog.reconnectAll",
-        "title": "MCP Watchdog: Reconnect All Servers"
+        "title": "MCP Watchdog: Retry All Probes"
       },
       {
         "command": "mcpWatchdog.reconnectServer",
-        "title": "MCP Watchdog: Reconnect Server..."
+        "title": "MCP Watchdog: Retry Probe..."
       },
       {
         "command": "mcpWatchdog.reconnectOne",
-        "title": "MCP Watchdog: Reconnect Server"
+        "title": "MCP Watchdog: Retry Probe"
       },
       {
         "command": "mcpWatchdog.focusServersView",
@@ -314,12 +313,12 @@
           "tags": [
             "usesOnlineServices"
           ],
-          "description": "Opt-in: post names-only incident summaries to Watchdog Cloud (never env/header values). Off by default."
+          "description": "Preview, off by default. The extension does not post incidents to Watchdog Cloud and does not read the editor’s MCP client state."
         },
         "mcpWatchdog.cloudBridge.url": {
           "type": "string",
           "default": "",
-          "description": "Watchdog Cloud base URL (e.g. http://127.0.0.1:8787). Used only when cloudBridge.enabled is true."
+          "description": "Watchdog Cloud base URL (e.g. http://127.0.0.1:8787). Preview only: unused until the extension posts incidents. Ignored unless cloudBridge.enabled is true."
         }
       }
     }

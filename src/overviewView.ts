@@ -1,11 +1,7 @@
 import * as vscode from 'vscode';
 import type { ServerStatus } from './monitor';
 import type { McpConfigStatus } from './config';
-import {
-  statusesSnapshot,
-  renderOverviewBody,
-  wrapOverviewDocument,
-} from './ui/overviewHtml';
+import { statusesSnapshot, renderOverviewBody, wrapOverviewDocument } from './ui/overviewHtml';
 
 export class OverviewViewProvider implements vscode.WebviewViewProvider {
   private view?: vscode.WebviewView;

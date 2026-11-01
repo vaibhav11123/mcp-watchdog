@@ -24,6 +24,18 @@ describe('classifyProbeError', () => {
     );
   });
 
+  it('rewrites clear AWS session-expired wording', () => {
+    expect(
+      classifyProbeError('Your session has expired. Please reauthenticate using aws login'),
+    ).toBe('AWS credentials expired — run: aws login --profile <profile>');
+  });
+
+  it('does not rewrite bare MCP -32602 (not AWS-specific)', () => {
+    expect(classifyProbeError('MCP error -32602: Invalid request parameters')).toBe(
+      'MCP error -32602: Invalid request parameters',
+    );
+  });
+
   it('passes through other messages unchanged', () => {
     expect(classifyProbeError('Max retries exceeded')).toBe('Max retries exceeded');
   });

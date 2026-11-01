@@ -14,7 +14,7 @@ npm run build
 ```
 
 - `packages/probe-core` — vscode-free probe/diff/bridge scrub
-- `packages/cloud` — Watchdog Cloud (monitor + policy/trust plane)
+- `packages/cloud` — Watchdog Cloud preview (remote health, schema change alerts, configuration policy checks)
 - Unit tests must pass with **no network**
 - Never log or commit env/header **values**
 

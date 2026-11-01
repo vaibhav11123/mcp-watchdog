@@ -47,9 +47,9 @@ Sometimes those helpers **die quietly**. The laptop sleeps. An `npx` process cra
 
 - updates a status-bar count (`Watchdog: healthy/total`),
 - shows per-server detail in an activity-bar panel,
-- toasts with **Reconnect**, **Show Log**, **Reload Window**, or **Mute 1h**.
+- toasts with **Retry probe**, **Show Log**, **Reload Window**, or **Mute 1h**. **Restart editor MCP** is a separate action when `workbench.mcp.*` exists.
 
-It does **not** replace the editor’s MCP integration. On **Reconnect** it restarts Watchdog’s probe and **best-effort** calls VS Code `workbench.mcp.restartServer` / `startServer` / `listServer` when those commands exist. Cursor and some forks may omit them — then **Reload Window** (toast action) remains the honest editor remediation.
+It does **not** replace the editor’s MCP integration, and it does **not** read that client’s state. **Retry probe** only runs Watchdog’s check again. **Restart editor MCP** is the separate toast action that best-effort calls `workbench.mcp.restartServer` / `startServer` / `listServer` when those commands exist. Cursor and some forks omit them — then **Reload Window** remains the editor remediation.
 
 Think of three layers:
 
@@ -57,7 +57,7 @@ Think of three layers:
 |-------|-------------|--------------|
 | Editor MCP client | Cursor / VS Code | Real agent tool calls |
 | MCP servers | You (via `mcp.json`) | The actual helper processes / HTTP endpoints |
-| **MCP Watchdog** | This extension | Parallel health probes + alerts + reconnect UX |
+| **MCP Watchdog** | This extension | Its own health probes, alerts, and a separate editor-restart action |
 
 ---
 
@@ -105,20 +105,21 @@ These are deliberate constraints, not accidents:
 
 - A **parallel observer** that opens its own MCP SDK client (`name: 'mcp-watchdog'`) per approved server.
 - A **reachability + latency** meter using MCP `ping`.
-- An **alerting and remediation UX** (reconnect Watchdog’s probe; reload window for the editor).
+- An **alerting UX** with separate next steps: retry Watchdog’s probe, restart the editor MCP client when the host exposes the command, or reload the window.
 - A **trust-gated** runner of user-defined commands/URLs from config files the user already maintains.
+- **Watchdog Cloud (preview):** remote health checks, schema change alerts, and configuration policy checks. The extension does not post incidents yet.
 
 ### 3.2 Is not
 
-- Not a replacement for the editor’s MCP client.
-- Not an MCP gateway/proxy.
-- Not team/fleet SaaS monitoring.
+- Not a reader of the editor’s MCP client state. Retry probe does not restart that client.
+- Not an MCP gateway or proxy. Policy checks run outside the tool-call path.
+- Not a live correlation between the editor probe and Cloud. That comparison waits until the extension posts.
 - Not an OAuth client for remote MCP auth flows.
 - Not a guarantee that “Healthy” means the agent’s session is healthy — only that **Watchdog’s probe** succeeded.
 
 ### 3.3 Honest scope sentence (canonical)
 
-> Watchdog opens its **own** read-only health connections to measure reachability and latency — it cannot fix editor-internal MCP state without you reloading.
+> Watchdog opens its **own** health connections to measure reachability and latency. Retry probe repeats that check. Restart editor MCP, when the host offers it, is a different action. Reload Window is the fallback. Cloud is a preview and is not fed by the extension yet.
 
 ---
 
@@ -136,7 +137,7 @@ These are deliberate constraints, not accidents:
 | **Trust / approval** | User must allow monitoring before spawn/HTTP when `requireApproval` is true |
 | **Fingerprint** | SHA-256 of server names + command/args/url (not env/header **values**) |
 | **Flapping** | Too many failures in a short window → one consolidated alert |
-| **Degraded** | Temporary bad state while retries are still allowed (UI label: “Reconnecting”) |
+| **Degraded** | Temporary bad state while retries are still allowed (UI label: “Retrying”) |
 | **VSIX** | Packaged VS Code extension file |
 | **Open VSX** | Extension registry Cursor and many forks use (vs Microsoft Marketplace) |
 | **Memento** | VS Code persistent key-value store (`globalState`) used for trust + first-run flags |
@@ -418,7 +419,7 @@ Do not add states without updating **together**: `monitor.ts`, `ui/statePresenta
 |-------|----------|---------|
 | `healthy` | Healthy | Last probe/ping succeeded |
 | `connecting` | Connecting | Attempt in flight |
-| `degraded` | Reconnecting | Failure occurred; retries still allowed |
+| `degraded` | Retrying | Failure occurred; retries still allowed |
 | `failed` | Failed | Gave up (max retries) or hard connect failure (persistent) |
 | `disconnected` | Offline | Stopped, disabled, or awaiting trust |
 
@@ -543,7 +544,8 @@ Notable rules:
 
 | Action | Effect |
 |--------|--------|
-| Reconnect | `forceReconnect()` on that monitor |
+| Retry probe | `forceReconnect()` on that monitor only |
+| Restart editor MCP | `tryRestartEditorMcp` when `workbench.mcp.*` exists |
 | Show Log | Focus Output + dump recent monitor log |
 | Reload Window | `workbench.action.reloadWindow` |
 | Mute 1h | `AlertManager.mute(server, 3_600_000)` |
@@ -651,16 +653,16 @@ interface McpWatchdogApi {
 | Command ID | Title |
 |------------|-------|
 | `mcpWatchdog.showStatus` | Show Server Status |
-| `mcpWatchdog.reconnectAll` | Reconnect All Servers |
-| `mcpWatchdog.reconnectServer` | Reconnect Server… |
-| `mcpWatchdog.reconnectOne` | Reconnect Server (tree) |
+| `mcpWatchdog.reconnectAll` | Retry All Probes |
+| `mcpWatchdog.reconnectServer` | Retry Probe… |
+| `mcpWatchdog.reconnectOne` | Retry Probe (tree) |
 | `mcpWatchdog.focusServersView` | Open Servers View |
 | `mcpWatchdog.openMcpConfig` | Open MCP Config |
 | `mcpWatchdog.showOutput` | Show Output Log |
 | `mcpWatchdog.refresh` | Refresh |
 | `mcpWatchdog.reviewTrust` | Review Trusted Servers |
 
-Menus: view title toolbar (refresh / reconnect all / open config); tree item inline reconnect.
+Menus: view title toolbar (refresh / retry all probes / open config); tree item inline retry probe.
 
 ---
 
@@ -824,7 +826,7 @@ That sequencing encodes priority: **testability → safety → light probes → 
 - `${input:…}` is not expanded; `${env:}` / `${userHome}` are.
 - Tool-drift fingerprints are **name-only** (no input/output schema hash).
 - Passive HTTP is HEAD/GET reachability only — not an MCP session substitute.
-- `images/demo.gif` ships a live EH Watchdog UI + kill→toast story (see `docs/media/GIF-RECORDING.md`).
+- `images/demo.gif` is not the current failure clip. Record `docs/media/GIF-RECORDING.md` before announce.
 
 ### 19.2 Explicitly deferred / out of scope (for now)
 
@@ -836,7 +838,7 @@ From product planning (not shipped):
 - Persistent latency/uptime history across reloads (in-memory sparklines + incident export shipped)
 - Acting as MCP gateway/proxy
 - Team SaaS / fleet monitoring
-- Fully replacing the editor MCP client (we only best-effort call `workbench.mcp.*` when present)
+- Reading or fully replacing the editor MCP client (Restart editor MCP only best-effort calls `workbench.mcp.*` when present; Retry probe does not)
 - Opt-in telemetry
 
 Strategic bet: ship **trust + light probes + useful alerts + Open VSX** before depth features.
@@ -903,7 +905,7 @@ If you remember only four sentences:
 1. **Watchdog is a parallel smoke detector**, not the editor’s MCP client.
 2. **Interval probing is the default** so we don’t leave duplicate servers running.
 3. **Nothing connects until you approve** (unless you turn the gate off).
-4. **Reconnect attempts editor MCP restart when `workbench.mcp.*` exists; otherwise Reload Window is the honest fix** — both are on the toast.
+4. **Retry probe only repeats Watchdog’s check.** Restart editor MCP is a separate toast action when `workbench.mcp.*` exists; otherwise Reload Window is the editor fix.
 
 For day-to-day usage, see the [README](../README.md). For what shipped when, see the [CHANGELOG](../CHANGELOG.md). For vulnerability reporting, see [SECURITY.md](../SECURITY.md).
 

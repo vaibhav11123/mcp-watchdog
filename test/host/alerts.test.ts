@@ -17,7 +17,7 @@ function matchingEchoAlert(api: McpWatchdogApi) {
     alert &&
     alert.server === ECHO &&
     (alert.kind === 'error' || alert.kind === 'warning') &&
-    alert.actions.includes('Reconnect') &&
+    alert.actions.includes('Retry probe') &&
     alert.actions.includes('Reload Window')
   ) {
     return alert;
@@ -26,7 +26,7 @@ function matchingEchoAlert(api: McpWatchdogApi) {
 }
 
 suite('MCP Watchdog alerts (host)', () => {
-  test('kill echo server → alert with Reconnect and Reload Window', async function () {
+  test('kill echo server → alert with Retry probe and Reload Window', async function () {
     this.timeout(90_000);
 
     const cfg = vscode.workspace.getConfiguration('mcpWatchdog');
@@ -81,7 +81,7 @@ suite('MCP Watchdog alerts (host)', () => {
         `expected echo alert; last=${JSON.stringify(api.getLastAlert())}; statuses=${JSON.stringify(api.getStatuses())}`,
       );
       assert.strictEqual(alert!.server, ECHO);
-      assert.ok(alert!.actions.includes('Reconnect') && alert!.actions.includes('Reload Window'));
+      assert.ok(alert!.actions.includes('Retry probe') && alert!.actions.includes('Reload Window'));
       assert.ok(
         alert!.actions.includes('Quit Cursor'),
         `actions=${JSON.stringify(alert!.actions)}`,

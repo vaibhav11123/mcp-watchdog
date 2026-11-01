@@ -23,12 +23,27 @@ describe('decideAlert', () => {
     );
     expect(r.alert?.kind).toBe('error');
     expect(r.alert?.actions).toEqual([
-      'Reconnect',
+      'Retry probe',
       'Show Log',
       'Reload Window',
       'Quit Cursor',
       'Mute 1h',
     ]);
+  });
+
+  it('degraded→failed (maxRetries exhausted) emits error alert', () => {
+    const r = decideAlert(
+      base('degraded', { lastError: 'Not connected' }),
+      base('failed', { lastError: 'Max retries exceeded' }),
+      undefined,
+      'failures',
+      1000,
+      emptyFlap,
+      500,
+    );
+    expect(r.alert?.kind).toBe('error');
+    expect(r.alert?.message).toMatch(/failed: Max retries exceeded/);
+    expect(r.degradedSince).toBeUndefined();
   });
 
   it('degraded with recovery in <60s emits no alert immediately', () => {

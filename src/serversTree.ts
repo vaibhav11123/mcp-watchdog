@@ -63,14 +63,14 @@ class ServerTreeItem extends vscode.TreeItem {
       md.appendMarkdown('```\n' + snippet + '\n```\n\n');
     }
     const args = encodeURIComponent(JSON.stringify([serverName]));
-    md.appendMarkdown(`[Reconnect](command:mcpWatchdog.reconnectOne?${args})`);
+    md.appendMarkdown(`[Retry probe](command:mcpWatchdog.reconnectOne?${args})`);
     this.tooltip = md;
 
     this.iconPath = stateThemeIcon(status.state);
 
     this.command = {
       command: 'mcpWatchdog.reconnectOne',
-      title: 'Reconnect server',
+      title: 'Retry probe',
       arguments: [serverName],
     };
   }

@@ -1,6 +1,6 @@
 # Watchdog Cloud (OSS)
 
-Author monitor (handshake + schema drift) + **policy/trust plane** (allowlist/audit). Not a reverse-proxy gateway.
+**Watchdog Cloud (preview).** Remote health checks, schema change alerts, and configuration policy checks with an audit trail. Policy decisions run outside the MCP tool-call path. The editor extension does not post incidents here yet.
 
 ## Quick start (T3 target &lt; 30 min)
 

@@ -27,7 +27,7 @@ const DEFAULT_DEGRADED_ALERT_DELAY_MS = 60_000;
 
 /** Failed / sustained-degraded toast actions (Quit before Mute). */
 export const FAILURE_ALERT_ACTIONS = [
-  'Reconnect',
+  'Retry probe',
   'Show Log',
   'Reload Window',
   'Quit Cursor',
@@ -127,8 +127,9 @@ export function decideAlert(
     };
   }
 
+  // Include degraded→failed: maxRetries:0 often skips the sustained-degraded delay.
   if (
-    (prevState === 'healthy' || prevState === 'connecting') &&
+    (prevState === 'healthy' || prevState === 'connecting' || prevState === 'degraded') &&
     nextState === 'failed' &&
     !outFlap.flapping
   ) {

@@ -80,10 +80,7 @@ describe('editorMcp', () => {
       if ((cmd === EDITOR_MCP_STOP || cmd === EDITOR_MCP_START) && id === 'echo') return;
       throw new Error('no');
     });
-    const r = await tryRestartEditorMcp(
-      host([EDITOR_MCP_STOP, EDITOR_MCP_START], execute),
-      'echo',
-    );
+    const r = await tryRestartEditorMcp(host([EDITOR_MCP_STOP, EDITOR_MCP_START], execute), 'echo');
     expect(r.ok).toBe(true);
     expect(r.method).toBe('startServer');
     expect(r.detail).toMatch(/stop\+start:echo/);

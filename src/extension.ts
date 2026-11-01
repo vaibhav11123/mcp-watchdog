@@ -178,7 +178,9 @@ async function notifyEditorMcpResult(
   result: Awaited<ReturnType<typeof tryRestartEditorMcp>>,
 ): Promise<void> {
   if (result.ok) {
-    logger.info(`[Watchdog] Editor MCP restart via ${result.method}${result.detail ? ` (${result.detail})` : ''}`);
+    logger.info(
+      `[Watchdog] Editor MCP restart via ${result.method}${result.detail ? ` (${result.detail})` : ''}`,
+    );
     if (!editorMcpHintShown) {
       editorMcpHintShown = true;
       void vscode.window.showInformationMessage(
@@ -202,17 +204,15 @@ async function notifyEditorMcpResult(
   }
 }
 
-/** Watchdog probe reconnect + best-effort editor MCP restart. */
-async function reconnectWatchdogAndEditor(serverName?: string): Promise<void> {
+/** Retry Watchdog’s own probe. Does not restart the editor MCP client. */
+async function retryProbe(serverName?: string): Promise<void> {
   if (serverName) {
     await monitors.get(serverName)?.forceReconnect();
-  } else {
-    for (const monitor of monitors.values()) {
-      await monitor.forceReconnect();
-    }
+    return;
   }
-  const result = await tryRestartEditorMcp(vscodeEditorMcpHost, serverName);
-  await notifyEditorMcpResult(result);
+  for (const monitor of monitors.values()) {
+    await monitor.forceReconnect();
+  }
 }
 
 async function emitAlert(decision: AlertDecision): Promise<void> {
@@ -225,7 +225,7 @@ async function emitAlert(decision: AlertDecision): Promise<void> {
         : vscode.window.showInformationMessage;
 
   let actions = decision.actions;
-  if (decision.actions.includes('Reconnect') || decision.actions.includes('Reload Window')) {
+  if (decision.actions.includes('Retry probe') || decision.actions.includes('Reload Window')) {
     try {
       const cmds = await vscode.commands.getCommands(true);
       actions = failureAlertActionsWithEditorMcp(editorMcpCommandsAvailable(cmds));
@@ -237,8 +237,8 @@ async function emitAlert(decision: AlertDecision): Promise<void> {
   const picked = await show(decision.message, ...actions);
   if (!picked) return;
 
-  if (picked === 'Reconnect') {
-    await reconnectWatchdogAndEditor(decision.server);
+  if (picked === 'Retry probe') {
+    await retryProbe(decision.server);
   } else if (picked === RESTART_EDITOR_MCP_ACTION) {
     const result = await tryRestartEditorMcp(vscodeEditorMcpHost, decision.server);
     await notifyEditorMcpResult(result);
@@ -398,7 +398,7 @@ export async function activate(context: vscode.ExtensionContext): Promise<McpWat
           : arg && typeof arg === 'object' && 'serverName' in arg
             ? String((arg as { serverName: string }).serverName)
             : undefined;
-      if (name) await reconnectWatchdogAndEditor(name);
+      if (name) await retryProbe(name);
     }),
     vscode.commands.registerCommand('mcpWatchdog.focusServersView', focusServersView),
     vscode.commands.registerCommand('mcpWatchdog.openMcpConfig', openMcpConfig),
@@ -677,8 +677,8 @@ async function reconnectAll(): Promise<void> {
     await offerTrustPrompt();
     return;
   }
-  void vscode.window.showInformationMessage('MCP Watchdog: reconnecting all servers…');
-  await reconnectWatchdogAndEditor();
+  void vscode.window.showInformationMessage('MCP Watchdog: retrying probes…');
+  await retryProbe();
 }
 
 async function reconnectServer(): Promise<void> {
@@ -694,10 +694,10 @@ async function reconnectServer(): Promise<void> {
     return;
   }
   const picked = await vscode.window.showQuickPick(names, {
-    placeHolder: 'Select a server to reconnect',
+    placeHolder: 'Select a server to retry',
   });
   if (picked) {
-    await reconnectWatchdogAndEditor(picked);
+    await retryProbe(picked);
   }
 }
 
@@ -737,12 +737,12 @@ async function showStatusPanel(): Promise<void> {
   });
 
   const item = await vscode.window.showQuickPick<StatusPickItem>(items, {
-    placeHolder: 'MCP servers — select to reconnect',
+    placeHolder: 'MCP servers — select to retry the probe',
     canPickMany: false,
   });
   if (!item) return;
-  void vscode.window.showInformationMessage(`Reconnecting ${item.serverName}…`);
-  await reconnectWatchdogAndEditor(item.serverName);
+  void vscode.window.showInformationMessage(`Retrying probe for ${item.serverName}…`);
+  await retryProbe(item.serverName);
 }
 
 export async function deactivate(): Promise<void> {

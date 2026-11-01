@@ -8,11 +8,11 @@ Audiences, platforms, media, dual publish, marketing sync. Complements [EXECUTIO
 
 | Audience | Surface | Proof asset |
 |---|---|---|
-| Operator (PLG) | IDE (Cursor first) | Live GIF kill→toast→Reconnect |
-| Author | Watchdog Cloud monitor | Dashboard + Slack on down/breaking drift |
-| Team / security | Policy/trust plane | Deny unpinned `npx -y` + audit export |
+| Operator (PLG) | IDE (Cursor first) | Live clip: server stop, Watchdog result, Retry probe, then Restart editor MCP |
+| Author | Watchdog Cloud (preview) | Remote health + schema change alerts |
+| Team / security | Configuration policy checks | Allow or deny, with an audit trail, outside the tool-call path |
 | Self-host | OSS cloud README | T3 &lt;30 min |
-| Investor | Dual-truth story | IDE vs cloud mismatch screenshot |
+| Investor | Local probe vs Cloud probe | Do not claim the extension already posts or correlates the two |
 
 Do **not** market cloud before Gate −1 + E7 demoable.
 
@@ -38,7 +38,7 @@ Script: [launch/GIF-RECORDING.md](../launch/GIF-RECORDING.md) (repo-local; may b
 
 | Asset | Path | Status |
 |---|---|---|
-| Demo GIF | `images/demo.gif` | **Shipped:** live EH Watchdog UI + kill→toast story (≤5 MB); re-record if UI changes before major announce |
+| Demo GIF | `images/demo.gif` | **Not shipped.** Record [GIF-RECORDING.md](./media/GIF-RECORDING.md) before announce. Do not publish the old Reconnect asset as live. |
 | Demo MP4 | `docs/media/demo-x.mp4` | From same master |
 | State sprites ×5 | `docs/media/states/*.png` | See brand kit |
 | Recover CTA | `docs/media/recover-cta.png` | After E6 |
@@ -47,7 +47,7 @@ Script: [launch/GIF-RECORDING.md](../launch/GIF-RECORDING.md) (repo-local; may b
 | Schema breaking | `docs/media/schema-breaking.png` | After E7 |
 | Architecture | `docs/media/architecture.png` | Export from EXECUTION mermaid |
 
-**G1 human gate (0.5.3):** GIF + MP4 updated; README placeholder note removed. Optional Kap/CleanShot re-record for pure native toast footage before HN/X.
+**G1 human gate:** record the shot list in [docs/media/GIF-RECORDING.md](./media/GIF-RECORDING.md) (stop, Watchdog result, Retry probe, then Restart editor MCP as a different action). README does not embed a GIF until that clip exists.
 
 ---
 
@@ -78,8 +78,9 @@ Item: `mcp-watchdog.mcp-watchdog`.
 
 ## F. Watchdog Cloud story (G4) — after E7
 
-- Copy: monitor + **policy/trust plane** (not “gateway”)
-- Assets: dashboard, Slack, dual-truth, T3 proof
+- Public copy: remote health checks, schema change alerts, and configuration policy checks with an audit trail. Preview. Not a gateway. Decisions sit outside the tool-call path.
+- Do not say the extension already correlates a local probe with a Cloud probe.
+- Assets: dashboard, Slack, T3 proof. A dual-probe screenshot waits until the extension posts.
 - Paid: hosted convenience later (see [PAID-BOUNDARY.md](./PAID-BOUNDARY.md))
 
 ---
@@ -93,9 +94,9 @@ Item: `mcp-watchdog.mcp-watchdog`.
 ### Announce draft slots
 
 **X / LinkedIn (short):**  
-MCP Watchdog: know when MCP is actually dead — status bar + one-click Reconnect in Cursor/VS Code. Open VSX + Marketplace.
+MCP Watchdog: know which MCP servers are responding. Independent health checks for Cursor and VS Code. Open VSX + Marketplace.
 
 **HN / forum (longer):**  
-Show: problem (silent MCP death) → kill demo → honest scope (parallel probe, not Cursor auto-heal) → install links → ask for feedback.
+Show: the editor can still list tools after the server goes quiet → Watchdog’s own probe, status, and failure detail → Retry probe and Restart editor MCP are different actions → install links → ask whether that listing language matches the failure they hit. Do not claim Cloud correlation or a market size.
 
 Do not spam; respect [validation/OUTREACH.md](./validation/OUTREACH.md).

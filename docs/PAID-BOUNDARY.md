@@ -2,6 +2,8 @@
 
 Code stays **MIT**. Charge later for running it — not for locking algorithms.
 
+Public listing says **configuration policy checks**. Cloud stays preview until the editor extension posts incidents. “Trust plane” on this page is internal architecture language.
+
 | Free (OSS / self-host) | Paid (hosted later) |
 |---|---|
 | Extension, probe-core, self-host cloud via README | Managed multi-tenant cloud, SLA, support |

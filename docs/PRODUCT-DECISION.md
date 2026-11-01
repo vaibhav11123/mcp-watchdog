@@ -4,6 +4,8 @@
 **Constraint:** No founder interviews. Goal includes a path that can **raise**.  
 **Why revise:** Operator IDE recovery is a real job but **commercially empty** vs author monitors and enterprise gateways (where checks and SKUs already exist). A toast-only company is not venture-scale. We **expand**, we do not abandon the IDE wedge.
 
+**Public listing (2026-10-31):** category is **MCP reliability and diagnostics**. The marketplace lead is editor health checks (“Know which MCP servers are responding”). Cloud is the same product, marked **preview**, until the extension posts incidents. Public copy says **configuration policy checks**, not “trust plane.” Retry probe and Restart editor MCP are separate actions. Do not claim the extension reads the editor MCP client or already correlates probes.
+
 ---
 
 ## Decision (locked for fundraising narrative)

@@ -7,7 +7,7 @@ export const STATE_LABELS: Record<
 > = {
   healthy: { label: 'Healthy', icon: 'check', themeColor: 'testing.iconPassed' },
   connecting: { label: 'Connecting', icon: 'sync~spin' },
-  degraded: { label: 'Reconnecting', icon: 'warning', themeColor: 'editorWarning.foreground' },
+  degraded: { label: 'Retrying', icon: 'warning', themeColor: 'editorWarning.foreground' },
   failed: { label: 'Failed', icon: 'error', themeColor: 'errorForeground' },
   disconnected: { label: 'Offline', icon: 'circle-slash', themeColor: 'descriptionForeground' },
 };

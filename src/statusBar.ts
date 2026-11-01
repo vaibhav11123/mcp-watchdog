@@ -24,7 +24,7 @@ export class McpStatusBar implements vscode.Disposable {
       else md.appendMarkdown(`${line}\n\n`);
     }
     md.appendMarkdown(
-      '\n[Open dashboard](command:mcpWatchdog.overview.focus) · [Reconnect all](command:mcpWatchdog.reconnectAll)',
+      '\n[Open dashboard](command:mcpWatchdog.overview.focus) · [Retry all probes](command:mcpWatchdog.reconnectAll)',
     );
     this.item.tooltip = md;
 
