@@ -11,6 +11,18 @@ launch/
 out-test/
 coverage/
 
+# Vendored MCP deps (keep package.json / lock / wrappers / upstream src)
+mcp-watchdog-test/vendored/**/node_modules/
+mcp-watchdog-test/vendored/**/filesystem-repo/
+
+# Local env / secrets — never commit
+.env
+**/.env
+packages/cloud/.env
+
+# Large local capture dumps
+docs/validation/priya-evidence/stills/g1c/
+
 # Spike curriculum clones + bulky REA JSON (keep REA-EVIDENCE.md + *.summary.json)
 docs/spikes/repos/
 docs/spikes/rea-evidence/*.json

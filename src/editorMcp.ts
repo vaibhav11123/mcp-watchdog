@@ -40,7 +40,16 @@ export function editorMcpRestartIdCandidates(serverName: string): string[] {
 
 export function failureAlertActionsWithEditorMcp(
   commandsAvailable: boolean,
-  base: readonly string[] = ['Retry probe', 'Show Log', 'Reload Window', 'Quit Cursor', 'Mute 1h'],
+  base: readonly string[] = [
+    'Accept',
+    'Fix…',
+    'Remove',
+    'Retry probe',
+    'Show Log',
+    'Reload Window',
+    'Quit Cursor',
+    'Mute 1h',
+  ],
 ): string[] {
   if (!commandsAvailable) return [...base];
   const actions = [...base];

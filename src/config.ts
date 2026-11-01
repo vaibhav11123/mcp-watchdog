@@ -37,11 +37,29 @@ export function claudeCodeMcpPath(home = os.homedir()): string {
   return path.join(home, '.claude.json');
 }
 
+/** Claude Desktop user MCP config (`mcpServers`). */
+export function claudeDesktopMcpPath(home = os.homedir(), platform = process.platform): string {
+  if (platform === 'darwin') {
+    return path.join(
+      home,
+      'Library',
+      'Application Support',
+      'Claude',
+      'claude_desktop_config.json',
+    );
+  }
+  if (platform === 'win32') {
+    const appData = process.env.APPDATA || path.join(home, 'AppData', 'Roaming');
+    return path.join(appData, 'Claude', 'claude_desktop_config.json');
+  }
+  return path.join(home, '.config', 'Claude', 'claude_desktop_config.json');
+}
+
 function readConfigFile(
   filePath: string,
   label: string,
   workspaceRoot: string | undefined,
-): { servers: Record<string, McpServerConfig>; label: string } | null {
+): { servers: Record<string, McpServerConfig>; label: string; path: string } | null {
   try {
     const raw = fs.readFileSync(filePath, 'utf-8');
     const parsed = parseConfigFile(raw, workspaceRoot, {
@@ -54,7 +72,7 @@ function readConfigFile(
       }
       return null;
     }
-    return { servers: parsed.servers, label };
+    return { servers: parsed.servers, label, path: filePath };
   } catch (err) {
     if ((err as NodeJS.ErrnoException).code === 'ENOENT') return null;
     throw err;
@@ -68,8 +86,9 @@ function readConfigFile(
  * 1. VS Code user `mcp.json`
  * 2. Windsurf `~/.codeium/windsurf/mcp_config.json`
  * 3. Claude Code `~/.claude.json` (`mcpServers`)
- * 4. Cursor global `~/.cursor/mcp.json`
- * 5–N. For each workspace folder (in order): `.vscode/mcp.json` then `.cursor/mcp.json`
+ * 4. Claude Desktop `claude_desktop_config.json` (`mcpServers`)
+ * 5. Cursor global `~/.cursor/mcp.json`
+ * 6–N. For each workspace folder (in order): `.vscode/mcp.json` then `.cursor/mcp.json`
  *     (labels include the folder name, e.g. `app/.cursor/mcp.json`)
  *
  * Global layers expand `${workspaceFolder}` using the **first** folder only.
@@ -79,7 +98,7 @@ function readConfigFile(
 export function loadMcpConfig(): McpConfigResult {
   const workspaceFolders = vscode.workspace.workspaceFolders;
   if (!workspaceFolders?.length) {
-    return { status: { kind: 'no_workspace' }, config: null };
+    return { status: { kind: 'no_workspace' }, config: null, origins: {} };
   }
 
   const home = os.homedir();
@@ -88,6 +107,11 @@ export function loadMcpConfig(): McpConfigResult {
     readConfigFile(vscodeUserMcpPath(home), 'VS Code user mcp.json', primaryRoot),
     readConfigFile(windsurfMcpPath(home), 'Windsurf mcp_config.json', primaryRoot),
     readConfigFile(claudeCodeMcpPath(home), 'Claude Code (~/.claude.json)', primaryRoot),
+    readConfigFile(
+      claudeDesktopMcpPath(home),
+      'Claude Desktop (claude_desktop_config.json)',
+      primaryRoot,
+    ),
     readConfigFile(path.join(home, '.cursor', 'mcp.json'), '~/.cursor/mcp.json', primaryRoot),
   ];
 
@@ -110,17 +134,18 @@ export function loadMcpConfig(): McpConfigResult {
 
   const anyFileFound = layers.some((l) => l !== null);
   if (!anyFileFound) {
-    return { status: { kind: 'no_config' }, config: null };
+    return { status: { kind: 'no_config' }, config: null, origins: {} };
   }
 
-  const { merged, sources } = mergeConfigLayers(layers);
+  const { merged, sources, origins } = mergeConfigLayers(layers);
   if (Object.keys(merged).length === 0) {
-    return { status: { kind: 'empty_servers', sources }, config: { servers: {} } };
+    return { status: { kind: 'empty_servers', sources }, config: { servers: {} }, origins };
   }
 
   return {
     status: { kind: 'ok', sources },
     config: { servers: merged },
+    origins,
   };
 }
 
@@ -153,6 +178,7 @@ export function watchMcpConfig(onChange: () => void): vscode.Disposable {
     watchGlobalFile(vscodeUserMcpPath(home)),
     watchGlobalFile(windsurfMcpPath(home)),
     watchGlobalFile(claudeCodeMcpPath(home)),
+    watchGlobalFile(claudeDesktopMcpPath(home)),
   );
 
   const globalDir = path.join(home, '.cursor');

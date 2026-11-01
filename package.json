@@ -1,8 +1,8 @@
 {
   "name": "mcp-watchdog",
   "displayName": "MCP Watchdog",
-  "description": "Independent MCP server health checks for Cursor and VS Code. See status, latency, and failure details, then retry Watchdog’s probe or restart the editor’s MCP connection.",
-  "version": "0.5.3",
+  "description": "Independent MCP health for Cursor and VS Code: status, latency, and Accept / Fix… / Remove when a server fails — plus opt-in Cloud bridge (names-only).",
+  "version": "0.5.4",
   "publisher": "mcp-watchdog",
   "license": "MIT",
   "keywords": [
@@ -93,6 +93,22 @@
       {
         "command": "mcpWatchdog.exportIncidentMarkdown",
         "title": "MCP Watchdog: Export Incident Timeline (Markdown)"
+      },
+      {
+        "command": "mcpWatchdog.acceptFailure",
+        "title": "MCP Watchdog: Accept Failure"
+      },
+      {
+        "command": "mcpWatchdog.clearAcceptance",
+        "title": "MCP Watchdog: Unaccept Failure"
+      },
+      {
+        "command": "mcpWatchdog.fixFailure",
+        "title": "MCP Watchdog: Fix Failure…"
+      },
+      {
+        "command": "mcpWatchdog.removeServer",
+        "title": "MCP Watchdog: Remove Server"
       }
     ],
     "menus": {
@@ -116,8 +132,28 @@
       "view/item/context": [
         {
           "command": "mcpWatchdog.reconnectOne",
-          "when": "view == mcpWatchdog.servers && viewItem == mcpWatchdogServer",
+          "when": "view == mcpWatchdog.servers && viewItem =~ /^mcpWatchdogServer/",
           "group": "inline"
+        },
+        {
+          "command": "mcpWatchdog.acceptFailure",
+          "when": "view == mcpWatchdog.servers && viewItem == mcpWatchdogServerFailed",
+          "group": "1_triage@1"
+        },
+        {
+          "command": "mcpWatchdog.fixFailure",
+          "when": "view == mcpWatchdog.servers && viewItem =~ /^mcpWatchdogServer(Failed|Degraded)/",
+          "group": "1_triage@2"
+        },
+        {
+          "command": "mcpWatchdog.removeServer",
+          "when": "view == mcpWatchdog.servers && viewItem =~ /^mcpWatchdogServer/",
+          "group": "1_triage@3"
+        },
+        {
+          "command": "mcpWatchdog.clearAcceptance",
+          "when": "view == mcpWatchdog.servers && viewItem == mcpWatchdogServerAccepted",
+          "group": "1_triage@4"
         }
       ]
     },
@@ -150,7 +186,7 @@
           {
             "id": "statusBar",
             "title": "Check the status bar",
-            "description": "When servers are monitored, the bottom-right status bar shows **MCP: healthy/total**.\n\n[Show server status](command:mcpWatchdog.showStatus)",
+            "description": "When servers are monitored, the bottom-right status bar shows **Watchdog: healthy/total** (separate from the editor’s MCP chip).\n\n[Show server status](command:mcpWatchdog.showStatus)",
             "media": {
               "image": "images/screenshot-status-bar.png",
               "altText": "MCP Watchdog status bar indicator"
@@ -261,7 +297,7 @@
         "mcpWatchdog.perServer": {
           "type": "object",
           "default": {},
-          "description": "Per-server overrides, e.g. {\"memory\":{\"probeMode\":\"persistent\",\"pingIntervalMs\":60000,\"enabled\":false}}",
+          "description": "Per-server overrides (probeMode, pingIntervalMs, enabled, optional authProbe). authProbe calls an MCP tool after a successful ping to verify credentials — may have side effects or cost; off unless set.",
           "additionalProperties": {
             "type": "object",
             "properties": {
@@ -277,6 +313,21 @@
               },
               "enabled": {
                 "type": "boolean"
+              },
+              "authProbe": {
+                "type": "object",
+                "description": "Optional. After a successful ping, call this MCP tool once to verify credentials. May have side effects or cost. Off unless set.",
+                "properties": {
+                  "tool": {
+                    "type": "string",
+                    "description": "MCP tool name to call"
+                  },
+                  "arguments": {
+                    "type": "object",
+                    "description": "Optional tool arguments (never logged as secret values)"
+                  }
+                },
+                "required": ["tool"]
               }
             }
           }
@@ -313,12 +364,12 @@
           "tags": [
             "usesOnlineServices"
           ],
-          "description": "Preview, off by default. The extension does not post incidents to Watchdog Cloud and does not read the editor’s MCP client state."
+          "description": "Send names-only health incidents to a self-hosted Watchdog Cloud (opt-in). Off by default. Never posts env/header values. Fail-soft if Cloud is unreachable."
         },
         "mcpWatchdog.cloudBridge.url": {
           "type": "string",
           "default": "",
-          "description": "Watchdog Cloud base URL (e.g. http://127.0.0.1:8787). Preview only: unused until the extension posts incidents. Ignored unless cloudBridge.enabled is true."
+          "description": "Watchdog Cloud base URL (e.g. http://127.0.0.1:8787). Used only when cloudBridge.enabled is true."
         }
       }
     }
@@ -332,6 +383,8 @@
     "test:unit": "vitest run",
     "t0": "tsx scripts/t0-probe-live.ts",
     "t2": "tsx scripts/t2-bridge-dry-run.ts",
+    "triage-e2e": "tsx scripts/triage-e2e.ts",
+    "tier3-filesystem": "node scripts/tier3-filesystem-smoke.mjs",
     "fixture-mcp": "tsx scripts/fixture-mcp-server.ts",
     "policy-demo": "tsx scripts/policy-audit-demo.ts",
     "test:host": "tsc -p tsconfig.test.json && vscode-test",

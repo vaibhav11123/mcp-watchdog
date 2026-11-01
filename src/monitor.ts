@@ -12,6 +12,7 @@ import { classifyProbeError } from './authError';
 import type { McpServerConfig } from './config-core';
 import { jittered, type MonitorOptions } from './options';
 import { probeHttpEndpoint } from './passiveHttp';
+import { redactLogTail, redactSecrets } from './secretRedact';
 
 export type ServerState = 'connecting' | 'healthy' | 'degraded' | 'failed' | 'disconnected';
 
@@ -20,8 +21,17 @@ export interface ServerStatus {
   state: ServerState;
   lastPingMs?: number;
   lastError?: string;
+  /**
+   * Last classified/raw probe error before max-retries overwrite.
+   * Used by Fix triage when lastError is only "Max retries exceeded".
+   */
+  lastProbeError?: string;
   /** Last few probe log lines on failure (secret-safe; never env/header values). */
   failureContext?: string;
+  /** True when this failure was acknowledged (presentation only — set by UI layer). */
+  accepted?: boolean;
+  /** SecretStorage credential present; editor mcp.json may still lack the key. */
+  watchdogOnlyCred?: boolean;
   /** Present when checkEmptyTools / detectToolDrift ran after a successful ping. */
   toolCount?: number;
   /** True when tool-name fingerprint changed vs the previous successful listTools. */
@@ -50,6 +60,10 @@ export interface MonitorClient {
   connect(transport: unknown): Promise<void>;
   ping(opts: { timeout: number }): Promise<unknown>;
   listTools?: () => Promise<{ tools: unknown[] }>;
+  callTool?: (args: {
+    name: string;
+    arguments?: Record<string, unknown>;
+  }) => Promise<{ isError?: boolean; content?: unknown }>;
   close(): Promise<void>;
 }
 
@@ -104,6 +118,18 @@ function defaultClientFactory(
     }
   }
   return { client: client as unknown as MonitorClient, transport };
+}
+
+function attachStderrCapture(transport: unknown, onLine: (line: string) => void): void {
+  const t = transport as { stderr?: NodeJS.ReadableStream | null };
+  const stream = t.stderr;
+  if (!stream || typeof stream.on !== 'function') return;
+  stream.on('data', (chunk: Buffer | string) => {
+    const text = typeof chunk === 'string' ? chunk : chunk.toString('utf8');
+    for (const line of text.split(/\r?\n/)) {
+      if (line.trim()) onLine(line);
+    }
+  });
 }
 
 export class ServerMonitor {
@@ -176,11 +202,12 @@ export class ServerMonitor {
   }
 
   private recordLog(msg: string): void {
-    this.recentLog.push(msg);
-    if (this.recentLog.length > 20) {
+    const safe = redactSecrets(msg);
+    this.recentLog.push(safe);
+    if (this.recentLog.length > 40) {
       this.recentLog.shift();
     }
-    this.log(msg);
+    this.log(safe);
   }
 
   /** After sleep/wake: probe/ping soon if connected, otherwise try a fresh cycle. */
@@ -201,7 +228,27 @@ export class ServerMonitor {
   }
 
   private failureContextFromLog(): string {
-    return this.recentLog.slice(-5).join('\n');
+    return redactLogTail(this.recentLog, 40, 8192);
+  }
+
+  /** Opt-in credential check after a successful ping/listTools. */
+  private async maybeAuthProbe(client: MonitorClient): Promise<string | undefined> {
+    const probe = this.options.authProbe;
+    if (!probe?.tool || !client.callTool) return undefined;
+    try {
+      const result = await client.callTool({
+        name: probe.tool,
+        arguments: probe.arguments ?? {},
+      });
+      if (result.isError) {
+        return 'Auth probe failed';
+      }
+      return undefined;
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : String(err);
+      this.recordLog(`[${this.name}] authProbe failed: ${msg}`);
+      return 'Auth probe failed';
+    }
   }
 
   private wantsListTools(): boolean {
@@ -287,20 +334,36 @@ export class ServerMonitor {
       const { client, transport } = this.clientFactory(this.config, this.options);
       probeClient = client;
       await client.connect(transport);
+      attachStderrCapture(transport, (line) => this.recordLog(`[${this.name}] stderr: ${line}`));
       const start = this.clock.now();
       await client.ping({ timeout: this.options.pingTimeoutMs });
       const elapsed = this.clock.now() - start;
       const listed = await this.maybeListTools(client);
+      this.retryCount = 0;
+      this.recordLog(`[${this.name}] Probe OK (${elapsed}ms)`);
+      const authFail = await this.maybeAuthProbe(client);
       await client.close().catch(() => {});
       probeClient = null;
       this.client = null;
-      this.retryCount = 0;
-      this.recordLog(`[${this.name}] Probe OK (${elapsed}ms)`);
+      if (authFail) {
+        this.setStatus('degraded', {
+          lastPingMs: elapsed,
+          lastError: authFail,
+          lastProbeError: authFail,
+          lastFailedAt: new Date(this.clock.now()),
+          failureContext: this.failureContextFromLog(),
+          toolCount: listed.toolCount,
+          toolDrift: false,
+        });
+        this.scheduleRetry();
+        return;
+      }
       // Do not put drift notes in lastError — UI treats lastError as a failure string.
       this.setStatus('healthy', {
         lastPingMs: elapsed,
         lastConnectedAt: new Date(this.clock.now()),
         lastError: undefined,
+        lastProbeError: undefined,
         failureContext: undefined,
         toolCount: listed.toolCount,
         toolDrift: listed.toolDrift === true,
@@ -322,6 +385,7 @@ export class ServerMonitor {
       this.recordLog(`[${this.name}] Probe failed: ${msg}`);
       this.setStatus('degraded', {
         lastError,
+        lastProbeError: lastError,
         lastFailedAt: new Date(this.clock.now()),
         failureContext: this.failureContextFromLog(),
         toolDrift: false,
@@ -345,11 +409,17 @@ export class ServerMonitor {
     try {
       const { client, transport } = this.clientFactory(this.config, this.options);
       await client.connect(transport);
+      attachStderrCapture(transport, (line) => this.recordLog(`[${this.name}] stderr: ${line}`));
 
       this.client = client;
       this.retryCount = 0;
       this.recordLog(`[${this.name}] Connected`);
-      this.setStatus('healthy', { lastConnectedAt: new Date(this.clock.now()), toolDrift: false });
+      this.setStatus('healthy', {
+        lastConnectedAt: new Date(this.clock.now()),
+        lastError: undefined,
+        lastProbeError: undefined,
+        toolDrift: false,
+      });
       this.schedulePing();
     } catch (err) {
       const msg = err instanceof Error ? err.message : String(err);
@@ -357,6 +427,7 @@ export class ServerMonitor {
       this.recordLog(`[${this.name}] Connection failed: ${msg}`);
       this.setStatus('failed', {
         lastError,
+        lastProbeError: lastError,
         lastFailedAt: new Date(this.clock.now()),
         failureContext: this.failureContextFromLog(),
         toolDrift: false,
@@ -375,17 +446,34 @@ export class ServerMonitor {
   }
 
   private async doPing(): Promise<void> {
-    if (!this.client || this.closing) return;
+    const client = this.client;
+    if (!client || this.closing) return;
 
     const start = this.clock.now();
     try {
-      await this.client.ping({ timeout: this.options.pingTimeoutMs });
+      await client.ping({ timeout: this.options.pingTimeoutMs });
       const elapsed = this.clock.now() - start;
-      const listed = await this.maybeListTools(this.client);
+      const listed = await this.maybeListTools(client);
       this.recordLog(`[${this.name}] Ping OK (${elapsed}ms)`);
+      const authFail = await this.maybeAuthProbe(client);
+      if (authFail) {
+        this.setStatus('degraded', {
+          lastPingMs: elapsed,
+          lastError: authFail,
+          lastProbeError: authFail,
+          failureContext: this.failureContextFromLog(),
+          toolCount: listed.toolCount,
+          toolDrift: false,
+        });
+        await client.close().catch(() => {});
+        this.client = null;
+        this.scheduleRetry();
+        return;
+      }
       this.setStatus('healthy', {
         lastPingMs: elapsed,
         lastError: undefined,
+        lastProbeError: undefined,
         failureContext: undefined,
         toolCount: listed.toolCount,
         toolDrift: listed.toolDrift === true,
@@ -400,11 +488,12 @@ export class ServerMonitor {
       this.recordLog(`[${this.name}] Ping failed: ${msg}`);
       this.setStatus('degraded', {
         lastError,
+        lastProbeError: lastError,
         failureContext: this.failureContextFromLog(),
         toolDrift: false,
       });
 
-      await this.client.close().catch(() => {});
+      await client.close().catch(() => {});
       this.client = null;
       this.scheduleRetry();
     }
@@ -416,6 +505,7 @@ export class ServerMonitor {
       this.recordLog(`[${this.name}] Max retries (${this.options.maxRetries}) reached. Giving up.`);
       this.setStatus('failed', {
         lastError: 'Max retries exceeded',
+        lastProbeError: this.status.lastProbeError ?? this.status.lastError,
         failureContext: this.failureContextFromLog(),
       });
       return;

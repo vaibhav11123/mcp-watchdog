@@ -24,6 +24,8 @@ export interface BridgeIncident {
   toolDrift?: boolean;
   headerNames?: string[];
   envNames?: string[];
+  /** IDE Accept failure ack (names-only metadata). */
+  accepted?: boolean;
   at: string;
 }
 

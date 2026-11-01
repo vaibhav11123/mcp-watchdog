@@ -63,6 +63,8 @@ export class IncidentRingBuffer {
       `Exported: ${new Date().toISOString()}`,
       `Transitions: ${this.items.length}`,
       '',
+      '_Accept / Remove notes:_ Accept is a sticky ack stored in workspace state (chip quiet); it does not change probe state. Remove deletes the server key from the owning mcp.json (or falls back to per-server disable). Dual-truth: Watchdog probe ≠ editor MCP client.',
+      '',
     ];
 
     if (this.items.length === 0) {

@@ -4,9 +4,11 @@ export const EXT_ID = 'mcp-watchdog.mcp-watchdog';
 export const ECHO = 'echo';
 
 export interface McpWatchdogApi {
-  getStatuses(): Array<{ name: string; state: string; lastError?: string }>;
+  getStatuses(): Array<{ name: string; state: string; lastError?: string; accepted?: boolean }>;
   getLastAlert(): { kind: string; message: string; actions: string[]; server: string } | undefined;
   revokeTrustForTests(): Promise<void>;
+  acceptFailureForTests(serverName: string): Promise<void>;
+  removeServerForTests(serverName: string): Promise<void>;
 }
 
 export function delay(ms: number): Promise<void> {
@@ -32,13 +34,33 @@ export async function setupEchoOnlyHost(
 ): Promise<void> {
   const cfg = vscode.workspace.getConfiguration('mcpWatchdog');
   await cfg.update('requireApproval', opts.requireApproval, vscode.ConfigurationTarget.Workspace);
+  // Ensure the configuration service has applied the write before any reload.
+  await delay(200);
+  const applied = vscode.workspace
+    .getConfiguration('mcpWatchdog')
+    .get<boolean>('requireApproval', true);
+  if (applied !== opts.requireApproval) {
+    throw new Error(
+      `requireApproval update failed: wanted ${opts.requireApproval}, got ${applied}`,
+    );
+  }
 
-  // Discover merged server names (workspace + global) before locking perServer.
-  await vscode.commands.executeCommand('mcpWatchdog.refresh');
+  // Discover names without starting probes when gated: revoke first.
+  if (opts.requireApproval) {
+    await api.revokeTrustForTests();
+  } else {
+    await vscode.commands.executeCommand('mcpWatchdog.refresh');
+  }
   await delay(400);
 
   const discovered = new Set(api.getStatuses().map((s) => s.name));
-  for (const known of ['memory', 'filesystem', ECHO]) {
+  for (const known of [
+    'memory',
+    'filesystem',
+    'filesystem-vendored',
+    'filesystem-vendored-fail',
+    ECHO,
+  ]) {
     discovered.add(known);
   }
 
@@ -50,6 +72,7 @@ export async function setupEchoOnlyHost(
   }
 
   await cfg.update('perServer', perServer, vscode.ConfigurationTarget.Workspace);
+  await delay(200);
 
   if (opts.requireApproval) {
     await api.revokeTrustForTests();

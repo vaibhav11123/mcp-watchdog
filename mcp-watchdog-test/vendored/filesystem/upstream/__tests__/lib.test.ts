@@ -1,0 +1,1213 @@
+import {
+  describe,
+  it,
+  expect,
+  beforeEach,
+  afterEach,
+  vi,
+  type Mock,
+} from "vitest";
+import fs, { type FileHandle } from "fs/promises";
+import type { BigIntStats, Dirent, PathLike, Stats } from "fs";
+import path from "path";
+import {
+  // Pure utility functions
+  formatSize,
+  normalizeLineEndings,
+  detectLineEnding,
+  createUnifiedDiff,
+  // Security & validation functions
+  validatePath,
+  // File operations
+  getFileStats,
+  readFileContent,
+  writeFileContent,
+  createDirectory,
+  moveFile,
+  // Search & filtering functions
+  searchFilesWithValidation,
+  // File editing functions
+  applyFileEdits,
+  tailFile,
+  headFile,
+} from "../lib.js";
+import * as pinned from "../pinned-directory.js";
+
+// Mock fs module
+vi.mock("fs/promises");
+// The pinned-directory writes act on the real filesystem; their own suite
+// covers them, so here only what lib.ts hands them is checked.
+vi.mock("../pinned-directory.js");
+const mockPinned = vi.mocked(pinned);
+const mockFs = vi.mocked(fs);
+// fs.readdir is overloaded and vi.mocked types the mock against its last
+// (Buffer) overload; the code under test calls the withFileTypes overload.
+const mockReaddir = vi.mocked(
+  fs.readdir as (
+    path: PathLike,
+    options: { withFileTypes: true },
+  ) => Promise<Dirent[]>,
+);
+
+// The path resolver calls the plain overload, which lists names as strings.
+const mockReaddirNames = vi.mocked(
+  fs.readdir as (path: PathLike) => Promise<string[]>,
+);
+
+// The case respelling (#470) lstats with { bigint: true }, to compare inodes
+// Windows reports as 64-bit file IDs without losing precision.
+const mockLstatBigInt = vi.mocked(
+  fs.lstat as (
+    path: PathLike,
+    options: { bigint: true },
+  ) => Promise<BigIntStats>,
+);
+
+interface MockFileHandle {
+  read: Mock;
+  close: Mock;
+}
+
+function asFileHandle(handle: MockFileHandle): FileHandle {
+  // Double cast is safe here: tailFile/headFile only ever call read() and
+  // close() on the handle, which this test double provides; FileHandle's
+  // overloaded read() signatures cannot be matched by a vi.fn() mock, so no
+  // single cast or structural type relates the two.
+  return handle as unknown as FileHandle;
+}
+
+function createMockFileHandle(content: Buffer) {
+  return {
+    read: vi.fn(
+      async (
+        buffer: Buffer,
+        offset: number,
+        length: number,
+        position: number,
+      ) => {
+        const bytesRead = content.copy(
+          buffer,
+          offset,
+          position,
+          Math.min(position + length, content.length),
+        );
+        return { bytesRead, buffer };
+      },
+    ),
+    close: vi.fn().mockResolvedValue(undefined),
+  };
+}
+
+// What lstat reports for the file an in-place write replaces: a regular file,
+// as a BigInt stat, the form the identity check compares exactly (#5154).
+const REGULAR_FILE = {
+  isFile: () => true,
+  dev: 1n,
+  ino: 42n,
+  size: 8n,
+  mtimeNs: 1_700_000_000_000_000_000n,
+} as BigIntStats;
+
+// The allow-list validatePath checks against; each server instance passes its
+// own (#4854), so the unit tests pass this one explicitly.
+const allowedDirs =
+  process.platform === "win32"
+    ? ["C:\\Users\\test", "C:\\temp", "C:\\allowed"]
+    : ["/home/user", "/tmp", "/allowed"];
+
+describe("Lib Functions", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
+  describe("Pure Utility Functions", () => {
+    describe("formatSize", () => {
+      it("formats bytes correctly", () => {
+        expect(formatSize(0)).toBe("0 B");
+        expect(formatSize(512)).toBe("512 B");
+        expect(formatSize(1024)).toBe("1.00 KB");
+        expect(formatSize(1536)).toBe("1.50 KB");
+        expect(formatSize(1048576)).toBe("1.00 MB");
+        expect(formatSize(1073741824)).toBe("1.00 GB");
+        expect(formatSize(1099511627776)).toBe("1.00 TB");
+      });
+
+      it("handles edge cases", () => {
+        expect(formatSize(1023)).toBe("1023 B");
+        expect(formatSize(1025)).toBe("1.00 KB");
+        expect(formatSize(1048575)).toBe("1024.00 KB");
+      });
+
+      it("handles very large numbers beyond TB", () => {
+        // The function only supports up to TB, so very large numbers will show as TB
+        expect(formatSize(1024 * 1024 * 1024 * 1024 * 1024)).toBe("1024.00 TB");
+        expect(formatSize(Number.MAX_SAFE_INTEGER)).toContain("TB");
+      });
+
+      it("handles negative numbers", () => {
+        // Negative numbers should return '0 B' as file sizes cannot be negative
+        expect(formatSize(-1)).toBe("0 B");
+        expect(formatSize(-1024)).toBe("0 B");
+        expect(formatSize(-1000000)).toBe("0 B");
+        expect(formatSize(-0)).toBe("0 B");
+      });
+
+      it("handles decimal numbers", () => {
+        expect(formatSize(1536.5)).toBe("1.50 KB");
+        expect(formatSize(1023.9)).toBe("1023.9 B");
+      });
+
+      it("handles very small positive numbers", () => {
+        expect(formatSize(1)).toBe("1 B");
+        expect(formatSize(0.5)).toBe("0.5 B");
+        expect(formatSize(0.1)).toBe("0.1 B");
+      });
+    });
+
+    describe("normalizeLineEndings", () => {
+      it("converts CRLF to LF", () => {
+        expect(normalizeLineEndings("line1\r\nline2\r\nline3")).toBe(
+          "line1\nline2\nline3",
+        );
+      });
+
+      it("leaves LF unchanged", () => {
+        expect(normalizeLineEndings("line1\nline2\nline3")).toBe(
+          "line1\nline2\nline3",
+        );
+      });
+
+      it("handles mixed line endings", () => {
+        expect(normalizeLineEndings("line1\r\nline2\nline3\r\n")).toBe(
+          "line1\nline2\nline3\n",
+        );
+      });
+
+      it("handles empty string", () => {
+        expect(normalizeLineEndings("")).toBe("");
+      });
+    });
+
+    describe("detectLineEnding", () => {
+      it("detects CRLF", () => {
+        expect(detectLineEnding("line1\r\nline2\r\n")).toBe("\r\n");
+      });
+
+      it("detects LF", () => {
+        expect(detectLineEnding("line1\nline2\n")).toBe("\n");
+      });
+
+      it("picks the predominant ending of a mixed file", () => {
+        expect(detectLineEnding("a\r\nb\r\nc\n")).toBe("\r\n");
+        expect(detectLineEnding("a\r\nb\nc\n")).toBe("\n");
+      });
+
+      it("defaults to LF for a file with no line breaks", () => {
+        expect(detectLineEnding("")).toBe("\n");
+        expect(detectLineEnding("line1")).toBe("\n");
+      });
+    });
+
+    describe("createUnifiedDiff", () => {
+      it("creates diff for simple changes", () => {
+        const original = "line1\nline2\nline3";
+        const modified = "line1\nmodified line2\nline3";
+        const diff = createUnifiedDiff(original, modified, "test.txt");
+
+        expect(diff).toContain("--- test.txt");
+        expect(diff).toContain("+++ test.txt");
+        expect(diff).toContain("-line2");
+        expect(diff).toContain("+modified line2");
+      });
+
+      it("handles CRLF normalization", () => {
+        const original = "line1\r\nline2\r\n";
+        const modified = "line1\nmodified line2\n";
+        const diff = createUnifiedDiff(original, modified);
+
+        expect(diff).toContain("-line2");
+        expect(diff).toContain("+modified line2");
+      });
+
+      it("handles identical content", () => {
+        const content = "line1\nline2\nline3";
+        const diff = createUnifiedDiff(content, content);
+
+        // Should not contain any +/- lines for identical content (excluding header lines)
+        expect(
+          diff
+            .split("\n")
+            .filter(
+              (line: string) =>
+                line.startsWith("+++") || line.startsWith("---"),
+            ),
+        ).toHaveLength(2);
+        expect(
+          diff
+            .split("\n")
+            .filter(
+              (line: string) => line.startsWith("+") && !line.startsWith("+++"),
+            ),
+        ).toHaveLength(0);
+        expect(
+          diff
+            .split("\n")
+            .filter(
+              (line: string) => line.startsWith("-") && !line.startsWith("---"),
+            ),
+        ).toHaveLength(0);
+      });
+
+      it("handles empty content", () => {
+        const diff = createUnifiedDiff("", "");
+        expect(diff).toContain("--- file");
+        expect(diff).toContain("+++ file");
+      });
+
+      it("handles default filename parameter", () => {
+        const diff = createUnifiedDiff("old", "new");
+        expect(diff).toContain("--- file");
+        expect(diff).toContain("+++ file");
+      });
+
+      it("handles custom filename", () => {
+        const diff = createUnifiedDiff("old", "new", "custom.txt");
+        expect(diff).toContain("--- custom.txt");
+        expect(diff).toContain("+++ custom.txt");
+      });
+    });
+  });
+
+  describe("Security & Validation Functions", () => {
+    describe("validatePath", () => {
+      it("rejects Windows drive paths on POSIX hosts", async () => {
+        if (process.platform === "win32") return;
+
+        await expect(
+          validatePath("C:\\Users\\me\\notes\\file.md", allowedDirs),
+        ).rejects.toThrow("Windows-style path received on a POSIX host");
+      });
+
+      beforeEach(() => {
+        mockFs.realpath.mockImplementation(async (path: PathLike) =>
+          path.toString(),
+        );
+        // A name the path resolver lstats is missing unless a test says
+        // otherwise, so an unmatched component starts the missing tail.
+        const enoent = new Error("ENOENT") as NodeJS.ErrnoException;
+        enoent.code = "ENOENT";
+        mockFs.lstat.mockRejectedValue(enoent);
+      });
+
+      it("validates allowed paths", async () => {
+        const testPath =
+          process.platform === "win32"
+            ? "C:\\Users\\test\\file.txt"
+            : "/home/user/file.txt";
+        const result = await validatePath(testPath, allowedDirs);
+        expect(result).toBe(testPath);
+      });
+
+      it("rejects disallowed paths", async () => {
+        const testPath =
+          process.platform === "win32"
+            ? "C:\\Windows\\System32\\file.txt"
+            : "/etc/passwd";
+        await expect(validatePath(testPath, allowedDirs)).rejects.toThrow(
+          "Access denied - path outside allowed directories",
+        );
+      });
+
+      it("handles non-existent files by checking parent directory", async () => {
+        const newFilePath =
+          process.platform === "win32"
+            ? "C:\\Users\\test\\newfile.txt"
+            : "/home/user/newfile.txt";
+        const parentPath =
+          process.platform === "win32" ? "C:\\Users\\test" : "/home/user";
+
+        // Create an error with the ENOENT code that the implementation checks for
+        const enoentError = new Error("ENOENT") as NodeJS.ErrnoException;
+        enoentError.code = "ENOENT";
+
+        mockFs.realpath
+          .mockRejectedValueOnce(enoentError)
+          .mockResolvedValueOnce(parentPath);
+
+        const result = await validatePath(newFilePath, allowedDirs);
+        expect(result).toBe(path.resolve(newFilePath));
+      });
+
+      it("walks past multiple missing ancestors to an existing allowed directory", async () => {
+        // e.g. create_directory('/home/user/nonexistent/nested/newfile.txt') when
+        // neither 'nonexistent' nor 'nonexistent/nested' exist yet, but '/home/user'
+        // (an allowed directory) does. Regression test for #4629.
+        const newFilePath =
+          process.platform === "win32"
+            ? "C:\\Users\\test\\nonexistent\\nested\\newfile.txt"
+            : "/home/user/nonexistent/nested/newfile.txt";
+
+        const enoentError = new Error("ENOENT") as NodeJS.ErrnoException;
+        enoentError.code = "ENOENT";
+
+        // The path itself is missing. The resolver then realpaths the allowed
+        // directory ('/home/user'), which falls through to the beforeEach base
+        // implementation and echoes the path back as-is. readdir is mocked to
+        // undefined, so every component below it counts as missing.
+        mockFs.realpath.mockRejectedValueOnce(enoentError);
+
+        const result = await validatePath(newFilePath, allowedDirs);
+        expect(result).toBe(path.resolve(newFilePath));
+      });
+
+      it("checks a component no entry matches by spelling when the OS still finds it", async () => {
+        // On a case-insensitive file system "LINK" opens the symlink listed as
+        // "link"; it must be resolved and checked, not treated as missing.
+        const base =
+          process.platform === "win32" ? "C:\\Users\\test" : "/home/user";
+        const outsideDir =
+          process.platform === "win32" ? "C:\\outside" : "/outside";
+        const enoentError = new Error("ENOENT") as NodeJS.ErrnoException;
+        enoentError.code = "ENOENT";
+        mockFs.realpath
+          .mockRejectedValueOnce(enoentError)
+          .mockResolvedValueOnce(base)
+          .mockResolvedValueOnce(outsideDir);
+        mockReaddirNames.mockResolvedValueOnce(["link"]);
+        mockFs.lstat.mockResolvedValueOnce({} as Stats);
+
+        await expect(
+          validatePath(path.join(base, "LINK", "a"), allowedDirs),
+        ).rejects.toThrow(
+          `Access denied - symlink target outside allowed directories: ${outsideDir}`,
+        );
+        expect(mockFs.lstat).toHaveBeenCalledWith(path.join(base, "LINK"));
+      });
+
+      it("reports an lstat failure other than ENOENT on an unmatched component as is", async () => {
+        const base =
+          process.platform === "win32" ? "C:\\Users\\test" : "/home/user";
+        const enoentError = new Error("ENOENT") as NodeJS.ErrnoException;
+        enoentError.code = "ENOENT";
+        mockFs.realpath.mockRejectedValueOnce(enoentError);
+        mockReaddirNames.mockResolvedValueOnce([]);
+        mockFs.lstat.mockRejectedValueOnce(new Error("EACCES lstat"));
+
+        await expect(
+          validatePath(path.join(base, "new", "f.txt"), allowedDirs),
+        ).rejects.toThrow("EACCES lstat");
+      });
+
+      it("rejects when no ancestor directory exists at all", async () => {
+        const newFilePath =
+          process.platform === "win32"
+            ? "C:\\Users\\test\\nonexistent\\newfile.txt"
+            : "/home/user/nonexistent/newfile.txt";
+
+        const enoentError = new Error("ENOENT") as NodeJS.ErrnoException;
+        enoentError.code = "ENOENT";
+
+        // Every ancestor, all the way up to the filesystem root, is missing.
+        mockFs.realpath.mockRejectedValue(enoentError);
+
+        await expect(validatePath(newFilePath, allowedDirs)).rejects.toThrow(
+          "Parent directory does not exist",
+        );
+      });
+
+      it("resolves relative paths against allowed directories instead of process.cwd()", async () => {
+        const relativePath = "test-file.txt";
+        const originalCwd = process.cwd;
+
+        // Mock process.cwd to return a directory outside allowed directories
+        const disallowedCwd =
+          process.platform === "win32" ? "C:\\Windows\\System32" : "/root";
+        process.cwd = vi.fn(() => disallowedCwd);
+
+        try {
+          const result = await validatePath(relativePath, allowedDirs);
+
+          // Result should be resolved against first allowed directory, not process.cwd()
+          const expectedPath =
+            process.platform === "win32"
+              ? path.resolve("C:\\Users\\test", relativePath)
+              : path.resolve("/home/user", relativePath);
+
+          expect(result).toBe(expectedPath);
+          expect(result).not.toContain(disallowedCwd);
+        } finally {
+          // Restore original process.cwd
+          process.cwd = originalCwd;
+        }
+      });
+
+      // #470: the allowed directory's own name spelled in a letter case that
+      // matches neither the configured nor the on-disk spelling. It is
+      // respelled only where the file system confirms, component by
+      // component, that both spellings name one entry.
+      describe("letter case of an allowed directory's own name (#470)", () => {
+        const win = process.platform === "win32";
+        const configured = win ? "C:\\Users\\test" : "/home/user";
+        const requestedFile = win
+          ? "C:\\USERS\\Test\\file.txt"
+          : "/HOME/User/file.txt";
+        const respelled = path.join(configured, "file.txt");
+        // Each directory the walk lists, as the configured spelling names it.
+        const listings: Record<string, string[]> = win
+          ? { "C:\\": ["Users"], "C:\\Users": ["test"] }
+          : { "/": ["home"], "/home": ["user"] };
+
+        // lstat on a case-insensitive file system: any spelling of a listed
+        // entry is that entry, one inode per lowercased path.
+        function foldingLstat() {
+          mockLstatBigInt.mockImplementation(
+            async (p: PathLike) =>
+              ({
+                dev: 1n,
+                ino: BigInt(p.toString().toLowerCase().length),
+              }) as BigIntStats,
+          );
+        }
+
+        beforeEach(() => {
+          mockReaddirNames.mockImplementation(
+            async (p: PathLike) => listings[p.toString()] ?? [],
+          );
+        });
+
+        it("respells the request onto the allowed directory when the file system folds case", async () => {
+          foldingLstat();
+          await expect(validatePath(requestedFile, allowedDirs)).resolves.toBe(
+            respelled,
+          );
+        });
+
+        it("refuses when a directory holds two entries differing only in case", async () => {
+          foldingLstat();
+          const [first, second] = win ? ["Users", "test"] : ["home", "user"];
+          const parent = win ? "C:\\" : "/";
+          mockReaddirNames.mockImplementation(async (p: PathLike) =>
+            p.toString() === parent ? [first, first.toUpperCase()] : [second],
+          );
+          await expect(
+            validatePath(requestedFile, allowedDirs),
+          ).rejects.toThrow("Access denied - path outside allowed directories");
+        });
+
+        it("refuses when the requested spelling does not exist (a case-sensitive directory)", async () => {
+          // beforeEach makes every lstat ENOENT.
+          await expect(
+            validatePath(requestedFile, allowedDirs),
+          ).rejects.toThrow("Access denied - path outside allowed directories");
+        });
+
+        it("refuses when the two spellings are different entries", async () => {
+          let ino = 0n;
+          mockLstatBigInt.mockImplementation(
+            async () => ({ dev: 1n, ino: ++ino }) as BigIntStats,
+          );
+          await expect(
+            validatePath(requestedFile, allowedDirs),
+          ).rejects.toThrow("Access denied - path outside allowed directories");
+        });
+
+        it("refuses when a directory cannot be listed", async () => {
+          foldingLstat();
+          mockReaddirNames.mockRejectedValue(new Error("EACCES readdir"));
+          await expect(
+            validatePath(requestedFile, allowedDirs),
+          ).rejects.toThrow("Access denied - path outside allowed directories");
+        });
+
+        it("still refuses a name that only folds onto part of an allowed directory", async () => {
+          foldingLstat();
+          const parentOnly = win ? "C:\\USERS\\x.txt" : "/HOME/x.txt";
+          await expect(validatePath(parentOnly, allowedDirs)).rejects.toThrow(
+            "Access denied - path outside allowed directories",
+          );
+        });
+      });
+    });
+  });
+
+  describe("File Operations", () => {
+    describe("getFileStats", () => {
+      it("returns file statistics", async () => {
+        const mockStats = {
+          size: 1024,
+          birthtime: new Date("2023-01-01"),
+          mtime: new Date("2023-01-02"),
+          atime: new Date("2023-01-03"),
+          isDirectory: () => false,
+          isFile: () => true,
+          mode: 0o644,
+          nlink: 2,
+        };
+
+        mockFs.stat.mockResolvedValueOnce(mockStats as Stats);
+
+        const result = await getFileStats("/test/file.txt");
+
+        expect(result).toEqual({
+          size: 1024,
+          created: new Date("2023-01-01"),
+          modified: new Date("2023-01-02"),
+          accessed: new Date("2023-01-03"),
+          isDirectory: false,
+          isFile: true,
+          permissions: "644",
+          hardLinks: 2,
+        });
+      });
+
+      it("handles directory statistics", async () => {
+        const mockStats = {
+          size: 4096,
+          birthtime: new Date("2023-01-01"),
+          mtime: new Date("2023-01-02"),
+          atime: new Date("2023-01-03"),
+          isDirectory: () => true,
+          isFile: () => false,
+          mode: 0o755,
+        };
+
+        mockFs.stat.mockResolvedValueOnce(mockStats as Stats);
+
+        const result = await getFileStats("/test/dir");
+
+        expect(result.isDirectory).toBe(true);
+        expect(result.isFile).toBe(false);
+        expect(result.permissions).toBe("755");
+      });
+    });
+
+    describe("readFileContent", () => {
+      it("reads file with default encoding", async () => {
+        mockFs.readFile.mockResolvedValueOnce("file content");
+
+        const result = await readFileContent("/test/file.txt");
+
+        expect(result).toBe("file content");
+        expect(mockFs.readFile).toHaveBeenCalledWith("/test/file.txt", "utf-8");
+      });
+
+      it("reads file with custom encoding", async () => {
+        mockFs.readFile.mockResolvedValueOnce("file content");
+
+        const result = await readFileContent("/test/file.txt", "ascii");
+
+        expect(result).toBe("file content");
+        expect(mockFs.readFile).toHaveBeenCalledWith("/test/file.txt", "ascii");
+      });
+    });
+
+    describe("writeFileContent", () => {
+      it("creates a new file in its pinned directory", async () => {
+        await writeFileContent("/test/file.txt", "new content");
+
+        expect(mockPinned.createFileInDirectory).toHaveBeenCalledWith(
+          "/test/file.txt",
+          "new content",
+        );
+        expect(mockPinned.overwriteFileInDirectory).not.toHaveBeenCalled();
+      });
+
+      it("overwrites an existing file in place, as the file lstat saw (#4512)", async () => {
+        mockPinned.createFileInDirectory.mockRejectedValueOnce(
+          Object.assign(new Error("EEXIST"), { code: "EEXIST" }),
+        );
+        mockFs.lstat.mockResolvedValueOnce(REGULAR_FILE);
+
+        await writeFileContent("/test/script.sh", "new content");
+
+        expect(mockFs.lstat).toHaveBeenCalledWith("/test/script.sh", {
+          bigint: true,
+        });
+        expect(mockPinned.overwriteFileInDirectory).toHaveBeenCalledWith(
+          "/test/script.sh",
+          "new content",
+          REGULAR_FILE,
+        );
+        // No temp file, no rename over the target (#3199), no chmod to repair
+        // the permission bits of a replaced inode.
+        expect(mockFs.writeFile).not.toHaveBeenCalled();
+        expect(mockFs.rename).not.toHaveBeenCalled();
+        expect(mockFs.chmod).not.toHaveBeenCalled();
+      });
+
+      it("refuses to overwrite a path that is not a regular file", async () => {
+        mockPinned.createFileInDirectory.mockRejectedValueOnce(
+          Object.assign(new Error("EEXIST"), { code: "EEXIST" }),
+        );
+        mockFs.lstat.mockResolvedValueOnce({
+          ...REGULAR_FILE,
+          isFile: () => false,
+        } as BigIntStats);
+
+        await expect(
+          writeFileContent("/test/link.txt", "new content"),
+        ).rejects.toThrow(
+          "Refusing to write: not a regular file: /test/link.txt",
+        );
+        expect(mockPinned.overwriteFileInDirectory).not.toHaveBeenCalled();
+      });
+
+      it("reports a create failure other than EEXIST as is", async () => {
+        mockPinned.createFileInDirectory.mockRejectedValueOnce(
+          Object.assign(new Error("EIO"), { code: "EIO" }),
+        );
+
+        await expect(
+          writeFileContent("/test/file.txt", "new content"),
+        ).rejects.toThrow("EIO");
+        expect(mockPinned.overwriteFileInDirectory).not.toHaveBeenCalled();
+      });
+    });
+
+    describe("createDirectory", () => {
+      it("creates the directory in its pinned parents", async () => {
+        await createDirectory("/test/a/b");
+
+        expect(mockPinned.createDirectoryInPlace).toHaveBeenCalledWith(
+          "/test/a/b",
+        );
+      });
+    });
+
+    describe("moveFile", () => {
+      it("moves the file when the destination does not exist", async () => {
+        const enoent = Object.assign(new Error("not found"), {
+          code: "ENOENT",
+        });
+        mockFs.lstat.mockRejectedValueOnce(enoent);
+
+        await moveFile("/test/source.txt", "/test/dest.txt");
+
+        expect(mockPinned.renameIntoDirectory).toHaveBeenCalledWith(
+          "/test/source.txt",
+          "/test/dest.txt",
+        );
+      });
+
+      it("fails without overwriting when the destination already exists", async () => {
+        // lstat resolving means the destination is occupied.
+        mockFs.lstat.mockResolvedValueOnce({} as Stats);
+
+        await expect(
+          moveFile("/test/source.txt", "/test/dest.txt"),
+        ).rejects.toThrow("Destination already exists");
+
+        expect(mockPinned.renameIntoDirectory).not.toHaveBeenCalled();
+      });
+
+      it("copies and removes instead when the rename crosses a device (EXDEV)", async () => {
+        mockFs.lstat.mockRejectedValueOnce(
+          Object.assign(new Error("not found"), { code: "ENOENT" }),
+        );
+        mockPinned.renameIntoDirectory.mockImplementationOnce(() => {
+          throw Object.assign(new Error("EXDEV: cross-device link"), {
+            code: "EXDEV",
+          });
+        });
+
+        await moveFile("/test/source.txt", "/mnt/other/dest.txt");
+
+        expect(mockPinned.moveFileAcrossDevices).toHaveBeenCalledWith(
+          "/test/source.txt",
+          "/mnt/other/dest.txt",
+        );
+      });
+
+      it("reports a rename failure other than EXDEV as is, without copying", async () => {
+        mockFs.lstat.mockRejectedValueOnce(
+          Object.assign(new Error("not found"), { code: "ENOENT" }),
+        );
+        mockPinned.renameIntoDirectory.mockImplementationOnce(() => {
+          throw Object.assign(new Error("EACCES: permission denied"), {
+            code: "EACCES",
+          });
+        });
+
+        await expect(
+          moveFile("/test/source.txt", "/test/dest.txt"),
+        ).rejects.toThrow("EACCES: permission denied");
+        expect(mockPinned.moveFileAcrossDevices).not.toHaveBeenCalled();
+      });
+    });
+  });
+
+  describe("Search & Filtering Functions", () => {
+    describe("searchFilesWithValidation", () => {
+      beforeEach(() => {
+        mockFs.realpath.mockImplementation(async (path: PathLike) =>
+          path.toString(),
+        );
+      });
+
+      it("excludes files matching exclude patterns", async () => {
+        const mockEntries = [
+          { name: "test.txt", isDirectory: () => false },
+          { name: "test.log", isDirectory: () => false },
+          { name: "node_modules", isDirectory: () => true },
+        ];
+
+        mockReaddir.mockResolvedValueOnce(mockEntries as Dirent[]);
+
+        const testDir =
+          process.platform === "win32" ? "C:\\allowed\\dir" : "/allowed/dir";
+        const allowedDirs =
+          process.platform === "win32" ? ["C:\\allowed"] : ["/allowed"];
+
+        // Mock realpath to return the same path for validation to pass
+        mockFs.realpath.mockImplementation(async (inputPath: PathLike) => {
+          const pathStr = inputPath.toString();
+          // Return the path as-is for validation
+          return pathStr;
+        });
+
+        const result = await searchFilesWithValidation(
+          testDir,
+          "*test*",
+          allowedDirs,
+          { excludePatterns: ["*.log", "node_modules"] },
+        );
+
+        const expectedResult =
+          process.platform === "win32"
+            ? "C:\\allowed\\dir\\test.txt"
+            : "/allowed/dir/test.txt";
+        expect(result).toEqual([expectedResult]);
+      });
+
+      it("handles validation errors during search", async () => {
+        const mockEntries = [
+          { name: "test.txt", isDirectory: () => false },
+          { name: "invalid_file.txt", isDirectory: () => false },
+        ];
+
+        mockReaddir.mockResolvedValueOnce(mockEntries as Dirent[]);
+
+        // Mock validatePath to throw error for invalid_file.txt
+        mockFs.realpath.mockImplementation(async (path: PathLike) => {
+          if (path.toString().includes("invalid_file.txt")) {
+            throw new Error("Access denied");
+          }
+          return path.toString();
+        });
+
+        const testDir =
+          process.platform === "win32" ? "C:\\allowed\\dir" : "/allowed/dir";
+        const allowedDirs =
+          process.platform === "win32" ? ["C:\\allowed"] : ["/allowed"];
+
+        const result = await searchFilesWithValidation(
+          testDir,
+          "*test*",
+          allowedDirs,
+          {},
+        );
+
+        // Should only return the valid file, skipping the invalid one
+        const expectedResult =
+          process.platform === "win32"
+            ? "C:\\allowed\\dir\\test.txt"
+            : "/allowed/dir/test.txt";
+        expect(result).toEqual([expectedResult]);
+      });
+
+      it("handles complex exclude patterns with wildcards", async () => {
+        const mockEntries = [
+          { name: "test.txt", isDirectory: () => false },
+          { name: "test.backup", isDirectory: () => false },
+          { name: "important_test.js", isDirectory: () => false },
+        ];
+
+        mockReaddir.mockResolvedValueOnce(mockEntries as Dirent[]);
+
+        const testDir =
+          process.platform === "win32" ? "C:\\allowed\\dir" : "/allowed/dir";
+        const allowedDirs =
+          process.platform === "win32" ? ["C:\\allowed"] : ["/allowed"];
+
+        const result = await searchFilesWithValidation(
+          testDir,
+          "*test*",
+          allowedDirs,
+          { excludePatterns: ["*.backup"] },
+        );
+
+        const expectedResults =
+          process.platform === "win32"
+            ? [
+                "C:\\allowed\\dir\\test.txt",
+                "C:\\allowed\\dir\\important_test.js",
+              ]
+            : ["/allowed/dir/test.txt", "/allowed/dir/important_test.js"];
+        expect(result).toEqual(expectedResults);
+      });
+    });
+  });
+
+  describe("File Editing Functions", () => {
+    describe("applyFileEdits", () => {
+      beforeEach(() => {
+        mockFs.readFile.mockResolvedValue("line1\nline2\nline3\n");
+        mockFs.lstat.mockResolvedValue(REGULAR_FILE);
+      });
+
+      afterEach(() => {
+        // Persistent implementations outlive vi.clearAllMocks(); drop them.
+        mockFs.lstat.mockReset();
+      });
+
+      it("applies simple text replacement", async () => {
+        const edits = [{ oldText: "line2", newText: "modified line2" }];
+
+        const result = await applyFileEdits("/test/file.txt", edits, false);
+
+        expect(result).toContain("modified line2");
+        expect(mockPinned.overwriteFileInDirectory).toHaveBeenCalledWith(
+          expect.any(String),
+          "line1\nmodified line2\nline3\n",
+          REGULAR_FILE,
+        );
+      });
+
+      it("treats dollar signs in replacement text literally", async () => {
+        const edits = [
+          {
+            oldText: "line2",
+            newText: "price=$$; match=$&; before=$`; after=$'",
+          },
+        ];
+
+        await applyFileEdits("/test/file.txt", edits, false);
+
+        expect(mockPinned.overwriteFileInDirectory).toHaveBeenCalledWith(
+          expect.any(String),
+          "line1\nprice=$$; match=$&; before=$`; after=$'\nline3\n",
+          REGULAR_FILE,
+        );
+      });
+
+      it("handles dry run mode", async () => {
+        const edits = [{ oldText: "line2", newText: "modified line2" }];
+
+        const result = await applyFileEdits("/test/file.txt", edits, true);
+
+        expect(result).toContain("modified line2");
+        expect(mockPinned.overwriteFileInDirectory).not.toHaveBeenCalled();
+      });
+
+      it("applies multiple edits sequentially", async () => {
+        const edits = [
+          { oldText: "line1", newText: "first line" },
+          { oldText: "line3", newText: "third line" },
+        ];
+
+        await applyFileEdits("/test/file.txt", edits, false);
+
+        expect(mockPinned.overwriteFileInDirectory).toHaveBeenCalledWith(
+          expect.any(String),
+          "first line\nline2\nthird line\n",
+          REGULAR_FILE,
+        );
+      });
+
+      it("handles whitespace-flexible matching", async () => {
+        mockFs.readFile.mockResolvedValue("  line1\n    line2\n  line3\n");
+
+        const edits = [{ oldText: "line2", newText: "modified line2" }];
+
+        await applyFileEdits("/test/file.txt", edits, false);
+
+        expect(mockPinned.overwriteFileInDirectory).toHaveBeenCalledWith(
+          expect.any(String),
+          "  line1\n    modified line2\n  line3\n",
+          REGULAR_FILE,
+        );
+      });
+
+      it("writes the edit in place, without a temp file, rename or chmod (#4512, #3199)", async () => {
+        const edits = [{ oldText: "line2", newText: "modified line2" }];
+
+        await applyFileEdits("/test/script.sh", edits, false);
+
+        expect(mockPinned.overwriteFileInDirectory).toHaveBeenCalledWith(
+          "/test/script.sh",
+          "line1\nmodified line2\nline3\n",
+          REGULAR_FILE,
+        );
+        expect(mockFs.writeFile).not.toHaveBeenCalled();
+        expect(mockFs.rename).not.toHaveBeenCalled();
+        expect(mockFs.chmod).not.toHaveBeenCalled();
+      });
+
+      it("does not open the file for writing in dry run mode", async () => {
+        const edits = [{ oldText: "line2", newText: "modified line2" }];
+
+        await applyFileEdits("/test/file.txt", edits, true);
+
+        expect(mockPinned.overwriteFileInDirectory).not.toHaveBeenCalled();
+      });
+
+      it("throws error for non-matching edits", async () => {
+        const edits = [{ oldText: "nonexistent line", newText: "replacement" }];
+
+        await expect(
+          applyFileEdits("/test/file.txt", edits, false),
+        ).rejects.toThrow("Could not find exact match for edit");
+      });
+
+      it("handles complex multi-line edits with indentation", async () => {
+        mockFs.readFile.mockResolvedValue(
+          'function test() {\n  console.log("hello");\n  return true;\n}',
+        );
+
+        const edits = [
+          {
+            oldText: '  console.log("hello");\n  return true;',
+            newText:
+              '  console.log("world");\n  console.log("test");\n  return false;',
+          },
+        ];
+
+        await applyFileEdits("/test/file.js", edits, false);
+
+        expect(mockPinned.overwriteFileInDirectory).toHaveBeenCalledWith(
+          expect.any(String),
+          'function test() {\n  console.log("world");\n  console.log("test");\n  return false;\n}',
+          REGULAR_FILE,
+        );
+      });
+
+      it("handles edits with different indentation patterns", async () => {
+        mockFs.readFile.mockResolvedValue(
+          "    if (condition) {\n        doSomething();\n    }",
+        );
+
+        const edits = [
+          {
+            oldText: "doSomething();",
+            newText: "doSomethingElse();\n        doAnotherThing();",
+          },
+        ];
+
+        await applyFileEdits("/test/file.js", edits, false);
+
+        expect(mockPinned.overwriteFileInDirectory).toHaveBeenCalledWith(
+          expect.any(String),
+          "    if (condition) {\n        doSomethingElse();\n        doAnotherThing();\n    }",
+          REGULAR_FILE,
+        );
+      });
+
+      it("handles CRLF line endings in file content", async () => {
+        mockFs.readFile.mockResolvedValue("line1\r\nline2\r\nline3\r\n");
+
+        const edits = [{ oldText: "line2", newText: "modified line2" }];
+
+        await applyFileEdits("/test/file.txt", edits, false);
+
+        expect(mockPinned.overwriteFileInDirectory).toHaveBeenCalledWith(
+          expect.any(String),
+          "line1\r\nmodified line2\r\nline3\r\n",
+          REGULAR_FILE,
+        );
+      });
+    });
+
+    describe("tailFile", () => {
+      it("handles empty files", async () => {
+        mockFs.stat.mockResolvedValue({ size: 0 } as Stats);
+
+        const result = await tailFile("/test/empty.txt", 5);
+
+        expect(result).toBe("");
+        expect(mockFs.open).not.toHaveBeenCalled();
+      });
+
+      it("calls stat to check file size", async () => {
+        mockFs.stat.mockResolvedValue({ size: 100 } as Stats);
+
+        // Mock file handle with proper typing
+        const mockFileHandle = {
+          read: vi.fn(),
+          close: vi.fn(),
+        };
+
+        mockFileHandle.read.mockResolvedValue({ bytesRead: 0 });
+        mockFileHandle.close.mockResolvedValue(undefined);
+
+        mockFs.open.mockResolvedValue(asFileHandle(mockFileHandle));
+
+        await tailFile("/test/file.txt", 2);
+
+        expect(mockFs.stat).toHaveBeenCalledWith("/test/file.txt");
+        expect(mockFs.open).toHaveBeenCalledWith("/test/file.txt", "r");
+      });
+
+      it("handles files with content and returns last lines", async () => {
+        mockFs.stat.mockResolvedValue({ size: 50 } as Stats);
+
+        const mockFileHandle = {
+          read: vi.fn(),
+          close: vi.fn(),
+        };
+
+        // Simulate reading file content in chunks
+        mockFileHandle.read
+          .mockResolvedValueOnce({
+            bytesRead: 20,
+            buffer: Buffer.from("line3\nline4\nline5\n"),
+          })
+          .mockResolvedValueOnce({ bytesRead: 0 });
+        mockFileHandle.close.mockResolvedValue(undefined);
+
+        mockFs.open.mockResolvedValue(asFileHandle(mockFileHandle));
+
+        await tailFile("/test/file.txt", 2);
+
+        expect(mockFileHandle.close).toHaveBeenCalled();
+      });
+
+      it("preserves UTF-8 characters split across chunk boundaries", async () => {
+        const content = Buffer.concat([
+          Buffer.from("discard\n"),
+          Buffer.from("界"),
+          Buffer.alloc(1017, "a"),
+          Buffer.from("\nlast"),
+        ]);
+        const mockFileHandle = createMockFileHandle(content);
+
+        mockFs.stat.mockResolvedValue({ size: content.length } as Stats);
+        mockFs.open.mockResolvedValue(asFileHandle(mockFileHandle));
+
+        const result = await tailFile("/test/file.txt", 2);
+
+        expect(result).toBe(`界${"a".repeat(1017)}\nlast`);
+      });
+
+      it("handles read errors gracefully", async () => {
+        mockFs.stat.mockResolvedValue({ size: 100 } as Stats);
+
+        const mockFileHandle = {
+          read: vi.fn(),
+          close: vi.fn(),
+        };
+
+        mockFileHandle.read.mockResolvedValue({ bytesRead: 0 });
+        mockFileHandle.close.mockResolvedValue(undefined);
+
+        mockFs.open.mockResolvedValue(asFileHandle(mockFileHandle));
+
+        await tailFile("/test/file.txt", 5);
+
+        expect(mockFileHandle.close).toHaveBeenCalled();
+      });
+    });
+
+    describe("headFile", () => {
+      it("opens file for reading", async () => {
+        // Mock file handle with proper typing
+        const mockFileHandle = {
+          read: vi.fn(),
+          close: vi.fn(),
+        };
+
+        mockFileHandle.read.mockResolvedValue({ bytesRead: 0 });
+        mockFileHandle.close.mockResolvedValue(undefined);
+
+        mockFs.open.mockResolvedValue(asFileHandle(mockFileHandle));
+
+        await headFile("/test/file.txt", 2);
+
+        expect(mockFs.open).toHaveBeenCalledWith("/test/file.txt", "r");
+      });
+
+      it("handles files with content and returns first lines", async () => {
+        const mockFileHandle = {
+          read: vi.fn(),
+          close: vi.fn(),
+        };
+
+        // Simulate reading file content with newlines
+        mockFileHandle.read
+          .mockResolvedValueOnce({
+            bytesRead: 20,
+            buffer: Buffer.from("line1\nline2\nline3\n"),
+          })
+          .mockResolvedValueOnce({ bytesRead: 0 });
+        mockFileHandle.close.mockResolvedValue(undefined);
+
+        mockFs.open.mockResolvedValue(asFileHandle(mockFileHandle));
+
+        await headFile("/test/file.txt", 2);
+
+        expect(mockFileHandle.close).toHaveBeenCalled();
+      });
+
+      it("preserves UTF-8 characters split across chunk boundaries", async () => {
+        const content = Buffer.concat([
+          Buffer.alloc(1023, "a"),
+          Buffer.from("界\nsecond"),
+        ]);
+        const mockFileHandle = createMockFileHandle(content);
+
+        mockFs.open.mockResolvedValue(asFileHandle(mockFileHandle));
+
+        const result = await headFile("/test/file.txt", 1);
+
+        expect(result).toBe(`${"a".repeat(1023)}界`);
+      });
+
+      it("handles files with leftover content", async () => {
+        const mockFileHandle = {
+          read: vi.fn(),
+          close: vi.fn(),
+        };
+
+        // Simulate reading file content without final newline
+        mockFileHandle.read
+          .mockResolvedValueOnce({
+            bytesRead: 15,
+            buffer: Buffer.from("line1\nline2\nend"),
+          })
+          .mockResolvedValueOnce({ bytesRead: 0 });
+        mockFileHandle.close.mockResolvedValue(undefined);
+
+        mockFs.open.mockResolvedValue(asFileHandle(mockFileHandle));
+
+        await headFile("/test/file.txt", 5);
+
+        expect(mockFileHandle.close).toHaveBeenCalled();
+      });
+
+      it("handles reaching requested line count", async () => {
+        const mockFileHandle = {
+          read: vi.fn(),
+          close: vi.fn(),
+        };
+
+        // Simulate reading exactly the requested number of lines
+        mockFileHandle.read
+          .mockResolvedValueOnce({
+            bytesRead: 12,
+            buffer: Buffer.from("line1\nline2\n"),
+          })
+          .mockResolvedValueOnce({ bytesRead: 0 });
+        mockFileHandle.close.mockResolvedValue(undefined);
+
+        mockFs.open.mockResolvedValue(asFileHandle(mockFileHandle));
+
+        await headFile("/test/file.txt", 2);
+
+        expect(mockFileHandle.close).toHaveBeenCalled();
+      });
+    });
+  });
+});

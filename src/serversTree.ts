@@ -24,13 +24,23 @@ class ServerTreeItem extends vscode.TreeItem {
         : status.toolCount !== undefined
           ? ` · ${status.toolCount} tools`
           : '';
+    const accepted = status.accepted ? ' · accepted' : '';
     this.description =
       formatTreeDescription(status.state, status.lastPingMs) +
       modeSuffix +
       toolsSuffix +
       flapping +
-      disabled;
-    this.contextValue = 'mcpWatchdogServer';
+      disabled +
+      accepted;
+    if (status.accepted) {
+      this.contextValue = 'mcpWatchdogServerAccepted';
+    } else if (status.state === 'failed') {
+      this.contextValue = 'mcpWatchdogServerFailed';
+    } else if (status.state === 'degraded') {
+      this.contextValue = 'mcpWatchdogServerDegraded';
+    } else {
+      this.contextValue = 'mcpWatchdogServer';
+    }
 
     const md = new vscode.MarkdownString();
     md.isTrusted = true;

@@ -2,15 +2,36 @@
   "mcpWatchdog.requireApproval": false,
   "mcpWatchdog.probeMode": "persistent",
   "mcpWatchdog.perServer": {
-    "aws-mcp": { "enabled": true },
-    "exa": { "enabled": true },
-    "rea": { "enabled": true },
-    "echo": { "enabled": true, "probeMode": "persistent" },
-    "memory": { "enabled": true },
-    "filesystem": { "enabled": true }
+    "aws-mcp": {
+      "enabled": false
+    },
+    "exa": {
+      "enabled": false
+    },
+    "rea": {
+      "enabled": false
+    },
+    "memory": {
+      "enabled": false
+    },
+    "filesystem": {
+      "enabled": false
+    },
+    "filesystem-vendored": {
+      "enabled": false
+    },
+    "filesystem-vendored-fail": {
+      "enabled": false
+    },
+    "echo": {
+      "enabled": true,
+      "probeMode": "persistent"
+    }
   },
   "mcpWatchdog.pingIntervalMs": 2000,
   "mcpWatchdog.notify": "failures",
   "mcpWatchdog.degradedAlertDelayMs": 2500,
-  "mcpWatchdog.maxRetries": 0
+  "mcpWatchdog.maxRetries": 0,
+  "mcpWatchdog.cloudBridge.enabled": false,
+  "mcpWatchdog.cloudBridge.url": ""
 }

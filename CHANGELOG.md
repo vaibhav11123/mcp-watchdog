@@ -6,21 +6,27 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [0.5.4] - 2026-11-01
+
 ### Added
 
-- **Restart editor MCP** toast action when the host exposes `workbench.mcp.*`. It does not run as part of Retry probe. Reload Window remains the fallback.
+- **Accept / Fix… / Remove** on failure toasts, Servers tree, and commands. Accept drops the server from the status-bar **N/M** chip (Overview still shows Failed + Accepted). Fix classifies `aws_session` | `auth` | `spawn` | `generic` with guided steps (copy, open owning config, AWS terminal login, Exa credential wizard, retry). Remove deletes the key from the owning mcp.json (JSONC → refuse + Open/Disable).
+- Opt-in per-server **`authProbe`** (`tools/call` after ping); Claude Desktop config layer; secret-safe stderr tail; vendor recipes for Exa/AWS.
+- Opt-in **`cloudBridge`**: extension POSTs scrubbed names-only incidents when enabled; Cloud `GET /health`, Add Server dialog, duplicate **409**, `accepted` on dual-truth rows.
+- Host hooks: `acceptFailureForTests` / `removeServerForTests` + `MCP_WATCHDOG_HOST_AUTOCONFIRM=1`; live Cloud bridge host E2E.
+- `npm run triage-e2e` / `npm run tier3-filesystem`; triage evidence pack under `docs/validation/triage-evidence/`.
 
 ### Fixed
 
 - Failure toast when `maxRetries` is 0: emit on **degraded→failed** (previously only healthy/connecting→failed), so host CI / fast give-up paths still notify.
-- Prettier formatting so `format:check` passes in CI.
+- `lastProbeError` preserved when display error becomes Max retries exceeded (Fix classification).
+- Host trust-gate setup applies `requireApproval` before refresh (flaky healthy-without-approval).
 
 ### Changed
 
-- Public category is MCP reliability and diagnostics. Marketplace summary leads with Cursor and VS Code health checks. Keywords drop auto-reconnect.
-- Failure action **Retry probe** only restarts Watchdog’s probe. Degraded label is **Retrying**.
-- Watchdog Cloud is labeled preview. The extension does not post incidents and does not read the editor MCP client.
-- README Demo: live Cursor capture (`Watchdog: 5/6`, aws offline OK). Shot list: [docs/media/GIF-RECORDING.md](docs/media/GIF-RECORDING.md).
+- Marketplace summary leads with Accept / Fix… / Remove and opt-in Cloud bridge.
+- Watchdog Cloud settings describe opt-in self-host bridge (posts when enabled).
+- GIF shot list is Accept-first: [docs/media/GIF-RECORDING.md](docs/media/GIF-RECORDING.md).
 
 ## [0.5.3] - 2026-10-30
 
@@ -44,6 +50,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - Opt-in settings `mcpWatchdog.cloudBridge.enabled` / `.url` (default off).
 - Direction scripts: `npm run t0`, `npm run t2`; fixture MCP server.
 - CLA draft + CONTRIBUTING.
+- **Restart editor MCP** toast action when the host exposes `workbench.mcp.*`.
 
 ## [0.5.2] - 2026-10-29
 
@@ -205,6 +212,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - Reads **`.vscode/mcp.json`** (`servers`); expands **`${workspaceFolder}`** in strings.
 - Stdio and streamable HTTP transports via `@modelcontextprotocol/sdk`.
 
+[Unreleased]: https://github.com/vaibhav11123/mcp-watchdog/compare/v0.5.4...HEAD
+[0.5.4]: https://github.com/vaibhav11123/mcp-watchdog/releases/tag/v0.5.4
+[0.5.3]: https://github.com/vaibhav11123/mcp-watchdog/releases/tag/v0.5.3
+[0.5.2]: https://github.com/vaibhav11123/mcp-watchdog/releases/tag/v0.5.2
+[0.5.1]: https://github.com/vaibhav11123/mcp-watchdog/releases/tag/v0.5.1
 [0.1.6]: https://github.com/vaibhav11123/mcp-watchdog/releases/tag/v0.1.6
 [0.1.5]: https://github.com/vaibhav11123/mcp-watchdog/releases/tag/v0.1.5
 [0.1.4]: https://github.com/vaibhav11123/mcp-watchdog/releases/tag/v0.1.4

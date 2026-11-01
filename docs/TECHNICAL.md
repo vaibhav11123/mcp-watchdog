@@ -107,7 +107,7 @@ These are deliberate constraints, not accidents:
 - A **reachability + latency** meter using MCP `ping`.
 - An **alerting UX** with separate next steps: retry Watchdog’s probe, restart the editor MCP client when the host exposes the command, or reload the window.
 - A **trust-gated** runner of user-defined commands/URLs from config files the user already maintains.
-- **Watchdog Cloud (preview):** remote health checks, schema change alerts, and configuration policy checks. The extension does not post incidents yet.
+- **Watchdog Cloud (preview):** remote health checks, schema change alerts, and configuration policy checks. Opt-in `cloudBridge.enabled` posts names-only incidents to a self-hosted Cloud; default off; fail-soft if unreachable.
 
 ### 3.2 Is not
 
@@ -544,6 +544,9 @@ Notable rules:
 
 | Action | Effect |
 |--------|--------|
+| Accept | Sticky ack in workspaceState; chip uses `statusesForChip` (drop accepted-failed); Overview still Failed + Accepted; toasts suppressed until Unaccept / healthy |
+| Fix… | `classifyFailure` → QuickPick steps (copy / open owning config / AWS terminal / credential wizard / retry) |
+| Remove | Delete key from owning mcp.json via origins (JSONC → refuse + Open/Disable) |
 | Retry probe | `forceReconnect()` on that monitor only |
 | Restart editor MCP | `tryRestartEditorMcp` when `workbench.mcp.*` exists |
 | Show Log | Focus Output + dump recent monitor log |
@@ -643,6 +646,9 @@ interface McpWatchdogApi {
   getStatuses(): ServerStatus[];
   getLastAlert(): AlertDecision | undefined;
   revokeTrustForTests(): Promise<void>;
+  acceptFailureForTests(serverName: string): Promise<void>;
+  /** Set MCP_WATCHDOG_HOST_AUTOCONFIRM=1 to skip Remove modal. */
+  removeServerForTests(serverName: string): Promise<void>;
 }
 ```
 

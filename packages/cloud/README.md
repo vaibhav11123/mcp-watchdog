@@ -1,6 +1,6 @@
 # Watchdog Cloud (OSS)
 
-**Watchdog Cloud (preview).** Remote health checks, schema change alerts, and configuration policy checks with an audit trail. Policy decisions run outside the MCP tool-call path. The editor extension does not post incidents here yet.
+**Watchdog Cloud (preview).** Remote health checks, schema change alerts, and configuration policy checks with an audit trail. Policy decisions run outside the MCP tool-call path. With the opt-in IDE bridge enabled, the extension posts names-only incidents (including accepted failures when marked).
 
 ## Quick start (T3 target &lt; 30 min)
 

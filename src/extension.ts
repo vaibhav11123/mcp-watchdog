@@ -3,7 +3,7 @@ import * as os from 'os';
 import * as path from 'path';
 import { ServerMonitor, ServerStatus, ServerState } from './monitor';
 import { emptyViewMessage, loadMcpConfig, McpConfigStatus, watchMcpConfig } from './config';
-import type { McpServerConfig } from './config-core';
+import type { McpServerConfig, ServerOrigin } from './config-core';
 import { McpStatusBar } from './statusBar';
 import { Logger } from './logger';
 import { ServersTreeProvider } from './serversTree';
@@ -22,6 +22,15 @@ import {
   tryRestartEditorMcp,
   type EditorMcpHost,
 } from './editorMcp';
+import {
+  acceptedFailuresStorageKey,
+  normalizeAcceptedList,
+  statusesForChip,
+} from './failureTriage';
+import { buildBridgePayload, postBridgeIncident, workspaceIdHash } from './cloudBridge';
+import { mergeCredentialOverlay, secretStorageKey } from './credentialOverlay';
+import { matchRecipe } from './vendorRecipes';
+import { resolveServerArg, runFixFailure, runRemoveServer } from './triageHost';
 
 type StatusPickItem = vscode.QuickPickItem & { serverName: string };
 
@@ -57,6 +66,11 @@ let lastAlertForTest: AlertDecision | undefined;
 let configDiagnostics: ConfigDiagnostics | undefined;
 const incidentBuffer = new IncidentRingBuffer();
 const latencyHistory = new LatencyHistory();
+let serverOrigins: Record<string, ServerOrigin> = {};
+let serverConfigs: Record<string, McpServerConfig> = {};
+const watchdogOnlyCred = new Set<string>();
+let bridgeFailLogged = false;
+let acceptedNames = new Set<string>();
 
 /** Joined sorted folder paths — trust key covers the full multi-root workspace. */
 function workspacePath(): string {
@@ -68,14 +82,86 @@ function workspacePath(): string {
     .join('\0');
 }
 
+function loadAcceptedFromState(): void {
+  acceptedNames = new Set(
+    normalizeAcceptedList(extensionContext.workspaceState.get(acceptedFailuresStorageKey())),
+  );
+}
+
+async function persistAccepted(): Promise<void> {
+  await extensionContext.workspaceState.update(
+    acceptedFailuresStorageKey(),
+    [...acceptedNames].sort(),
+  );
+}
+
+function annotateStatuses(list: ServerStatus[]): ServerStatus[] {
+  return list.map((s) => ({
+    ...s,
+    accepted: acceptedNames.has(s.name),
+    watchdogOnlyCred: watchdogOnlyCred.has(s.name) || undefined,
+  }));
+}
+
 function refreshAllUi(): void {
-  const list = [...statuses.values()];
-  statusBar.update(list, lastConfigStatus);
+  const list = annotateStatuses([...statuses.values()]);
+  statusBar.update(statusesForChip(list, acceptedNames), lastConfigStatus);
   serversTreeProvider?.refresh();
   overviewProvider?.update(list, lastConfigStatus, latencyHistory.snapshot());
   if (serversView) {
     serversView.message = emptyViewMessage(lastConfigStatus);
   }
+}
+
+function maybePostBridge(name: string, prev: ServerStatus | undefined, next: ServerStatus): void {
+  const cfg = vscode.workspace.getConfiguration('mcpWatchdog');
+  if (!cfg.get<boolean>('cloudBridge.enabled', false)) return;
+  const url = cfg.get<string>('cloudBridge.url', '').trim();
+  if (!url) return;
+  if (!prev || prev.state === next.state) {
+    // Still post Accept updates when accepted flips with same state — handled separately.
+    return;
+  }
+  const version =
+    (extensionContext.extension.packageJSON as { version?: string }).version ?? '0.0.0';
+  const payload = buildBridgePayload({
+    workspaceIdHash: workspaceIdHash(workspacePath()),
+    extensionVersion: version,
+    serverName: name,
+    config: serverConfigs[name],
+    stateFrom: prev.state,
+    stateTo: next.state,
+    accepted: acceptedNames.has(name),
+    toolCount: next.toolCount,
+    toolDrift: next.toolDrift,
+  });
+  void postBridgeIncident(url, payload).then((r) => {
+    if (!r.ok && !bridgeFailLogged) {
+      bridgeFailLogged = true;
+      logger.info(`[Watchdog] Cloud bridge post failed (fail-soft): ${r.error ?? r.status}`);
+    }
+  });
+}
+
+async function postBridgeAccepted(name: string, accepted: boolean): Promise<void> {
+  const cfg = vscode.workspace.getConfiguration('mcpWatchdog');
+  if (!cfg.get<boolean>('cloudBridge.enabled', false)) return;
+  const url = cfg.get<string>('cloudBridge.url', '').trim();
+  if (!url) return;
+  const st = statuses.get(name);
+  if (!st) return;
+  const version =
+    (extensionContext.extension.packageJSON as { version?: string }).version ?? '0.0.0';
+  const payload = buildBridgePayload({
+    workspaceIdHash: workspaceIdHash(workspacePath()),
+    extensionVersion: version,
+    serverName: name,
+    config: serverConfigs[name],
+    stateFrom: st.state,
+    stateTo: st.state,
+    accepted,
+  });
+  await postBridgeIncident(url, payload);
 }
 
 function resetConfigWatcher(): void {
@@ -117,10 +203,23 @@ function onServerStatus(name: string, s: ServerStatus): void {
   if (s.state === 'healthy' && s.lastPingMs !== undefined) {
     latencyHistory.push(name, s.lastPingMs);
   }
-  const withFlap = { ...s, flapping: alertManager.getFlapping(name) };
+  if (s.state === 'healthy' && acceptedNames.has(name)) {
+    acceptedNames.delete(name);
+    void persistAccepted();
+  }
+  const withFlap = {
+    ...s,
+    flapping: alertManager.getFlapping(name),
+    accepted: acceptedNames.has(name),
+  };
   statuses.set(name, withFlap);
   alertManager.onStatusChange(withFlap);
-  statuses.set(name, { ...withFlap, flapping: alertManager.getFlapping(name) });
+  statuses.set(name, {
+    ...withFlap,
+    flapping: alertManager.getFlapping(name),
+    accepted: acceptedNames.has(name),
+  });
+  maybePostBridge(name, prev, withFlap);
   if (s.toolDrift) {
     const note =
       s.toolDriftNote ??
@@ -264,6 +363,107 @@ async function emitAlert(decision: AlertDecision): Promise<void> {
     }
   } else if (picked === 'Mute 1h') {
     alertManager.mute(decision.server, 60 * 60 * 1000);
+  } else if (picked === 'Accept') {
+    await acceptFailure(decision.server);
+  } else if (picked === 'Fix…') {
+    await fixFailure(decision.server);
+  } else if (picked === 'Remove') {
+    await removeServer(decision.server);
+  }
+}
+
+async function acceptFailure(serverName: string): Promise<void> {
+  if (!serverName) return;
+  const st = statuses.get(serverName);
+  if (st?.lastError === 'Awaiting approval') {
+    void vscode.window.showInformationMessage(
+      'Use Review & Allow for untrusted servers — Accept is for probe failures only.',
+    );
+    return;
+  }
+  acceptedNames.add(serverName);
+  await persistAccepted();
+  const cur = statuses.get(serverName);
+  if (cur) statuses.set(serverName, { ...cur, accepted: true });
+  await postBridgeAccepted(serverName, true);
+  refreshAllUi();
+  void vscode.window.showInformationMessage(
+    `Accepted failure for ${serverName} — removed from status-bar chip (still Failed in Overview).`,
+  );
+}
+
+async function clearAcceptance(serverName: string): Promise<void> {
+  if (!serverName) return;
+  acceptedNames.delete(serverName);
+  await persistAccepted();
+  const cur = statuses.get(serverName);
+  if (cur) statuses.set(serverName, { ...cur, accepted: false });
+  await postBridgeAccepted(serverName, false);
+  refreshAllUi();
+}
+
+async function fixFailure(serverName: string): Promise<void> {
+  const st = statuses.get(serverName);
+  if (!st) {
+    void vscode.window.showInformationMessage(`No status for ${serverName}.`);
+    return;
+  }
+  await runFixFailure({
+    serverName,
+    status: st,
+    config: serverConfigs[serverName],
+    origin: serverOrigins[serverName],
+    logger,
+    secrets: extensionContext.secrets,
+    editorHost: vscodeEditorMcpHost,
+    retryProbe,
+    openConfigPath: async (filePath) => {
+      const doc = await vscode.workspace.openTextDocument(vscode.Uri.file(filePath));
+      await vscode.window.showTextDocument(doc);
+    },
+    onWatchdogOnlyCred: (name) => {
+      watchdogOnlyCred.add(name);
+      refreshAllUi();
+    },
+  });
+}
+
+async function removeServer(serverName: string): Promise<void> {
+  await runRemoveServer({
+    serverName,
+    origin: serverOrigins[serverName],
+    origins: serverOrigins,
+    logger,
+    secrets: extensionContext.secrets,
+    clearAcceptance,
+    disableServer: async (name) => {
+      const cfg = vscode.workspace.getConfiguration('mcpWatchdog');
+      const per = {
+        ...(cfg.get<Record<string, Record<string, unknown>>>('perServer') ?? {}),
+      };
+      per[name] = { ...(per[name] ?? {}), enabled: false };
+      await cfg.update('perServer', per, vscode.ConfigurationTarget.Workspace);
+      void vscode.window.showInformationMessage(`Disabled Watchdog monitoring for ${name}.`);
+    },
+  });
+}
+
+async function loadCredentialOverlay(
+  name: string,
+  config: McpServerConfig,
+): Promise<McpServerConfig> {
+  const recipe = matchRecipe({ name, config });
+  const slot = recipe?.credSlot;
+  if (!slot || slot.kind === 'awsProfile') return config;
+  try {
+    const value = await extensionContext.secrets.get(secretStorageKey(name, slot.name));
+    if (!value) return config;
+    if (slot.kind === 'env') {
+      return mergeCredentialOverlay(config, { env: { [slot.name]: value } });
+    }
+    return mergeCredentialOverlay(config, { headers: { [slot.name]: value } });
+  } catch {
+    return config;
   }
 }
 
@@ -351,6 +551,13 @@ export interface McpWatchdogApi {
   /** Host-test hook: last alert decision emitted (before user picks an action). */
   getLastAlert(): AlertDecision | undefined;
   revokeTrustForTests(): Promise<void>;
+  /** Host-test hook: Accept without UI (same as acceptFailure command). */
+  acceptFailureForTests(serverName: string): Promise<void>;
+  /**
+   * Host-test hook: Remove via runRemoveServer.
+   * Set MCP_WATCHDOG_HOST_AUTOCONFIRM=1 to skip the modal.
+   */
+  removeServerForTests(serverName: string): Promise<void>;
 }
 
 export async function activate(context: vscode.ExtensionContext): Promise<McpWatchdogApi> {
@@ -360,6 +567,7 @@ export async function activate(context: vscode.ExtensionContext): Promise<McpWat
   logger = new Logger();
   configDiagnostics = new ConfigDiagnostics();
   context.subscriptions.push(configDiagnostics);
+  loadAcceptedFromState();
   alertManager = new AlertManager(
     () =>
       vscode.workspace
@@ -369,6 +577,7 @@ export async function activate(context: vscode.ExtensionContext): Promise<McpWat
     () => Date.now(),
     () =>
       vscode.workspace.getConfiguration('mcpWatchdog').get<number>('degradedAlertDelayMs', 60_000),
+    (server) => acceptedNames.has(server),
   );
   statusBar = new McpStatusBar('mcpWatchdog.showStatus');
 
@@ -377,7 +586,7 @@ export async function activate(context: vscode.ExtensionContext): Promise<McpWat
     vscode.window.registerWebviewViewProvider('mcpWatchdog.overview', overviewProvider),
   );
 
-  const serversTree = new ServersTreeProvider(() => [...statuses.values()]);
+  const serversTree = new ServersTreeProvider(() => annotateStatuses([...statuses.values()]));
   serversTreeProvider = serversTree;
   serversView = vscode.window.createTreeView('mcpWatchdog.servers', {
     treeDataProvider: serversTree,
@@ -406,6 +615,49 @@ export async function activate(context: vscode.ExtensionContext): Promise<McpWat
     vscode.commands.registerCommand('mcpWatchdog.refresh', () => reloadServers()),
     vscode.commands.registerCommand('mcpWatchdog.reviewTrust', reviewTrustQuickPick),
     vscode.commands.registerCommand('mcpWatchdog.exportIncidentMarkdown', exportIncidentMarkdown),
+    vscode.commands.registerCommand('mcpWatchdog.acceptFailure', async (arg: unknown) => {
+      const name = resolveServerArg(arg);
+      if (name) await acceptFailure(name);
+      else {
+        const failed = [...statuses.values()].filter(
+          (s) => s.state === 'failed' || s.state === 'degraded',
+        );
+        const pick = await vscode.window.showQuickPick(
+          failed.map((s) => ({ label: s.name, serverName: s.name })),
+          { placeHolder: 'Accept failure for…' },
+        );
+        if (pick) await acceptFailure(pick.serverName);
+      }
+    }),
+    vscode.commands.registerCommand('mcpWatchdog.clearAcceptance', async (arg: unknown) => {
+      const name = resolveServerArg(arg);
+      if (name) await clearAcceptance(name);
+    }),
+    vscode.commands.registerCommand('mcpWatchdog.fixFailure', async (arg: unknown) => {
+      const name = resolveServerArg(arg);
+      if (name) await fixFailure(name);
+      else {
+        const failed = [...statuses.values()].filter(
+          (s) => s.state === 'failed' || s.state === 'degraded',
+        );
+        const pick = await vscode.window.showQuickPick(
+          failed.map((s) => ({ label: s.name, serverName: s.name })),
+          { placeHolder: 'Fix failure for…' },
+        );
+        if (pick) await fixFailure(pick.serverName);
+      }
+    }),
+    vscode.commands.registerCommand('mcpWatchdog.removeServer', async (arg: unknown) => {
+      const name = resolveServerArg(arg);
+      if (name) await removeServer(name);
+      else {
+        const pick = await vscode.window.showQuickPick(
+          [...statuses.keys()].map((n) => ({ label: n, serverName: n })),
+          { placeHolder: 'Remove server…' },
+        );
+        if (pick) await removeServer(pick.serverName);
+      }
+    }),
   );
 
   context.subscriptions.push(
@@ -455,12 +707,18 @@ export async function activate(context: vscode.ExtensionContext): Promise<McpWat
   }
 
   return {
-    getStatuses: () => [...statuses.values()],
+    getStatuses: () => annotateStatuses([...statuses.values()]),
     getLastAlert: () => lastAlertForTest,
     revokeTrustForTests: async () => {
       await trustStore.revoke();
       trustPromptShown = false;
       await reloadServers();
+    },
+    acceptFailureForTests: async (serverName: string) => {
+      await acceptFailure(serverName);
+    },
+    removeServerForTests: async (serverName: string) => {
+      await removeServer(serverName);
     },
   };
 }
@@ -482,8 +740,24 @@ async function reloadServers(): Promise<void> {
 
   trustStore = new TrustStore(extensionContext.globalState, workspacePath());
 
-  const { status, config } = loadMcpConfig();
+  const loaded = loadMcpConfig();
+  const { status, config } = loaded;
   lastConfigStatus = status;
+  serverOrigins = loaded.origins ?? {};
+  serverConfigs = config?.servers ?? {};
+
+  // Drop Accept entries for servers that disappeared from merged config.
+  if (config) {
+    const names = new Set(Object.keys(config.servers));
+    let changed = false;
+    for (const n of [...acceptedNames]) {
+      if (!names.has(n)) {
+        acceptedNames.delete(n);
+        changed = true;
+      }
+    }
+    if (changed) void persistAccepted();
+  }
 
   if (!config || status.kind !== 'ok') {
     const detail =
@@ -577,10 +851,14 @@ function startServer(name: string, serverConfig: McpServerConfig, globals: Monit
       retryCount: 0,
       disabled: true,
       probeMode: options.probeMode,
+      accepted: acceptedNames.has(name),
     });
     return;
   }
-  startMonitor(name, serverConfig, options);
+  void loadCredentialOverlay(name, serverConfig).then((cfg) => {
+    serverConfigs[name] = cfg;
+    startMonitor(name, cfg, options);
+  });
 }
 
 async function exportIncidentMarkdown(): Promise<void> {

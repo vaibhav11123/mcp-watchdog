@@ -379,6 +379,46 @@ describe('ServerMonitor', () => {
     expect(second?.toolDriftNote).toBe('Tools changed (2 → 1)');
   });
 
+  it('authProbe unset does not call callTool on ping', async () => {
+    const callTool = vi.fn();
+    const clock = makeFakeClock();
+    const client: MonitorClient = {
+      connect: async () => {},
+      ping: async () => {},
+      callTool,
+      close: async () => {},
+    };
+    const monitor = makeMonitor(makeFactory(client), clock);
+
+    await monitor.start();
+    const pingHandler = clock.handlers.find((h) => h.ms === 30_000);
+    await runHandler(pingHandler!);
+    expect(callTool).not.toHaveBeenCalled();
+  });
+
+  it('authProbe isError → degraded Auth probe failed', async () => {
+    const onStatus = vi.fn();
+    const callTool = vi.fn(async () => ({ isError: true }));
+    const clock = makeFakeClock();
+    const client: MonitorClient = {
+      connect: async () => {},
+      ping: async () => {},
+      callTool,
+      close: async () => {},
+    };
+    const monitor = makeMonitor(makeFactory(client), clock, onStatus, vi.fn(), {
+      ...defaultOptions,
+      authProbe: { tool: 'whoami' },
+    });
+
+    await monitor.start();
+    const pingHandler = clock.handlers.find((h) => h.ms === 30_000);
+    await runHandler(pingHandler!);
+    expect(callTool).toHaveBeenCalledWith({ name: 'whoami', arguments: {} });
+    const degraded = onStatus.mock.calls.map((c) => c[0]).find((s) => s.state === 'degraded');
+    expect(degraded?.lastError).toBe('Auth probe failed');
+  });
+
   it('passiveHttpProbe: HEAD ok + MCP fail → degraded with reachable note', async () => {
     const onStatus = vi.fn();
     const clock = makeFakeClock();

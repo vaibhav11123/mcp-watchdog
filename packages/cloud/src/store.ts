@@ -16,6 +16,7 @@ export interface DualTruthRow {
   ide_state: string;
   cloud_probe_state: string | null;
   at: string;
+  accepted?: boolean;
 }
 
 export interface AuditEvent {

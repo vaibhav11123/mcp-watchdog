@@ -45,19 +45,24 @@ That result is Watchdog’s probe. It does not read the editor’s MCP client, s
 
 When a check fails, the next steps are separate:
 
+- **Accept** — acknowledge the failure; status-bar chip drops that server from **N/M** (Overview still shows Failed + Accepted). Probing continues.
+- **Fix…** — guided remediation (copy commands, open owning config, AWS login terminal, credential wizard, retry).
+- **Remove** — delete the server key from the owning config file (or Disable Watchdog monitoring).
 - **Retry probe** — run Watchdog’s check again.
 - **Restart editor MCP** — only on the failure toast, and only when the host exposes `workbench.mcp.*`. Cursor and some forks do not.
 - **Reload Window** — when the editor client stays stuck. **Quit Cursor** is the last resort.
 
 ## Watchdog Cloud (preview)
 
-Watchdog Cloud (preview) adds remote health checks, schema change alerts, and configuration policy checks with an audit trail. Its policy decisions run outside the MCP tool-call path.
+Watchdog Cloud adds remote health checks, schema change alerts, and configuration policy checks with an audit trail. Its policy decisions run outside the MCP tool-call path.
 
-The extension does not post incidents to Cloud yet, and it does not compare the two probes. Self-host notes: [packages/cloud/README.md](./packages/cloud/README.md).
+Opt-in: set `mcpWatchdog.cloudBridge.enabled` and `cloudBridge.url` to post **names-only** health incidents to a self-hosted Cloud (fail-soft if unreachable). Default is off. Dual-truth compares IDE bridge state with Cloud’s own poll — it does not read the editor’s MCP client. Self-host notes: [packages/cloud/README.md](./packages/cloud/README.md).
 
 ## Demo
 
-The live failure clip is not in this build. The shot list — stop a server, show the Watchdog result, then **Retry probe** and **Restart editor MCP** as different actions — is [docs/media/GIF-RECORDING.md](./docs/media/GIF-RECORDING.md). A recording of that list is required before announce.
+![MCP Watchdog demo — failure toast and recovery](./images/demo.gif)
+
+Independent probe → failure toast → recovery. Prefer the Accept / Fix… / Remove story in [docs/media/GIF-RECORDING.md](./docs/media/GIF-RECORDING.md) when re-recording (no secret values in frame).
 
 ## Requirements
 
@@ -70,6 +75,7 @@ The live failure clip is not in this build. The shot list — stop a server, sho
   - **VS Code user `mcp.json`** — e.g. `~/Library/Application Support/Code/User/mcp.json` on macOS
   - **Windsurf** — `~/.codeium/windsurf/mcp_config.json`
   - **Claude Code** — `~/.claude.json` (`mcpServers` block)
+  - **Claude Desktop** — `claude_desktop_config.json` (`mcpServers`; fully quit the app after edits so MCP reloads)
   - Layers merge (workspace project files override globals).
 - In **multi-root** workspaces, workspace **`.vscode/mcp.json`** / **`.cursor/mcp.json`** are merged from **every** folder (later folder wins on the same server name). `${workspaceFolder}` on **global** layers uses the **first** folder only; each workspace layer expands with that folder’s path.
 
@@ -157,9 +163,11 @@ Watchdog keeps an in-memory ring of the last ~200 state transitions (not written
 ## Commands
 
 - **MCP Watchdog: Show Server Status** — Quick pick with per-server state.
+- **MCP Watchdog: Accept Failure** / **Unaccept Failure** — Drop or restore a failed server on the status-bar chip.
+- **MCP Watchdog: Fix Failure…** — Guided remediation QuickPick.
+- **MCP Watchdog: Remove Server** — Delete the key from the owning mcp.json (or Disable monitoring).
 - **MCP Watchdog: Review Trusted Servers** — Change the approved subset or revoke trust.
-- **MCP Watchdog: Retry All Probes**
-- **MCP Watchdog: Retry Probe…**
+- **MCP Watchdog: Retry All Probes** / **Retry Probe…**
 - **MCP Watchdog: Open Servers View** — Focus the **Servers** tree.
 - **MCP Watchdog: Open MCP Config** — Open or create `.cursor/mcp.json` / `.vscode/mcp.json`.
 - **MCP Watchdog: Export Incident Timeline (Markdown)** — Save the in-memory incident ring (~200 transitions) as Markdown.
@@ -184,6 +192,9 @@ Watchdog keeps an in-memory ring of the last ~200 state transitions (not written
 | `detectToolDrift` | `false` | Fingerprint tool names; info toast when the set changes (advisory). |
 | `passiveHttpProbe` | `false` | HTTP interval: HEAD/GET before MCP; reachable-but-MCP-fail → degraded advisory. |
 | `reviewAfterRecoveries` | `3` | After N recoveries, ask once for an Open VSX/Marketplace review (`0` = off). |
+| `cloudBridge.enabled` | `false` | Opt-in: POST names-only incidents to self-hosted Watchdog Cloud. |
+| `cloudBridge.url` | `""` | Cloud base URL (e.g. `http://127.0.0.1:8787`). |
+| `perServer.*.authProbe` | unset | Optional post-ping `tools/call` to verify credentials (may have side effects). |
 
 ### Opt-in advisories
 
@@ -195,7 +206,11 @@ These never force a server into `failed` on their own:
 
 ### Alerts
 
-When a server fails, Watchdog shows a notification with **Retry probe**, **Restart editor MCP** (when `workbench.mcp.*` is available), **Show Log**, **Reload Window**, **Quit Cursor**, and **Mute 1h**. Retry probe only restarts Watchdog’s check. Restart editor MCP is the separate action for the editor’s client. Reload Window and Quit remain the fallback when the host has no MCP commands. Set `mcpWatchdog.notify` to `all` to also get recovery toasts. Repeated failures within 10 minutes collapse into a single **flapping** warning.
+When a server fails, Watchdog shows **Accept**, **Fix…**, **Remove**, **Retry probe**, **Restart editor MCP** (when `workbench.mcp.*` is available), **Show Log**, **Reload Window**, **Quit Cursor**, and **Mute 1h**. Accept quiets the chip without marking the server healthy; Mute only silences toasts for 1h. Retry probe only restarts Watchdog’s check. Set `mcpWatchdog.notify` to `all` to also get recovery toasts. Repeated failures within 10 minutes collapse into a single **flapping** warning.
+
+### Auth probe (opt-in)
+
+Per-server `mcpWatchdog.perServer.<name>.authProbe` can call one MCP tool after a successful ping to verify credentials. **Default: unset (read-only).** May have side effects or cost — enable only when you understand the tool.
 
 ### Probe modes
 
@@ -210,11 +225,12 @@ Settings changes apply within ~1s without reloading the window; **`mcp.json`** e
 
 - **No** bundled analytics or telemetry from this extension.
 - Traffic goes to **your configured** MCP servers only (stdio child processes and HTTP clients you define in `mcp.json`).
+- Env/header **values** are never logged or shown in Overview / toasts. Opt-in Cloud bridge posts **names-only** incidents (fail-soft if unreachable).
 - Do **not** commit secrets inside `mcp.json` in shared repos; use environment variables or secret stores appropriate to your team.
 
 ## Known limitations
 
-- Reads workspace **`.vscode/mcp.json`** / **`.cursor/mcp.json`** from **all** multi-root folders (later folders override same server names), plus globals **`~/.cursor/mcp.json`**, VS Code user **`mcp.json`**, Windsurf **`mcp_config.json`**, and Claude Code **`~/.claude.json`**. Global `${workspaceFolder}` expands using the **first** folder only.
+- Reads workspace **`.vscode/mcp.json`** / **`.cursor/mcp.json`** from **all** multi-root folders (later folders override same server names), plus globals **`~/.cursor/mcp.json`**, VS Code user **`mcp.json`**, Windsurf **`mcp_config.json`**, Claude Code **`~/.claude.json`**, and Claude Desktop **`claude_desktop_config.json`**. Global `${workspaceFolder}` expands using the **first** folder only.
 - **Independent of the editor’s MCP UI**: native MCP may show different state until the next Watchdog ping.
 - **HTTP transport** may combine SDK-level reconnection with Watchdog-level retries. **SSE** is supported via SDK `SSEClientTransport` but is deprecated upstream — prefer Streamable HTTP when possible.
 - **Malformed `mcp.json`**: invalid JSON shows an error notification; fix the file and save.

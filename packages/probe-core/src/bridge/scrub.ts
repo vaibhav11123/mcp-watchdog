@@ -146,6 +146,7 @@ export function scrubBridgePayload(raw: unknown): ScrubResult {
       toolDrift: typeof i.toolDrift === 'boolean' ? i.toolDrift : undefined,
       headerNames,
       envNames,
+      accepted: typeof i.accepted === 'boolean' ? i.accepted : undefined,
       at: i.at,
     },
   };

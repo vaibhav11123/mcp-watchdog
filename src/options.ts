@@ -24,6 +24,11 @@ export interface MonitorOptions {
   passiveHttpFetch?: import('./passiveHttp').FetchLike;
   /** Injected for tests — defaults to Math.random. Use () => 0.5 for no jitter. */
   jitterRand?: () => number;
+  /**
+   * Optional. After a successful ping, call this MCP tool once to verify credentials.
+   * May have side effects or cost. Off unless set.
+   */
+  authProbe?: AuthProbeConfig;
 }
 
 /** ±10% jitter on scheduled delays to avoid thundering herd. */
@@ -43,10 +48,20 @@ export function debounce<F extends (...args: never[]) => void>(fn: F, waitMs: nu
   }) as F;
 }
 
+export interface AuthProbeConfig {
+  tool: string;
+  arguments?: Record<string, unknown>;
+}
+
 export interface PerServerOverride {
   probeMode?: ProbeMode;
   pingIntervalMs?: number;
   enabled?: boolean;
+  /**
+   * Optional. After a successful ping, call this MCP tool once to verify credentials.
+   * May have side effects or cost. Off unless set.
+   */
+  authProbe?: AuthProbeConfig;
 }
 
 export interface ResolvedServerOptions {
@@ -69,6 +84,7 @@ export function resolveServerOptions(
       ...globals,
       probeMode: override?.probeMode ?? globals.probeMode,
       pingIntervalMs: override?.pingIntervalMs ?? globals.pingIntervalMs,
+      authProbe: override?.authProbe ?? globals.authProbe,
     },
   };
 }

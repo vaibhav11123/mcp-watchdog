@@ -19,6 +19,8 @@ export interface OverviewSnapshot {
     dotClass: string;
     mode?: string;
     disabled?: boolean;
+    accepted?: boolean;
+    watchdogOnlyCred?: boolean;
     toolCount?: number;
     failureContext?: string;
     sparkline?: string;
@@ -56,6 +58,8 @@ export function statusesSnapshot(
             ? 'persistent'
             : undefined,
       disabled: s.disabled,
+      accepted: s.accepted,
+      watchdogOnlyCred: s.watchdogOnlyCred,
       toolCount: s.toolCount,
       failureContext: s.failureContext
         ? s.failureContext.split('\n').slice(-3).join('\n')
@@ -332,8 +336,9 @@ function renderDashboard(data: OverviewSnapshot): string {
     <li>
       <span class="dot ${s.dotClass}" aria-hidden="true"></span>
       <div style="flex:1;min-width:0">
-        <div class="server-name">${escapeHtml(s.name)}${s.sparkline ? `<span class="sparkline">${s.sparkline}</span>` : ''}</div>
-        <div class="server-meta">${escapeHtml(s.label)} · ${escapeHtml(s.ping)}${s.mode ? ` · ${escapeHtml(s.mode)}` : ''}${s.toolCount !== undefined ? ` · ${s.toolCount} tools` : ''}${s.disabled ? ' · disabled' : ''}</div>
+        <div class="server-name">${escapeHtml(s.name)}${s.accepted ? ' <span class="server-meta">(Accepted)</span>' : ''}${s.sparkline ? `<span class="sparkline">${s.sparkline}</span>` : ''}</div>
+        <div class="server-meta">${escapeHtml(s.label)} · ${escapeHtml(s.ping)}${s.mode ? ` · ${escapeHtml(s.mode)}` : ''}${s.toolCount !== undefined ? ` · ${s.toolCount} tools` : ''}${s.disabled ? ' · disabled' : ''}${s.accepted ? ' · accepted' : ''}</div>
+        ${s.watchdogOnlyCred ? `<div class="server-meta">Watchdog authenticated; editor may still need key</div>` : ''}
         ${s.error ? `<div class="server-error">${escapeHtml(s.error)}</div>` : ''}
         ${s.failureContext ? `<pre class="server-error" style="white-space:pre-wrap;margin:4px 0 0;font-size:11px">${escapeHtml(s.failureContext)}</pre>` : ''}
         ${
@@ -367,7 +372,8 @@ function renderDashboard(data: OverviewSnapshot): string {
     </p>
     <p class="server-meta" style="margin-top:8px">
       <strong>What this shows:</strong> these rows are Watchdog’s probe, not the editor’s MCP client.
-      Watchdog Cloud is a preview and is not connected from this extension yet.
+      Accept acknowledges a failure for the status-bar chip (N/M) without marking the server healthy.
+      Opt-in Cloud bridge posts names-only incidents when <code>cloudBridge.enabled</code> is on.
     </p>`;
 }
 

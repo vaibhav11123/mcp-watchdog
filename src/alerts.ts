@@ -25,8 +25,11 @@ const FLAP_WINDOW_MS = 10 * 60 * 1000;
 const FLAP_THRESHOLD = 3;
 const DEFAULT_DEGRADED_ALERT_DELAY_MS = 60_000;
 
-/** Failed / sustained-degraded toast actions (Quit before Mute). */
+/** Failed / sustained-degraded toast actions (Accept/Fix/Remove first; Quit before Mute). */
 export const FAILURE_ALERT_ACTIONS = [
+  'Accept',
+  'Fix…',
+  'Remove',
   'Retry probe',
   'Show Log',
   'Reload Window',
@@ -166,6 +169,8 @@ export class AlertManager {
     private readonly emit: (decision: AlertDecision) => void,
     private readonly now: () => number = () => Date.now(),
     private readonly degradedAlertDelayMs: () => number = () => DEFAULT_DEGRADED_ALERT_DELAY_MS,
+    /** When true, skip failure/degraded/flap toasts for this server (Accept). */
+    private readonly isAccepted: (server: string) => boolean = () => false,
   ) {}
 
   onStatusChange(status: ServerStatus): void {
@@ -174,7 +179,28 @@ export class AlertManager {
     const withFlap: ServerStatus = {
       ...status,
       flapping: this.flaps.get(name)?.flapping ?? false,
+      accepted: this.isAccepted(name) || status.accepted,
     };
+
+    if (this.isAccepted(name) && status.state !== 'healthy') {
+      // Still track flap/prev, but do not emit failure toasts.
+      const result = decideAlert(
+        prev,
+        withFlap,
+        this.mutes.get(name),
+        'none',
+        this.now(),
+        this.flaps.get(name) ?? { failureTimes: [], flapping: false, flapAlertSent: false },
+        this.degradedSince.get(name),
+        this.degradedAlertDelayMs(),
+      );
+      this.flaps.set(name, result.flap);
+      if (result.degradedSince !== undefined) {
+        this.degradedSince.set(name, result.degradedSince);
+      }
+      this.prev.set(name, { ...withFlap, flapping: result.flap.flapping });
+      return;
+    }
 
     const result = decideAlert(
       prev,

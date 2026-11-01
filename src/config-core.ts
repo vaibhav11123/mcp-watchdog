@@ -39,9 +39,16 @@ export type McpConfigStatus =
   | { kind: 'untrusted'; sources: string[]; serverCount: number }
   | { kind: 'ok'; sources: string[] };
 
+export interface ServerOrigin {
+  path: string;
+  label: string;
+}
+
 export interface McpConfigResult {
   status: McpConfigStatus;
   config: McpConfig | null;
+  /** Winning layer path per server name (later layers overwrite). */
+  origins?: Record<string, ServerOrigin>;
 }
 
 export type ParseConfigResult =
@@ -51,6 +58,8 @@ export type ParseConfigResult =
 export interface ConfigLayer {
   servers: Record<string, McpServerConfig>;
   label: string;
+  /** Absolute path to the config file (required for Remove / Fix open). */
+  path: string;
 }
 
 const WORKSPACE_FOLDER = /\$\{workspaceFolder\}/g;
@@ -180,15 +189,20 @@ export function parseConfigFile(
 export function mergeConfigLayers(layers: (ConfigLayer | null)[]): {
   merged: Record<string, McpServerConfig>;
   sources: string[];
+  origins: Record<string, ServerOrigin>;
 } {
   const merged: Record<string, McpServerConfig> = {};
   const sources: string[] = [];
+  const origins: Record<string, ServerOrigin> = {};
   for (const layer of layers) {
     if (!layer) continue;
     sources.push(layer.label);
-    Object.assign(merged, layer.servers);
+    for (const [name, cfg] of Object.entries(layer.servers)) {
+      merged[name] = cfg;
+      origins[name] = { path: layer.path, label: layer.label };
+    }
   }
-  return { merged, sources: [...new Set(sources)] };
+  return { merged, sources: [...new Set(sources)], origins };
 }
 
 export function emptyViewMessage(status: McpConfigStatus): string {
@@ -196,7 +210,7 @@ export function emptyViewMessage(status: McpConfigStatus): string {
     case 'no_workspace':
       return 'Open a folder to monitor MCP servers.';
     case 'no_config':
-      return 'Add MCP config: .vscode/mcp.json or .cursor/mcp.json (workspace), or globals ~/.cursor/mcp.json, VS Code User mcp.json, Windsurf, Claude Code (~/.claude.json).';
+      return 'Add MCP config: .vscode/mcp.json or .cursor/mcp.json (workspace), or globals ~/.cursor/mcp.json, VS Code User mcp.json, Windsurf, Claude Code (~/.claude.json), Claude Desktop.';
     case 'empty_servers':
       return 'mcp.json found but no valid servers. Use a "servers" or "mcpServers" object with stdio (command), http (url), or sse (url) entries.';
     case 'untrusted':

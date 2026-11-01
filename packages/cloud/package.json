@@ -5,7 +5,6 @@
   "license": "MIT",
   "description": "Watchdog Cloud — author monitor + policy/trust plane (OSS)",
   "scripts": {
-    "start": "npx --yes tsx src/server.ts",
-    "migrate": "npx --yes tsx src/db/migrate.ts"
+    "start": "npx --yes tsx src/server.ts"
   }
 }

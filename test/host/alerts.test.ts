@@ -18,7 +18,10 @@ function matchingEchoAlert(api: McpWatchdogApi) {
     alert.server === ECHO &&
     (alert.kind === 'error' || alert.kind === 'warning') &&
     alert.actions.includes('Retry probe') &&
-    alert.actions.includes('Reload Window')
+    alert.actions.includes('Reload Window') &&
+    alert.actions.includes('Accept') &&
+    alert.actions.includes('Fix…') &&
+    alert.actions.includes('Remove')
   ) {
     return alert;
   }
@@ -82,6 +85,12 @@ suite('MCP Watchdog alerts (host)', () => {
       );
       assert.strictEqual(alert!.server, ECHO);
       assert.ok(alert!.actions.includes('Retry probe') && alert!.actions.includes('Reload Window'));
+      assert.ok(
+        alert!.actions.includes('Accept') &&
+          alert!.actions.includes('Fix…') &&
+          alert!.actions.includes('Remove'),
+        `actions=${JSON.stringify(alert!.actions)}`,
+      );
       assert.ok(
         alert!.actions.includes('Quit Cursor'),
         `actions=${JSON.stringify(alert!.actions)}`,

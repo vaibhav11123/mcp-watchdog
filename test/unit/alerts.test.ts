@@ -23,6 +23,9 @@ describe('decideAlert', () => {
     );
     expect(r.alert?.kind).toBe('error');
     expect(r.alert?.actions).toEqual([
+      'Accept',
+      'Fix…',
+      'Remove',
       'Retry probe',
       'Show Log',
       'Reload Window',

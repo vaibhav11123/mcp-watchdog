@@ -1,21 +1,28 @@
-# GIF recording — live failure and recovery
+# GIF recording — Accept / Fix / Remove recovery
 
-Copy of the launch script. The clip is not shipped until this list is recorded in the Extension Host. Do not caption an older Reconnect GIF as live.
+Overwrite `images/demo.gif` (≤5 MB) only after this Accept-first story is recorded. Do not caption an older Retry-only GIF as live.
 
 ## Setup
 
-1. F5 **Run Extension (mcp-watchdog-test)** or install a local VSIX (clean Extension Host: `--disable-extensions` / `--profile-temp`).
-2. `mcpWatchdog.requireApproval: false`; only **echo** enabled (disable other servers via `perServer`).
-3. Kap / CleanShot / Cmd+Shift+5 — crop the status bar, the Watchdog sidebar, and the notification. Dark theme.
-4. No secrets in frame.
-5. The host must expose `workbench.mcp.*` so **Restart editor MCP** appears on the toast. If it does not, record on a VS Code host that does, and do not imply Cursor shows that button.
+1. F5 **Run Extension (mcp-watchdog-test)** (or clean Extension Host).
+2. `mcpWatchdog.requireApproval: false`; only **echo** enabled (`perServer`).
+3. Kap / CleanShot / Cmd+Shift+5 — crop status bar + Watchdog sidebar + notification. Dark theme.
+4. **No secrets in frame** (no env values, no API keys, no AWS login terminal with profiles).
+5. Optional: enable `cloudBridge` only if Cloud is local and you will not show raw payloads with secrets (there should be none).
 
-## Script (~18s)
+## Script (~20s) — Accept story
 
-1. 0–3s: Overview + `Watchdog: 1/1` with only echo healthy.
-2. 3–5s: stop the server (`kill -9` on the echo process).
-3. 5–10s: hold the real failure toast. **Retry probe** and **Restart editor MCP** are both visible, and they are different buttons.
-4. 10–14s: click **Retry probe** only. Watchdog’s row recovers. Do not click Restart editor MCP in this beat.
-5. 14–18s: if you show the editor action, trigger a second failure and click **Restart editor MCP** only, so the two actions are not one click.
+1. **0–3s:** Overview + status chip with echo healthy (`Watchdog: 1/1` or equivalent).
+2. **3–5s:** Kill echo (`pkill -f echo-server.js` or stop the process).
+3. **5–10s:** Hold the failure toast. Actions visible: **Retry probe**, **Accept**, **Fix…**, **Remove** (and Restart editor MCP if the host exposes it).
+4. **10–14s:** Click **Accept**. Chip drops the failure (N/M). Overview still shows Failed with **Accepted** badge — dual-truth beat.
+5. **14–17s:** Optional Fix beat (echo only): open **Fix…** QuickPick, pick **Retry probe** or **Open MCP Config** — never live aws login / Exa wizard with real keys.
+6. **17–20s:** Optional Remove beat on a disposable temp server key (not echo), or end on Accepted overview.
 
-Overwrite `images/demo.gif` (≤5 MB) and `docs/media/demo-x.mp4` only after that recording. Until then, the README does not embed `images/demo.gif`.
+## Out of frame
+
+- Live AWS terminal (`aws login`)
+- Real Exa credential wizard
+- Env/header values
+
+After recording: replace `images/demo.gif`, embed in README Demo, note date in CHANGELOG Unreleased.

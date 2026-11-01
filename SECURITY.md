@@ -18,3 +18,9 @@ We aim to acknowledge reports within a few business days. Thank you for helping 
 This extension runs **user-defined** commands and connects to **user-configured** MCP endpoints (`stdio` / HTTP). Review `.vscode/mcp.json` in shared repos before trusting it.
 
 It does **not** support VS Code **Restricted Mode** (`capabilities.untrustedWorkspaces.supported: false`). Trust the workspace in the editor, then use Watchdog’s own server approval gate before monitoring.
+
+## Secrets and Cloud bridge
+
+- Env var and HTTP header **values** are never written to the Output log, Overview, status bar, or opt-in Cloud bridge. **Names** may appear.
+- Credential wizard values go to VS Code SecretStorage (and only into mcp.json if you explicitly dual-write).
+- Opt-in `cloudBridge` posts scrubbed, names-only incidents; default off; fail-soft if unreachable.

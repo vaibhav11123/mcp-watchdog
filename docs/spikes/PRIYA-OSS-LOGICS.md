@@ -5,8 +5,8 @@ Shallow clones under `docs/spikes/repos/` (gitignored): mcpwatch, mcp-sentinel, 
 ## Takeaways for this wave
 
 ### mcp-sentinel (ADR-0004)
-- Monitor is **read-only**: `tools/list` (and discovery lists) only — **never `tools/call`**.
-- Aligns with our probe-core / `detectToolDrift` (advisory, no tool invocation).
+- Monitor is **read-only by default**: `tools/list` (and discovery lists) only — **never `tools/call`** unless the user opts into per-server `authProbe`.
+- Aligns with our probe-core / `detectToolDrift` (advisory, no tool invocation). `authProbe` is opt-in and documented as possibly side-effecting.
 
 ### mcpwatch
 - Health + schema contract diff (`diffTools`); exit codes distinguish down vs breaking schema.

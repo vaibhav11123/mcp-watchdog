@@ -136,6 +136,10 @@ const dashboard = readFileSync(join(__dirname, 'public', 'index.html'), 'utf8');
 const server = http.createServer(async (req, res) => {
   const url = new URL(req.url ?? '/', `http://127.0.0.1:${PORT}`);
 
+  if (req.method === 'GET' && url.pathname === '/health') {
+    send(res, 200, { ok: true });
+    return;
+  }
   if (req.method === 'GET' && url.pathname === '/') {
     send(res, 200, dashboard);
     return;
@@ -148,6 +152,11 @@ const server = http.createServer(async (req, res) => {
     const body = (await readJson(req)) as { name?: string; url?: string };
     if (!body.name || !body.url) {
       send(res, 400, { error: 'name and url required' });
+      return;
+    }
+    const duplicate = [...servers.values()].find((s) => s.name === body.name);
+    if (duplicate) {
+      send(res, 409, { error: 'duplicate name' });
       return;
     }
     const id = randomUUID();
@@ -176,16 +185,18 @@ const server = http.createServer(async (req, res) => {
     }
     const p = scrubbed.payload;
     const matched = [...servers.values()].find((s) => s.name === p.incident.serverName);
-    bridgeIncidents.push({
+    const dualTruth = {
       id: p.incident.id,
       workspaceIdHash: p.workspaceIdHash,
       serverName: p.incident.serverName,
       ide_state: p.incident.stateTo,
       cloud_probe_state: matched?.lastState ?? null,
       at: p.incident.at,
-    });
+      ...(p.incident.accepted === true ? { accepted: true as const } : {}),
+    };
+    bridgeIncidents.push(dualTruth);
     appendAudit('bridge.incident', p.incident.serverName);
-    send(res, 201, { ok: true, dualTruth: bridgeIncidents.at(-1) });
+    send(res, 201, { ok: true, dualTruth });
     return;
   }
   if (req.method === 'GET' && url.pathname === '/v1/bridge/incidents') {

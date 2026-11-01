@@ -15,6 +15,18 @@
       "type": "stdio",
       "command": "npx",
       "args": ["-y", "@modelcontextprotocol/server-filesystem", "${workspaceFolder}"]
+    },
+    "filesystem-vendored": {
+      "type": "stdio",
+      "command": "node",
+      "args": ["vendored/filesystem/run-healthy.mjs"],
+      "cwd": "${workspaceFolder}"
+    },
+    "filesystem-vendored-fail": {
+      "type": "stdio",
+      "command": "node",
+      "args": ["vendored/filesystem/run-bad-allowlist.mjs"],
+      "cwd": "${workspaceFolder}"
     }
   }
 }
