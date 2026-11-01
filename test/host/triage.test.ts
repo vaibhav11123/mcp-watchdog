@@ -21,7 +21,11 @@ async function waitForPort(port: number, timeoutMs: number): Promise<void> {
       await new Promise<void>((resolve, reject) => {
         const req = http.get(`http://127.0.0.1:${port}/health`, (res) => {
           res.resume();
-          res.statusCode && res.statusCode < 500 ? resolve() : reject(new Error('bad status'));
+          if (res.statusCode && res.statusCode < 500) {
+            resolve();
+          } else {
+            reject(new Error('bad status'));
+          }
         });
         req.on('error', reject);
         req.setTimeout(500, () => {

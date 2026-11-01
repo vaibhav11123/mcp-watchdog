@@ -15,14 +15,21 @@ import {
 export type { McpConfig, McpConfigResult, McpConfigStatus, McpServerConfig };
 export { emptyViewMessage };
 
+/** Windows Roaming AppData: prefer %APPDATA% only for the real home directory. */
+function winRoamingAppData(home: string): string {
+  if (process.env.APPDATA && home === os.homedir()) {
+    return process.env.APPDATA;
+  }
+  return path.join(home, 'AppData', 'Roaming');
+}
+
 /** VS Code user-profile MCP config (platform-specific). */
 export function vscodeUserMcpPath(home = os.homedir(), platform = process.platform): string {
   if (platform === 'darwin') {
     return path.join(home, 'Library', 'Application Support', 'Code', 'User', 'mcp.json');
   }
   if (platform === 'win32') {
-    const appData = process.env.APPDATA || path.join(home, 'AppData', 'Roaming');
-    return path.join(appData, 'Code', 'User', 'mcp.json');
+    return path.join(winRoamingAppData(home), 'Code', 'User', 'mcp.json');
   }
   return path.join(home, '.config', 'Code', 'User', 'mcp.json');
 }
@@ -49,8 +56,7 @@ export function claudeDesktopMcpPath(home = os.homedir(), platform = process.pla
     );
   }
   if (platform === 'win32') {
-    const appData = process.env.APPDATA || path.join(home, 'AppData', 'Roaming');
-    return path.join(appData, 'Claude', 'claude_desktop_config.json');
+    return path.join(winRoamingAppData(home), 'Claude', 'claude_desktop_config.json');
   }
   return path.join(home, '.config', 'Claude', 'claude_desktop_config.json');
 }

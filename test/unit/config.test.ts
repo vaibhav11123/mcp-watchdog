@@ -1,3 +1,4 @@
+import * as os from 'os';
 import * as path from 'path';
 import { describe, expect, it, vi } from 'vitest';
 
@@ -19,6 +20,20 @@ describe('claudeDesktopMcpPath', () => {
     expect(claudeDesktopMcpPath(home, 'win32')).toBe(
       path.join(home, 'AppData', 'Roaming', 'Claude', 'claude_desktop_config.json'),
     );
+  });
+
+  it('win32 uses APPDATA when home is the real homedir', () => {
+    const realHome = os.homedir();
+    const prev = process.env.APPDATA;
+    process.env.APPDATA = 'D:\\CustomRoaming';
+    try {
+      expect(claudeDesktopMcpPath(realHome, 'win32')).toBe(
+        path.join('D:\\CustomRoaming', 'Claude', 'claude_desktop_config.json'),
+      );
+    } finally {
+      if (prev === undefined) delete process.env.APPDATA;
+      else process.env.APPDATA = prev;
+    }
   });
 
   it('linux', () => {

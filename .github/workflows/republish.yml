@@ -45,7 +45,15 @@ jobs:
             echo "::error::VSCE_PAT not set"
             exit 1
           fi
-          npx --yes @vscode/vsce publish --packagePath "$VSIX" --skip-duplicate --pat "$VSCE_PAT"
+          # Already-published is success for a retry workflow.
+          set +e
+          out=$(npx --yes @vscode/vsce publish --packagePath "$VSIX" --skip-duplicate --pat "$VSCE_PAT" 2>&1)
+          code=$?
+          echo "$out"
+          if [ $code -eq 0 ] || echo "$out" | grep -qi 'already published\|Skipping publish'; then
+            exit 0
+          fi
+          exit $code
 
       - name: Publish to Open VSX
         env:
@@ -55,4 +63,12 @@ jobs:
             echo "::error::OVSX_PAT not set"
             exit 1
           fi
-          npx --yes ovsx publish "$VSIX" --pat "$OVSX_PAT"
+          set +e
+          out=$(npx --yes ovsx publish "$VSIX" --pat "$OVSX_PAT" 2>&1)
+          code=$?
+          echo "$out"
+          # Inactive-but-published means the version exists (scan/activate lag) — not a retry failure.
+          if [ $code -eq 0 ] || echo "$out" | grep -qi 'already published'; then
+            exit 0
+          fi
+          exit $code
