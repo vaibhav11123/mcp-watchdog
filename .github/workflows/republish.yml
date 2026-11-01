@@ -1,0 +1,58 @@
+name: Republish marketplaces
+
+# Re-upload an existing GitHub Release VSIX when galleries lag or a publish needs retry.
+on:
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: 'Release tag (e.g. v0.5.4)'
+        required: true
+        default: 'v0.5.4'
+
+permissions:
+  contents: read
+
+jobs:
+  republish:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Download VSIX from GitHub Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ inputs.tag }}
+        run: |
+          set -euo pipefail
+          gh release download "$TAG" -p '*.vsix' -D .
+          VSIX=$(ls -1 *.vsix | head -1)
+          echo "VSIX=$VSIX" >> "$GITHUB_ENV"
+          echo "Using $VSIX"
+          EXPECTED="${TAG#v}"
+          GOT=$(unzip -p "$VSIX" extension/package.json | node -pe 'JSON.parse(require("fs").readFileSync(0,"utf8")).version')
+          echo "vsix version=$GOT expected=$EXPECTED"
+          test "$GOT" = "$EXPECTED"
+
+      - name: Publish to VS Marketplace
+        env:
+          VSCE_PAT: ${{ secrets.VSCE_PAT }}
+        run: |
+          if [ -z "$VSCE_PAT" ]; then
+            echo "::error::VSCE_PAT not set"
+            exit 1
+          fi
+          npx --yes @vscode/vsce publish --packagePath "$VSIX" --skip-duplicate --pat "$VSCE_PAT"
+
+      - name: Publish to Open VSX
+        env:
+          OVSX_PAT: ${{ secrets.OVSX_PAT }}
+        run: |
+          if [ -z "$OVSX_PAT" ]; then
+            echo "::error::OVSX_PAT not set"
+            exit 1
+          fi
+          npx --yes ovsx publish "$VSIX" --pat "$OVSX_PAT"
