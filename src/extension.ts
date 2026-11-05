@@ -29,8 +29,11 @@ import {
 } from './failureTriage';
 import { buildBridgePayload, postBridgeIncident, workspaceIdHash } from './cloudBridge';
 import { mergeCredentialOverlay, secretStorageKey } from './credentialOverlay';
-import { matchRecipe } from './vendorRecipes';
+import { awsProfileFromEnv, matchRecipe } from './vendorRecipes';
 import { resolveServerArg, runFixFailure, runRemoveServer } from './triageHost';
+import { classifyFailure } from './failureTriage';
+import * as telemetry from './telemetry/client';
+import type { TransportKind } from './telemetry/events';
 
 type StatusPickItem = vscode.QuickPickItem & { serverName: string };
 
@@ -111,6 +114,48 @@ function refreshAllUi(): void {
   if (serversView) {
     serversView.message = emptyViewMessage(lastConfigStatus);
   }
+}
+
+function transportOf(name: string): TransportKind {
+  const cfg = serverConfigs[name];
+  if (!cfg) return 'unknown';
+  if (cfg.type === 'stdio' || cfg.type === 'http' || cfg.type === 'sse') return cfg.type;
+  return 'unknown';
+}
+
+function failureClassFor(name: string, st: ServerStatus): ReturnType<typeof classifyFailure> {
+  const cfg = serverConfigs[name];
+  const awsProfile = cfg?.type === 'stdio' && cfg.env ? awsProfileFromEnv(cfg.env) : undefined;
+  return classifyFailure({
+    serverName: name,
+    lastError: st.lastError,
+    lastProbeError: st.lastProbeError,
+    failureContext: st.failureContext,
+    config: cfg,
+    awsProfileId: awsProfile,
+  });
+}
+
+function maybeTrackStateTransition(
+  name: string,
+  prev: ServerStatus | undefined,
+  next: ServerStatus,
+): void {
+  if (!prev || prev.state === next.state) return;
+  const props: {
+    transport: TransportKind;
+    stateFrom: ServerState;
+    stateTo: ServerState;
+    failureClass?: ReturnType<typeof classifyFailure>;
+  } = {
+    transport: transportOf(name),
+    stateFrom: prev.state,
+    stateTo: next.state,
+  };
+  if (next.state === 'failed' || next.state === 'degraded') {
+    props.failureClass = failureClassFor(name, next);
+  }
+  telemetry.track('state_transition', props, { serverKey: name });
 }
 
 function maybePostBridge(name: string, prev: ServerStatus | undefined, next: ServerStatus): void {
@@ -220,6 +265,7 @@ function onServerStatus(name: string, s: ServerStatus): void {
     accepted: acceptedNames.has(name),
   });
   maybePostBridge(name, prev, withFlap);
+  maybeTrackStateTransition(name, prev, withFlap);
   if (s.toolDrift) {
     const note =
       s.toolDriftNote ??
@@ -337,8 +383,10 @@ async function emitAlert(decision: AlertDecision): Promise<void> {
   if (!picked) return;
 
   if (picked === 'Retry probe') {
+    telemetry.track('triage_action', { action: 'retry' });
     await retryProbe(decision.server);
   } else if (picked === RESTART_EDITOR_MCP_ACTION) {
+    telemetry.track('triage_action', { action: 'restart_editor_mcp' });
     const result = await tryRestartEditorMcp(vscodeEditorMcpHost, decision.server);
     await notifyEditorMcpResult(result);
     if (!result.ok && result.method === 'unavailable') {
@@ -362,6 +410,7 @@ async function emitAlert(decision: AlertDecision): Promise<void> {
       );
     }
   } else if (picked === 'Mute 1h') {
+    telemetry.track('triage_action', { action: 'mute' });
     alertManager.mute(decision.server, 60 * 60 * 1000);
   } else if (picked === 'Accept') {
     await acceptFailure(decision.server);
@@ -385,6 +434,11 @@ async function acceptFailure(serverName: string): Promise<void> {
   await persistAccepted();
   const cur = statuses.get(serverName);
   if (cur) statuses.set(serverName, { ...cur, accepted: true });
+  const fc = cur ? failureClassFor(serverName, cur) : undefined;
+  telemetry.track('triage_action', {
+    action: 'accept',
+    ...(fc ? { failureClass: fc } : {}),
+  });
   await postBridgeAccepted(serverName, true);
   refreshAllUi();
   void vscode.window.showInformationMessage(
@@ -437,6 +491,7 @@ async function removeServer(serverName: string): Promise<void> {
     secrets: extensionContext.secrets,
     clearAcceptance,
     disableServer: async (name) => {
+      telemetry.track('triage_action', { action: 'remove' });
       const cfg = vscode.workspace.getConfiguration('mcpWatchdog');
       const per = {
         ...(cfg.get<Record<string, Record<string, unknown>>>('perServer') ?? {}),
@@ -486,6 +541,8 @@ async function offerTrustPrompt(): Promise<void> {
 
   if (choice === 'Review & Allow') {
     await reviewTrustQuickPick();
+  } else {
+    telemetry.track('trust_decision', { outcome: 'deferred', allowedCount: 0 });
   }
 }
 
@@ -533,6 +590,7 @@ async function reviewTrustQuickPick(): Promise<void> {
   if (selected.length === 0) {
     await trustStore.revoke();
     logger.info('[Watchdog] Trust revoked for this workspace');
+    telemetry.track('trust_decision', { outcome: 'revoked', allowedCount: 0 });
     void vscode.window.showInformationMessage('MCP Watchdog: trust revoked for this workspace.');
     trustPromptShown = false;
     await reloadServers();
@@ -542,6 +600,7 @@ async function reviewTrustQuickPick(): Promise<void> {
   const allowed = selected.map((item) => item.serverName);
   await trustStore.approve(fingerprint, allowed);
   logger.info(`[Watchdog] Approved monitoring ${allowed.length} server(s)`);
+  telemetry.track('trust_decision', { outcome: 'allowed', allowedCount: allowed.length });
   trustPromptShown = false;
   await reloadServers();
 }
@@ -565,6 +624,8 @@ export async function activate(context: vscode.ExtensionContext): Promise<McpWat
   trustStore = new TrustStore(context.globalState, workspacePath());
 
   logger = new Logger();
+  telemetry.init(context);
+  context.subscriptions.push({ dispose: () => telemetry.dispose() });
   configDiagnostics = new ConfigDiagnostics();
   context.subscriptions.push(configDiagnostics);
   loadAcceptedFromState();
@@ -699,6 +760,17 @@ export async function activate(context: vscode.ExtensionContext): Promise<McpWat
   );
 
   await reloadServers();
+
+  const version = (context.extension.packageJSON as { version?: string }).version ?? '0.0.0';
+  const editor = (vscode.env.appName || 'unknown').slice(0, 64);
+  telemetry.track('activation', {
+    extVersion: version,
+    editor,
+    vscodeVersion: vscode.version,
+    serverCount: monitors.size,
+    $set: { extVersion: version, editor },
+    $set_once: { firstEditor: editor },
+  });
 
   const revealKey = 'mcpWatchdog.didRevealServersView';
   if (!context.globalState.get<boolean>(revealKey)) {

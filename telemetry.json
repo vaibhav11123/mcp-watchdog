@@ -1,0 +1,57 @@
+{
+  "events": [
+    {
+      "name": "activation",
+      "description": "Fired once per extension activate when Watchdog telemetry and editor telemetry are both enabled. Anonymous installId as distinct_id; person props via $set (extVersion, editor).",
+      "properties": {
+        "extVersion": { "classification": "SystemMetaData", "purpose": "FeatureInsight" },
+        "editor": { "classification": "SystemMetaData", "purpose": "FeatureInsight" },
+        "vscodeVersion": { "classification": "SystemMetaData", "purpose": "FeatureInsight" },
+        "serverCount": { "classification": "SystemMetaData", "purpose": "FeatureInsight", "isMeasurement": true }
+      }
+    },
+    {
+      "name": "state_transition",
+      "description": "Rate-limited (≤1 per server per 30s) health state change. Enums only; no server names or error text.",
+      "properties": {
+        "transport": { "classification": "SystemMetaData", "purpose": "FeatureInsight" },
+        "stateFrom": { "classification": "SystemMetaData", "purpose": "FeatureInsight" },
+        "stateTo": { "classification": "SystemMetaData", "purpose": "FeatureInsight" },
+        "failureClass": { "classification": "SystemMetaData", "purpose": "FeatureInsight" }
+      }
+    },
+    {
+      "name": "triage_action",
+      "description": "User chose Accept / Fix step / Remove / Retry / Restart editor MCP / Mute.",
+      "properties": {
+        "action": { "classification": "SystemMetaData", "purpose": "FeatureInsight" },
+        "fixStepId": { "classification": "SystemMetaData", "purpose": "FeatureInsight" },
+        "failureClass": { "classification": "SystemMetaData", "purpose": "FeatureInsight" }
+      }
+    },
+    {
+      "name": "trust_decision",
+      "description": "Review & Allow outcome (allowed / revoked / deferred).",
+      "properties": {
+        "outcome": { "classification": "SystemMetaData", "purpose": "FeatureInsight" },
+        "allowedCount": { "classification": "SystemMetaData", "purpose": "FeatureInsight", "isMeasurement": true }
+      }
+    },
+    {
+      "name": "settings_change",
+      "description": "mcpWatchdog.telemetry.enabled or cloudBridge.enabled toggled.",
+      "properties": {
+        "key": { "classification": "SystemMetaData", "purpose": "FeatureInsight" },
+        "value": { "classification": "SystemMetaData", "purpose": "FeatureInsight" }
+      }
+    },
+    {
+      "name": "error",
+      "description": "Unexpected catch — Error.name and where only; no stacks or messages.",
+      "properties": {
+        "where": { "classification": "SystemMetaData", "purpose": "FeatureInsight" },
+        "name": { "classification": "SystemMetaData", "purpose": "FeatureInsight" }
+      }
+    }
+  ]
+}

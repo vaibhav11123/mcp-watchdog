@@ -39,13 +39,18 @@ Use the platform’s real MCP config path (see README).
 
 ---
 
-## D. Marketing sync (G2) — 0.5.4
+## D. Marketing sync (G2) — 0.5.5
 
-- [x] CHANGELOG.md dated `0.5.4`
-- [x] README Accept/Fix/Remove + Cloud bridge + Demo GIF
-- [x] package.json description + walkthrough Watchdog chip
-- [x] Version `0.5.4`
-- [x] Announce draft (below)
+- [x] CHANGELOG.md dated `0.5.5` (product telemetry default on)
+- [x] README Privacy + `telemetry.enabled` + Cloud bridge
+- [x] package.json description (PostHog honesty) + walkthrough Watchdog chip
+- [x] Version `0.5.5`
+- [ ] Announce draft after PostHog project key is set and tag `v0.5.5` publishes
+
+### Prior — 0.5.4
+
+- [x] CHANGELOG / README Accept/Fix/Remove + Cloud bridge
+- [x] Dual-published Marketplace + Open VSX
 
 ---
 
@@ -53,11 +58,13 @@ Use the platform’s real MCP config path (see README).
 
 Workflow: `.github/workflows/release.yml` on tag `v*`.
 
-1. Tag `v0.5.4` → push  
-2. `vsce package` → GitHub Release + `.vsix`  
-3. VS Marketplace if `VSCE_PAT` set  
-4. Open VSX if `OVSX_PAT` set (Cursor primary)  
-5. Soft-skip if PAT empty — verify listing before claiming published  
+1. Set PostHog project API key + matching-region host in `src/telemetry/config.ts`  
+2. Tag `v0.5.5` → push  
+3. `vsce package` → GitHub Release + `.vsix`  
+4. VS Marketplace if `VSCE_PAT` set  
+5. Open VSX if `OVSX_PAT` set (Cursor primary)  
+6. Soft-skip if PAT empty — verify listing before claiming published  
+7. Confirm one `activation` in PostHog Live events from a real install  
 
 Item: `mcp-watchdog.mcp-watchdog`.
 
@@ -69,18 +76,19 @@ Evidence / handoff: [validation/triage-evidence/PUBLISH-HANDOFF.md](./validation
 
 - Opt-in `cloudBridge.enabled` posts names-only incidents including `accepted`.
 - Dual-truth compares IDE bridge state with Cloud’s own poll — not the editor MCP client.
+- Product telemetry (PostHog) is separate — default on; not Cloud dual-truth.
 - Assets: `V-CL-*` stills in triage-evidence.
 
 ---
 
 ## G. Post-release (G5)
 
-1. Confirm Open VSX + Marketplace show **0.5.4**  
+1. Confirm Open VSX + Marketplace show **0.5.5**  
 2. Re-run G0 on **published** Cursor install (not F5)  
 3. Outreach:
 
 **X / LinkedIn (short):**  
-MCP Watchdog 0.5.4 — when an MCP server fails, Accept / Fix… / Remove in one toast. Independent health for Cursor & VS Code. Opt-in Cloud bridge (names-only). Open VSX + Marketplace.
+MCP Watchdog 0.5.5 — Accept / Fix… / Remove when MCP fails, plus anonymous product telemetry (PostHog, on by default; disable in Settings). Opt-in Cloud bridge stays separate. Open VSX + Marketplace.
 
 **HN / forum (longer):**  
-Editor can still list tools after a server goes quiet. Watchdog runs its own probe, shows status/latency, then Accept (chip), Fix… (guided), or Remove (edit mcp.json). Retry probe ≠ Restart editor MCP. Cloud is opt-in self-host dual-truth — not a gateway.
+Editor can still list tools after a server goes quiet. Watchdog runs its own probe, shows status/latency, then Accept (chip), Fix… (guided), or Remove (edit mcp.json). 0.5.5 adds anonymous PostHog usage (activation / triage) behind a dual gate with the editor’s telemetry setting — turn off in Settings anytime. Cloud bridge remains opt-in self-host dual-truth.

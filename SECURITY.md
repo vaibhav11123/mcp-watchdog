@@ -21,6 +21,13 @@ It does **not** support VS Code **Restricted Mode** (`capabilities.untrustedWork
 
 ## Secrets and Cloud bridge
 
-- Env var and HTTP header **values** are never written to the Output log, Overview, status bar, or opt-in Cloud bridge. **Names** may appear.
+- Env var and HTTP header **values** are never written to the Output log, Overview, status bar, product telemetry, or opt-in Cloud bridge. **Names** may appear.
 - Credential wizard values go to VS Code SecretStorage (and only into mcp.json if you explicitly dual-write).
 - Opt-in `cloudBridge` posts scrubbed, names-only incidents; default off; fail-soft if unreachable.
+
+## Product telemetry (PostHog)
+
+- Setting `mcpWatchdog.telemetry.enabled` defaults to **on**; tagged `telemetry` + `usesOnlineServices`.
+- Also requires `vscode.env.isTelemetryEnabled`. Either gate off → no network.
+- Allowlisted events/properties only (see [`telemetry.json`](telemetry.json)). Anonymous `installId` in `globalState` — no email, no workspace path.
+- Distinct from Cloud bridge (user self-host dual-truth). No session replay / autocapture.

@@ -231,7 +231,7 @@ Each row is a deliberate choice. “Alternative rejected” captures what we exp
 | D17 | ±10% **jitter** on timers | Avoid thundering herd when many servers share interval | Exact simultaneous pings |
 | D18 | Window **focus → wakeUp (500ms)** | Faster recovery after sleep / context switch | Wait for next 30s tick only |
 | D19 | Live settings reload (500ms debounce) | No window reload for tuning intervals/modes | Require reload for settings |
-| D20 | No telemetry | Privacy marketing + trust for a tool that runs user commands | Opt-in crash analytics (deferred) |
+| D20 | Product telemetry via PostHog | Active installs / retention / triage funnels | Default **on** (`mcpWatchdog.telemetry.enabled`) + `vscode.env.isTelemetryEnabled` dual gate; allowlisted Capture sender; ≠ cloudBridge |
 | D21 | Dual publish: Open VSX + Marketplace | Cursor/forks need Open VSX; VS Code uses Marketplace | Marketplace only |
 | D22 | Unit tests offline; network in `scripts/` | Fast, deterministic CI | Hit npx in every unit test |
 | D23 | Coverage floors on `monitor` + `config-core` | Protect the state machine and parser | Coverage theater on UI glue only |
@@ -390,7 +390,7 @@ Values **are** still passed to the SDK for real connections (stdio `env`, HTTP `
 ### 9.4 Other security properties
 
 - Overview webview CSP: restrictive (`default-src 'none'`, nonce for scripts).
-- No bundled analytics/telemetry.
+- Product telemetry (PostHog) default on + VS Code gate; allowlisted events in `telemetry.json`; Cloud bridge remains opt-in and separate.
 - SECURITY.md: private advisory reporting; scope includes user-defined commands/endpoints.
 - Extension runs **user-configured** code/endpoints — trust your `mcp.json`.
 

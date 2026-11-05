@@ -18,6 +18,7 @@ import { secretStorageKey } from './credentialOverlay';
 import { tryRestartEditorMcp, type EditorMcpHost } from './editorMcp';
 import type { ServerStatus } from './monitor';
 import type { Logger } from './logger';
+import * as telemetry from './telemetry/client';
 
 const ALLOWED_LOGIN_HOSTS = new Set(['mcp.exa.ai', 'dashboard.exa.ai']);
 
@@ -69,6 +70,11 @@ export async function runFixFailure(deps: {
     { title: `Fix ${deps.serverName} (${cls})`, placeHolder: 'Choose a remediation step' },
   );
   if (!picked) return;
+  telemetry.track('triage_action', {
+    action: 'fix_step',
+    fixStepId: picked.step.id,
+    failureClass: cls,
+  });
   await executeFixStep(picked.step, deps, recipe?.credSlot, recipe?.loginUrl, awsProfile);
 }
 
@@ -369,6 +375,7 @@ export async function runRemoveServer(deps: {
 
   fs.writeFileSync(origin.path, result.raw, 'utf8');
   deps.logger.info(`[Watchdog] Removed ${deps.serverName} from ${origin.path}`);
+  telemetry.track('triage_action', { action: 'remove' });
 
   // Best-effort clear secrets
   try {

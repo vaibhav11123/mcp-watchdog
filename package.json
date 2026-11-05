@@ -1,8 +1,8 @@
 {
   "name": "mcp-watchdog",
   "displayName": "MCP Watchdog",
-  "description": "Independent MCP health for Cursor and VS Code: status, latency, and Accept / Fix… / Remove when a server fails — plus opt-in Cloud bridge (names-only).",
-  "version": "0.5.4",
+  "description": "Independent MCP health for Cursor and VS Code: status, latency, and Accept / Fix… / Remove when a server fails — plus opt-in Cloud bridge (names-only). Anonymous product telemetry via PostHog is on by default (disable in Settings).",
+  "version": "0.5.5",
   "publisher": "mcp-watchdog",
   "license": "MIT",
   "keywords": [
@@ -370,6 +370,15 @@
           "type": "string",
           "default": "",
           "description": "Watchdog Cloud base URL (e.g. http://127.0.0.1:8787). Used only when cloudBridge.enabled is true."
+        },
+        "mcpWatchdog.telemetry.enabled": {
+          "type": "boolean",
+          "default": true,
+          "tags": [
+            "telemetry",
+            "usesOnlineServices"
+          ],
+          "description": "Share anonymous product usage with MCP Watchdog via PostHog (activation, triage actions, failure classes). On by default; turn off anytime. Also requires the editor’s telemetry setting to be enabled. Never sends env/header values or secrets."
         }
       }
     }

@@ -6,6 +6,17 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [0.5.5] - 2026-11-05
+
+### Added
+
+- **Product telemetry (PostHog)** — anonymous activation / triage / failure-class events for retention. Setting `mcpWatchdog.telemetry.enabled` **default on**; also requires the editor’s telemetry setting (`vscode.env.isTelemetryEnabled`). Allowlisted properties only; never env/header values, paths, or raw errors. Event dictionary: [`telemetry.json`](telemetry.json). One-time first-run notice with Disable / Open Settings.
+- Dual gate + `TelemetryLogger` custom sender (no new runtime deps); silent in `ExtensionMode.Test`.
+
+### Changed
+
+- README / SECURITY / TECHNICAL: honesty that product telemetry is on by default (separate from opt-in `cloudBridge`).
+
 ## [0.5.4] - 2026-11-01
 
 ### Added
