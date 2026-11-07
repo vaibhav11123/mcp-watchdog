@@ -1,7 +1,7 @@
 # Sign-off v0.5.7
 
 - Date (UTC): 2026-11-07T17:53Z
-- Commit SHA: `23f563c` (+ Live EH host suite / alert clearServer flap reset / Overview `overflow-x:hidden` on tree at sign-off)
+- Commit SHA: `f545b0a` (`v0.5.7` tag)
 - Recorder: Cursor eng agent (Live EH via Extension Host matrix)
 - Platforms smoked: VS Code test-cli EH (`npm run test:host` → Live EH L1–L9 suite) + packaged VSIX built
 - Automated:
