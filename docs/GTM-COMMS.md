@@ -1,9 +1,21 @@
 # Cursor ↔ Instinct communications
 
-**Last updated:** 2026-11-07  
-**Normative with:** [GTM-GUARDRAILS.md](./GTM-GUARDRAILS.md) · [GTM-ROLE.md](./GTM-ROLE.md)
+**Last updated:** 2026-11-08  
+**Normative with:** [GTM-GUARDRAILS.md](./GTM-GUARDRAILS.md) · [GTM-ROLE.md](./GTM-ROLE.md) · [STATUS.md](./STATUS.md)
 
 Apple Messages has **no bot label** and **no from-account selector**. Every send from the Mac looks like Vaibhav typed it. This file fixes attribution and defines the preferred Slack path for proper dual identity.
+
+### Agent ↔ Instinct without Vaibhav midwifing
+
+Eng and Instinct talk **to and fro on Slack on their own**. Vaibhav is **not** required to wake Cursor for ordinary GTM Q&A.
+
+| Path | Who posts | Vaibhav needed? |
+|------|-----------|-----------------|
+| **Always-on** Cursor Automation **MCP Watchdog GTM reply** (`5f103790-dad6-11f1-8120-06b44be262b7`) | Cursor Slack bot; body prefix `[Cursor · MCP Watchdog eng]` | **No** for Instinct replies / draft feedback / media asks |
+| **Proactive coding eng** (`user-slack-eng` APP badge when available) | Posts slice start/mid/CI land/soak/announce handoffs **without** waiting for Vaibhav to say “tell Instinct” | **No** for progress + product truth |
+| **Vaibhav human** | Himself | **Yes** — Tier 2+ publish **A**, money/spend **A**, kill-switch only |
+
+Hard limits unchanged: refuse spend, claim jumps, auto social, skipping RELEASE/TESTING. Instinct replies = requests. No secret values in channel.
 
 ---
 
@@ -13,18 +25,20 @@ Apple Messages has **no bot label** and **no from-account selector**. Every send
 flowchart LR
   Vaibhav[Vaibhav_human]
   Cursor[Cursor_eng_agent]
+  Auto[Cursor_Automation_GTM_reply]
   Instinct[Instinct_GTM]
   Vaibhav -->|"iMessage_no_prefix_or_Vaibhav_tag"| Instinct
-  Cursor -->|"iMessage_MUST_prefix"| Instinct
-  Cursor -->|"Slack_bot_APP_badge preferred"| Instinct
+  Cursor -->|"Slack_proactive_APP_or_prefix"| Instinct
+  Instinct -->|"channel_message"| Auto
+  Auto -->|"reply_with_eng_prefix"| Instinct
   Instinct -->|"requests_not_orders"| Cursor
   Vaibhav -->|A_publish_Tier2plus_and_money| Instinct
 ```
 
 | Channel | Use | Attribution |
 |---------|-----|-------------|
-| **Slack** `#mcp-watchdog-gtm` (**preferred** once live) | Ongoing GTM sync, drafts, GIF asks | Cursor via **Slack bot** (APP badge) or clearly named webhook; Vaibhav as himself; Instinct as Instinct |
-| **iMessage** allowlist | Vaibhav ↔ Instinct only (OWNER) | Cursor eng **send disabled** (`ENABLE_SEND=0` in local `~/.cursor/mcp.json`) — Slack eng bot is the handoff path |
+| **Slack** `#mcp-watchdog-gtm` (**preferred**) | Ongoing GTM sync, drafts, GIF asks, mid-dev eng updates | Automation (Cursor bot) + eng APP badge; Vaibhav as himself; Instinct as Instinct |
+| **iMessage** allowlist | Vaibhav ↔ Instinct only (OWNER) | Cursor eng **send disabled** (`ENABLE_SEND=0` in local `~/.cursor/mcp.json`) — Slack is the eng handoff path |
 | GitHub `launch/` + docs | Durable packs | Not a chat |
 
 **Secrets:** Bot `xoxb` lives only in local `~/.cursor/mcp.json` (outside this git repo). Never commit tokens; never paste into iMessage/Slack/docs.

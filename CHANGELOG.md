@@ -6,6 +6,21 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+### Added
+
+- Phase 4 golden diagnostic fixtures (`test/unit/goldenFixtures.test.ts`) — same causeId across vendor-looking names.
+- Phase 5 soft-stop scaffold (`softStopFromToolDrift` / `contractStatus`) — advisory warn; never rewrites mcp.json.
+- Phase 6 CLI scaffold (`bin/mcp-watchdog.mjs` + package `bin`) — usage / honesty only until harness loaders land.
+- DoctorMetrics `falsePositiveRate` hook (local north-star; no public % yet).
+- Live EH L7 host hook + Overview unit for `Verified:` meta; 0.5.9 SIGN-OFF remains HOLD until soak + GIF.
+- GTM: [ANNOUNCE-DRAFT-0.6.0.md](./docs/gtm/ANNOUNCE-DRAFT-0.6.0.md) prep (Vaibhav A required before post).
+
+### Changed
+
+- Fix Quick Pick omits `restart.editorMcp` when `HostCapabilities.canRestartServer` is false.
+- Store listing dual-truth copy (description / README lead / walkthrough) + Doctor UI announce kit.
+- Agent↔Instinct Slack loop documented (automation replies; coding eng proactive; Vaibhav only A/money).
+
 ## [0.5.8] - 2026-11-07
 
 Cadence patch (2h train). No GTM announce. See commits since previous tag.
@@ -13,14 +28,17 @@ Cadence patch (2h train). No GTM announce. See commits since previous tag.
 ### Changed
 
 - Automated cadence release from `main` (CI green + commits since last tag).
-
-
-### Changed
-
-- Release / agent gates: `npm test` now runs `lint` + `format:check` (same failure mode as `ci.yml`); `scripts/wait-ci.sh` + ship-release waits for main CI after push — Release workflow green is not enough.
-- **2-hour cadence releases:** [`.github/workflows/cadence-release.yml`](./.github/workflows/cadence-release.yml) + [`scripts/cadence-release.sh`](./scripts/cadence-release.sh) — patch bump + publish when `main` is ahead of the last tag and CI is green; no GTM announce. Disable with repo var `ENABLE_CADENCE_RELEASE=false`.
+- Release / agent gates: `npm test` runs `lint` + `format:check`; `scripts/wait-ci.sh` + ship-release wait for main CI.
+- **2-hour cadence releases** via cadence-release.yml (disable with `ENABLE_CADENCE_RELEASE=false`).
 
 ## [0.5.7] - 2026-11-07
+
+### Marketing
+
+- Claim stage: **Now+**
+- G0: Cursor Open VSX + Marketplace (same VSIX); cadence may show newer patch
+- GIF updated: n/a for toast≤3 (verify beat → 0.5.9)
+- Announce kit: [docs/gtm/ANNOUNCE-DRAFT-0.5.7.md](./docs/gtm/ANNOUNCE-DRAFT-0.5.7.md)
 
 Marketing: claim stage **Now+**. Public announce story for this cut is **Doctor UI Must** only (cause sentences, toast ≤3, Reconnecting). HostCapabilities / verify ship in the same VSIX; GTM beats for those stay on the 0.5.8 / 0.5.9 map. No bake-off win claim until **0.6.0**.
 

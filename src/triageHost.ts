@@ -10,6 +10,7 @@ import {
   buildFixSteps,
   classifyFailure,
   diagnoseFailure,
+  filterFixStepsForHostCaps,
   type FixStep,
   type ClassifyFailureInput,
 } from './failureTriage';
@@ -82,7 +83,11 @@ export async function runFixFailure(deps: {
   deps.doctorMetrics?.recordDiagnose();
   const cls = classifyFailure(input);
   // Full recommend list (S-FIX-QP-01) — never toast-cap the Quick Pick.
-  const steps = buildFixSteps(cls, input);
+  // HostCaps: omit restart.editorMcp when the host cannot restart MCP servers.
+  const steps = filterFixStepsForHostCaps(
+    buildFixSteps(cls, input),
+    deps.hostCaps?.canRestartServer,
+  );
   deps.logger.info(`[Watchdog] Fix ${deps.serverName}: causeId=${diagnosis.causeId} class=${cls}`);
 
   const picked = await vscode.window.showQuickPick(

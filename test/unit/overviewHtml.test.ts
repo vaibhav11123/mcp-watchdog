@@ -90,4 +90,22 @@ describe('overviewHtml', () => {
     expect(doc).toMatch(/overflow-x:\s*hidden/);
     expect(doc).toMatch(/data-action="reconnectAll"/);
   });
+
+  it('failed row shows Verified: meta when verifiedOutcome set (L7 / S-VERIFY-01)', () => {
+    const snap = statusesSnapshot(
+      [
+        {
+          name: 'echo',
+          state: 'failed',
+          retryCount: 1,
+          lastError: 'Max retries exceeded',
+          verifiedOutcome: 'unresolved',
+        },
+      ],
+      { kind: 'ok', sources: ['.cursor/mcp.json'] },
+      {},
+    );
+    const body = renderOverviewBody(snap);
+    expect(body).toMatch(/Verified: unresolved/);
+  });
 });

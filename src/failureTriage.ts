@@ -106,6 +106,15 @@ export function buildFixSteps(cls: FailureClass, input: ClassifyFailureInput): F
   );
 }
 
+/**
+ * HostCapabilities honesty (Phase 2 fold): do not offer editor MCP restart
+ * when the host has no restart command (`canRestartServer === false`).
+ */
+export function filterFixStepsForHostCaps(steps: FixStep[], canRestartServer?: boolean): FixStep[] {
+  if (canRestartServer !== false) return steps;
+  return steps.filter((s) => s.id !== 'restart.editorMcp');
+}
+
 /** Drop accepted-failed servers from the chip status list (N/M). */
 export function statusesForChip(
   statuses: ServerStatus[],

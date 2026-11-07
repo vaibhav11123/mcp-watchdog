@@ -1,7 +1,7 @@
 {
   "name": "mcp-watchdog",
   "displayName": "MCP Watchdog",
-  "description": "Independent MCP health for Cursor and VS Code: status, latency, and Accept / Fix… / Remove when a server fails — plus opt-in Cloud bridge (names-only). Anonymous product usage analytics may be collected (see Settings / Privacy).",
+  "description": "Know which MCP servers are responding in Cursor and VS Code. Green is Watchdog's own connection, not the editor session.",
   "version": "0.5.8",
   "publisher": "mcp-watchdog",
   "license": "MIT",
@@ -51,6 +51,9 @@
     "onStartupFinished"
   ],
   "main": "./dist/extension.js",
+  "bin": {
+    "mcp-watchdog": "./bin/mcp-watchdog.mjs"
+  },
   "contributes": {
     "commands": [
       {
@@ -190,7 +193,7 @@
           {
             "id": "statusBar",
             "title": "Check the status bar",
-            "description": "When servers are monitored, the bottom-right status bar shows **Watchdog: healthy/total** (separate from the editor’s MCP chip).\n\n[Show server status](command:mcpWatchdog.showStatus)",
+            "description": "When servers are monitored, the bottom-right status bar shows **Watchdog: healthy/total**. That count is Watchdog’s own connection, not the editor’s MCP session.\n\n[Show server status](command:mcpWatchdog.showStatus)",
             "media": {
               "image": "images/screenshot-status-bar.png",
               "altText": "MCP Watchdog status bar indicator"
