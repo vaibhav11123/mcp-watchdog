@@ -47,9 +47,13 @@ scripts/bake-off/.artifacts/
 # Workspace-local Doctor incidents (Phase 3)
 .mcp-watchdog/
 
-# Release QA capture clips (keep SIGN-OFF.md + small stills)
+# Release QA capture — local only (SIGN-OFF.md + markdown notes stay in git)
 docs/validation/release-evidence/**/clips/
 docs/validation/release-evidence/**/*.mp4
 docs/validation/release-evidence/**/*.mov
 docs/validation/release-evidence/**/*.webm
+docs/validation/release-evidence/**/*.png
+docs/validation/release-evidence/**/*.jpg
+docs/validation/release-evidence/**/*.jpeg
+docs/validation/release-evidence/**/*.gif
 

@@ -52,15 +52,7 @@ No neutron-bit logic failures observed in this matrix. Pending only L1 empty-win
 
 ## What it looks like (stills)
 
-| Still | What you should see |
-|-------|---------------------|
-| [`stills/L3-healthy.png`](./stills/L3-healthy.png) | Overview: All 1 healthy · metrics Healthy / **Reconnecting** / Failed · echo healthy |
-| [`stills/L4-failed-cause.png`](./stills/L4-failed-cause.png) | Failed posthog · cause **sentence** (not raw token text) · Editor session: Unknown · Show Log |
-| [`stills/L7-verified-unresolved.png`](./stills/L7-verified-unresolved.png) | Failed echo · **Verified: unresolved** · Editor session: Unknown |
-| [`stills/screenshot-servers-view.png`](./stills/screenshot-servers-view.png) | Shipped Servers tree (store asset) |
-| [`stills/screenshot-status-bar.png`](./stills/screenshot-status-bar.png) | Shipped status chip (store asset) |
-
-Overview stills are the **real Overview HTML renderer** (`src/ui/overviewHtml.ts`) with fixture statuses — same markup the webview shows in Cursor (theme tokens fallback for headless capture).
+**Not on GitHub.** PNG/GIF under `stills/` are gitignored (desktop/privacy). Keep locally if needed; see [LIVE-SCREEN-CAPTURE.md](./LIVE-SCREEN-CAPTURE.md). Overview HTML fixtures may remain as `.html` only.
 
 ---
 
