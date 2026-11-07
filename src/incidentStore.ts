@@ -96,11 +96,16 @@ export function appendIncidentRecord(input: AppendIncidentInput): IncidentRecord
   return record;
 }
 
-/** Simple in-process counters for diagnose% / verified-resolve% thesis hooks. */
+/**
+ * In-process counters for diagnose% / verified-resolve% / FP thesis hooks.
+ * Public % only after labeled window + FP disclosure (STRATEGY) — never Slack raw %.
+ */
 export class DoctorMetrics {
   diagnoses = 0;
   verifies = 0;
   verifiedResolved = 0;
+  /** Labeled false positives among diagnoses (local north-star; not public yet). */
+  falsePositives = 0;
 
   recordDiagnose(): void {
     this.diagnoses += 1;
@@ -111,6 +116,10 @@ export class DoctorMetrics {
     if (outcome === 'resolved') this.verifiedResolved += 1;
   }
 
+  recordFalsePositive(): void {
+    this.falsePositives += 1;
+  }
+
   diagnoseRate(totalFailures: number): number {
     if (totalFailures <= 0) return 0;
     return this.diagnoses / totalFailures;
@@ -119,5 +128,11 @@ export class DoctorMetrics {
   verifiedResolveRate(): number {
     if (this.verifies <= 0) return 0;
     return this.verifiedResolved / this.verifies;
+  }
+
+  /** FP ÷ diagnoses (STRATEGY); 0 until any diagnose recorded. */
+  falsePositiveRate(): number {
+    if (this.diagnoses <= 0) return 0;
+    return this.falsePositives / this.diagnoses;
   }
 }

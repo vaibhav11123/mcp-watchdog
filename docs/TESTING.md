@@ -71,7 +71,7 @@ Full suite when available: `npm test` (see `package.json` — includes compile/b
 
 Run F5 **Run Extension (mcp-watchdog-test)** or a disposable workspace. Tick pass/fail with date in the cut’s `SIGN-OFF.md`.
 
-Automated stand-in for the same workspace: `npm run test:host` includes `test/host/liveEh.test.ts` (L2–L6/L8; L1 empty-window and L7 verify skipped until available).
+Automated stand-in for the same workspace: `npm run test:host` includes `test/host/liveEh.test.ts` (L2–L6/L8 + L7 Verified hook; L1 empty-window may skip with unit empty-state coverage).
 
 | # | Scenario | Expect |
 |---|----------|--------|

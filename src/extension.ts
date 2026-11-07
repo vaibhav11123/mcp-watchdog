@@ -688,6 +688,8 @@ export interface McpWatchdogApi {
    * Set MCP_WATCHDOG_HOST_AUTOCONFIRM=1 to skip the modal.
    */
   removeServerForTests(serverName: string): Promise<void>;
+  /** Host-test hook: set Overview Verified: line (Live EH L7). */
+  setVerifiedOutcomeForTests(serverName: string, outcome: VerifiedOutcome): void;
 }
 
 export async function activate(context: vscode.ExtensionContext): Promise<McpWatchdogApi> {
@@ -926,6 +928,9 @@ export async function activate(context: vscode.ExtensionContext): Promise<McpWat
     },
     removeServerForTests: async (serverName: string) => {
       await removeServer(serverName);
+    },
+    setVerifiedOutcomeForTests: (serverName: string, outcome: VerifiedOutcome) => {
+      setVerifiedOutcome(serverName, outcome);
     },
   };
 }

@@ -30,3 +30,8 @@ export {
   verifyRecovery,
   type DiagnoseInput,
 } from './diagnose';
+export {
+  softStopFromToolDrift,
+  type ContractStatus,
+  type SoftStopSignal,
+} from './softStop';

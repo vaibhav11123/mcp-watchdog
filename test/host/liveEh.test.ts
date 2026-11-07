@@ -154,8 +154,29 @@ suite('Live EH matrix (TESTING.md L1–L9)', () => {
     this.skip();
   });
 
-  test('L7 skip — Verified: line gated to ≥0.5.9', function () {
-    this.skip();
+  test('L7 Verified: outcome surfaces on status after Fix verify hook', async function () {
+    this.timeout(60_000);
+    const api = await activateWatchdog();
+    await setupEchoOnlyHost(api, { requireApproval: false });
+    await vscode.commands.executeCommand('mcpWatchdog.refresh');
+    await waitHealthy(api);
+
+    killEchoServer();
+    const killTimer = setInterval(killEchoServer, 400);
+    try {
+      const deadline = Date.now() + 40_000;
+      while (Date.now() < deadline) {
+        const echo = api.getStatuses().find((s) => s.name === ECHO);
+        if (echo && (echo.state === 'failed' || echo.state === 'degraded')) break;
+        await delay(400);
+      }
+      api.setVerifiedOutcomeForTests(ECHO, 'unresolved');
+      await delay(200);
+      const after = api.getStatuses().find((s) => s.name === ECHO);
+      assert.strictEqual(after?.verifiedOutcome, 'unresolved', JSON.stringify(after));
+    } finally {
+      clearInterval(killTimer);
+    }
   });
 
   test('L9 layout — Overview primary + overflow clamp (unit-backed in host suite)', function () {

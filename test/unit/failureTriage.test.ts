@@ -2,10 +2,12 @@ import { describe, expect, it } from 'vitest';
 import {
   buildFixSteps,
   classifyFailure,
+  filterFixStepsForHostCaps,
   normalizeAcceptedList,
   resolveFailureText,
   shouldSuppressAlert,
   statusesForChip,
+  type FixStep,
 } from '../../src/failureTriage';
 import { buildStatusBarModel } from '../../src/ui/statusBarModel';
 import type { ServerStatus } from '../../src/monitor';
@@ -142,5 +144,28 @@ describe('buildFixSteps wave2', () => {
     });
     expect(steps.some((s) => s.id === 'openExternal.login')).toBe(true);
     expect(steps.some((s) => s.id === 'credential.wizard')).toBe(true);
+  });
+});
+
+describe('filterFixStepsForHostCaps', () => {
+  const steps: FixStep[] = [
+    { id: 'retry.probe', label: 'Retry probe' },
+    { id: 'restart.editorMcp', label: 'Restart editor MCP' },
+    { id: 'reload.window', label: 'Reload Window' },
+  ];
+
+  it('keeps restart when canRestartServer is true or undefined', () => {
+    expect(filterFixStepsForHostCaps(steps, true).some((s) => s.id === 'restart.editorMcp')).toBe(
+      true,
+    );
+    expect(
+      filterFixStepsForHostCaps(steps, undefined).some((s) => s.id === 'restart.editorMcp'),
+    ).toBe(true);
+  });
+
+  it('omits restart.editorMcp when canRestartServer is false', () => {
+    const filtered = filterFixStepsForHostCaps(steps, false);
+    expect(filtered.some((s) => s.id === 'restart.editorMcp')).toBe(false);
+    expect(filtered.map((s) => s.id)).toEqual(['retry.probe', 'reload.window']);
   });
 });

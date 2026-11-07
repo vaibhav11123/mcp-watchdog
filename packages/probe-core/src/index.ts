@@ -44,4 +44,7 @@ export {
   type RecommendInput,
   type DeriveStateInput,
   type DiagnoseInput,
+  softStopFromToolDrift,
+  type ContractStatus,
+  type SoftStopSignal,
 } from './diagnostics/index';

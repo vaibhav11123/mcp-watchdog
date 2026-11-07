@@ -4,11 +4,21 @@ export const EXT_ID = 'mcp-watchdog.mcp-watchdog';
 export const ECHO = 'echo';
 
 export interface McpWatchdogApi {
-  getStatuses(): Array<{ name: string; state: string; lastError?: string; accepted?: boolean }>;
+  getStatuses(): Array<{
+    name: string;
+    state: string;
+    lastError?: string;
+    accepted?: boolean;
+    verifiedOutcome?: string;
+  }>;
   getLastAlert(): { kind: string; message: string; actions: string[]; server: string } | undefined;
   revokeTrustForTests(): Promise<void>;
   acceptFailureForTests(serverName: string): Promise<void>;
   removeServerForTests(serverName: string): Promise<void>;
+  setVerifiedOutcomeForTests(
+    serverName: string,
+    outcome: 'resolved' | 'unresolved' | 'unknown' | 'worsened',
+  ): void;
 }
 
 export function delay(ms: number): Promise<void> {

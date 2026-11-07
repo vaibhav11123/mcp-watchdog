@@ -61,7 +61,11 @@ One **user-visible product story per cut**. Do not merge Doctor UI + verify + ba
 
 If 0.5.8 has **no** user-visible delta (adapters only), skip announce and fold into 0.5.9 notes — still bump only when publishing.
 
-**0.5.7 listing copy** is drafted in [gtm/LISTING-DRAFT-0.5.7.md](./gtm/LISTING-DRAFT-0.5.7.md). It is not applied to `package.json`, the README lead, or `images/demo.gif` while the 0.5.7 sign-off is **HOLD**.
+**Cadence note:** 2h cadence may consume patch numbers (e.g. silent **0.5.8**). Announce stories track CHANGELOG/GTM beats (Doctor / HostCaps fold / verify / bake-off), not exact SemVer alone.
+
+**0.5.7 listing copy** — [gtm/LISTING-DRAFT-0.5.7.md](./gtm/LISTING-DRAFT-0.5.7.md) **applied** (description / README lead / walkthrough). Announce kit: [gtm/ANNOUNCE-DRAFT-0.5.7.md](./gtm/ANNOUNCE-DRAFT-0.5.7.md). SIGN-OFF **READY**. G0: published Cursor (Open VSX + Marketplace same VSIX); soak started 2026-11-07.
+
+**0.6.0 bake-off** — prep only: [gtm/ANNOUNCE-DRAFT-0.6.0.md](./gtm/ANNOUNCE-DRAFT-0.6.0.md). **Vaibhav A** required; no eng auto-post.
 
 ### Notes template (paste into CHANGELOG `## [x.y.z]` body)
 
