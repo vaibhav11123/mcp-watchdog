@@ -2,7 +2,7 @@
   "name": "mcp-watchdog",
   "displayName": "MCP Watchdog",
   "description": "Know which MCP servers are responding in Cursor and VS Code. Green is Watchdog's own connection, not the editor session.",
-  "version": "0.5.8",
+  "version": "0.5.9",
   "publisher": "mcp-watchdog",
   "license": "MIT",
   "keywords": [
