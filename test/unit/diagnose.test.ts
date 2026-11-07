@@ -62,6 +62,12 @@ describe('diagnose / auth taxonomy', () => {
     );
   });
 
+  it('C-SPAWN-CLOSED-02: bare Max retries exceeded → spawn.closed (not generic)', () => {
+    const d = diagnose({ serverName: 'echo', lastError: 'Max retries exceeded' });
+    expect(d.causeId).toBe('spawn.closed');
+    expect(d.retryExhausted).toBe(true);
+  });
+
   it('C-GENERIC-01: opaque text → generic', () => {
     expect(diagnose({ serverName: 'x', lastError: 'something weird happened' }).causeId).toBe(
       'generic',

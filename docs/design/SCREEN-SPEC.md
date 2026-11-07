@@ -114,7 +114,7 @@ See [CAUSE-CATALOG.md](./CAUSE-CATALOG.md) “Cause sentence map”.
 | **TO-BE** | When diagnosis known: one cause sentence from catalog; raw error only in Output |
 | **Anti-pattern** | Dumping full `failureContext` in the status tooltip |
 | **Acceptance** | Given failed server with `auth.missing` diagnosis, when status model builds, then tooltip contains catalog sentence and does not require secret values |
-| **Test** | Intended: `test/unit/statusBarModel.test.ts` › `failed tooltip uses cause sentence` — **untested** |
+| **Test** | `statusBarModel` suite — confirm cause sentence in tooltip; Live EH covers toast/Overview path (2026-11-08) |
 
 ### S-TREE-01 — Servers tree description
 
@@ -136,7 +136,7 @@ See [CAUSE-CATALOG.md](./CAUSE-CATALOG.md) “Cause sentence map”.
 | **TO-BE** | At most **three** primary toast actions. Default set: `Fix…`, `Show Log`, `Mute 1h`. Accept / Remove / Retry / Reload / Quit remain available from Overview, command palette, or Fix Quick Pick — **not** all on the toast |
 | **Anti-pattern** | Promo toast; repeating the same failure toast while muted |
 | **Acceptance** | Given healthy→failed transition, when alert fires, then `actions.length ≤ 3` and Mute still works |
-| **Test** | Intended: `test/unit/alerts.test.ts` › `failure toast ≤3 actions` — **untested** (update existing alerts tests) |
+| **Test** | `alerts` unit + host `kill echo → toast ≤3` — **tested** (2026-11-08) |
 
 ### S-TOAST-02 — toast message prefers cause
 
@@ -146,7 +146,7 @@ See [CAUSE-CATALOG.md](./CAUSE-CATALOG.md) “Cause sentence map”.
 | **AS-IS** | `MCP server {name} failed: {lastError}` |
 | **TO-BE** | `MCP server {name} failed — {cause sentence}` when diagnosis available; else keep short lastError without secrets |
 | **Acceptance** | Given auth.missing diagnosis, when toast shows, then message includes “Missing credential” (or exact catalog sentence) |
-| **Test** | Intended with S-TOAST-01 — **untested** |
+| **Test** | Covered with S-TOAST-01 host/unit (2026-11-08) |
 
 ### S-OVERVIEW-EMPTY-01 — empty / config reasons
 
@@ -178,7 +178,7 @@ See [CAUSE-CATALOG.md](./CAUSE-CATALOG.md) “Cause sentence map”.
 | **TO-BE** | Name + state word + **one cause sentence** + **first** recommend action only (label from `recommendActions`); host unknown → quiet second line `Editor session: Unknown`; no raw error as headline; failureContext not in row (use Logs) |
 | **Anti-pattern** | Three CTAs on one row; printing env values |
 | **Acceptance** | Given snapshot with failed server + causeId `auth.missing`, when `renderOverviewBody`, then body matches cause sentence and first action label, and does not put full lastError in `.server-error` as headline |
-| **Test** | Intended: `overviewHtml` › `failed row shows cause sentence and first action` — **untested** |
+| **Test** | `overviewHtml` › `failed row shows cause sentence and first action` — **tested** (2026-11-08) |
 
 ### S-OVERVIEW-METRIC-01 — rename Active
 
@@ -188,7 +188,7 @@ See [CAUSE-CATALOG.md](./CAUSE-CATALOG.md) “Cause sentence map”.
 | **AS-IS** | Tile label `Active` for connecting+degraded count |
 | **TO-BE** | Tile label `Reconnecting` |
 | **Acceptance** | Body matches `Reconnecting` and not a lone `Active` metric label |
-| **Test** | Intended with S-OVERVIEW-FAILED-01 or dedicated assert — **untested** |
+| **Test** | `overviewHtml` › `dashboard uses Reconnecting metric…` — **tested** (2026-11-08) |
 
 ### S-OVERVIEW-FOOTER-01 — drop essays
 
@@ -198,7 +198,7 @@ See [CAUSE-CATALOG.md](./CAUSE-CATALOG.md) “Cause sentence map”.
 | **AS-IS** | Three footer paragraphs (“Next step”, “What this shows”, Star on GitHub) |
 | **TO-BE** | Remove “Next step” and “What this shows” once rows state the cause. Optional: keep Star as a single quiet link **or** move to command only — prefer **remove from Overview** to cut noise (commands remain) |
 | **Acceptance** | Body does not contain `What this shows` or `Next step:` |
-| **Test** | Intended: `overviewHtml` › `dashboard has no footer essays` — **untested** |
+| **Test** | `overviewHtml` › `dashboard uses Reconnecting… has no footer essays` — **tested** (2026-11-08) |
 
 ### S-FIX-QP-01 — Fix Quick Pick full list
 
@@ -220,7 +220,7 @@ See [CAUSE-CATALOG.md](./CAUSE-CATALOG.md) “Cause sentence map”.
 | **AS-IS** | No durable verifiedOutcome on Overview |
 | **TO-BE** | After Fix that claims recovery + re-probe: quiet meta `Verified: resolved` \| `unresolved` \| `worsened` \| `unknown` (catalog C-VERIFY-*) |
 | **Acceptance** | Given verifyRecovery resolved, when Overview refreshes, then meta shows Verified: resolved |
-| **Test** | Intended after wiring — **untested** |
+| **Test** | `overviewHtml` Verified meta + Live EH L7 — **tested** (2026-11-08); human GIF still HOLD for 0.5.9 announce |
 
 ---
 

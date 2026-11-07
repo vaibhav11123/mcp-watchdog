@@ -20,15 +20,14 @@ describe('Phase 4 golden fixtures (cross-host causeId)', () => {
   );
 
   it.each(['echo', 'filesystem', 'memory'])(
-    '%s + Max retries / Not connected → transport-ish or spawn class',
+    '%s + bare Max retries exceeded → spawn.closed',
     (serverName) => {
       const d = diagnose({
         serverName,
         lastError: 'Max retries exceeded',
-        lastProbeError: 'Not connected',
       });
-      expect(d.causeId).toBeTruthy();
-      expect(typeof causeSentence(d.causeId)).toBe('string');
+      expect(d.causeId).toBe('spawn.closed');
+      expect(causeSentence(d.causeId)).toMatch(/Process closed|connection/i);
     },
   );
 
