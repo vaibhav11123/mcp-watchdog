@@ -2,7 +2,7 @@
   "name": "mcp-watchdog",
   "displayName": "MCP Watchdog",
   "description": "Independent MCP health for Cursor and VS Code: status, latency, and Accept / Fix… / Remove when a server fails — plus opt-in Cloud bridge (names-only). Anonymous product usage analytics may be collected (see Settings / Privacy).",
-  "version": "0.5.7",
+  "version": "0.5.8",
   "publisher": "mcp-watchdog",
   "license": "MIT",
   "keywords": [
