@@ -63,7 +63,13 @@ If 0.5.8 has **no** user-visible delta (adapters only), skip announce and fold i
 
 **Cadence note:** 2h cadence may consume patch numbers (e.g. silent **0.5.8**). Announce stories track CHANGELOG/GTM beats (Doctor / HostCaps fold / verify / bake-off), not exact SemVer alone.
 
-**0.5.7 listing copy** — [gtm/LISTING-DRAFT-0.5.7.md](./gtm/LISTING-DRAFT-0.5.7.md) **applied** (description / README lead / walkthrough). Announce kit: [gtm/ANNOUNCE-DRAFT-0.5.7.md](./gtm/ANNOUNCE-DRAFT-0.5.7.md). SIGN-OFF **READY**. G0: published Cursor (Open VSX + Marketplace same VSIX); soak started 2026-11-07.
+**Progress SoT:** [STATUS.md](./STATUS.md) — “Progress train” + GTM beats table. Do not invent a second board here.
+
+**0.5.7 listing copy** — [gtm/LISTING-DRAFT-0.5.7.md](./gtm/LISTING-DRAFT-0.5.7.md) **applied** (description / README lead / walkthrough). Announce kit: [gtm/ANNOUNCE-DRAFT-0.5.7.md](./gtm/ANNOUNCE-DRAFT-0.5.7.md). SIGN-OFF **READY**. G0: published Cursor (Open VSX + Marketplace same VSIX); soak started 2026-11-07; **Instinct post pending**.
+
+**0.5.8 HostCaps** — folded silent on cadence; **no announce**.
+
+**0.5.9 verify** — eng prep on main; SIGN-OFF **HOLD** until soak + GIF — [validation/release-evidence/v0.5.9/SIGN-OFF.md](./validation/release-evidence/v0.5.9/SIGN-OFF.md).
 
 **0.6.0 bake-off** — prep only: [gtm/ANNOUNCE-DRAFT-0.6.0.md](./gtm/ANNOUNCE-DRAFT-0.6.0.md). **Vaibhav A** required; no eng auto-post.
 
