@@ -14,7 +14,7 @@
 | Claim ladder | Eng: **after bake-off win**. Marketing: **Now+** until 0.6.0 cut |
 | GTM owner | **Instinct** — reach + comprehension ([GTM-ROLE.md](./GTM-ROLE.md)); Slack `#mcp-watchdog-gtm` + eng bot **live** ([GTM-COMMS.md](./GTM-COMMS.md)); iMessage = Vaibhav↔Instinct only (Cursor send off) |
 | Product phases | **1–3 done in tree**; 4–6 deferred |
-| Published vs tree | Tagging **0.5.7** (Doctor UI story); HostCapabilities / verify in same VSIX — GTM beats still 0.5.8 / 0.5.9; **no jump to 0.6.0 announce** |
+| Published vs tree | Marketplace + Open VSX **0.5.7** live (Doctor UI announce); HostCapabilities / verify in same VSIX — GTM beats still 0.5.8 / 0.5.9; **soak ≥3 days**; **no jump to 0.6.0 announce** |
 | North-star metrics | Hooks exist (`DoctorMetrics`); **no public diagnose%/resolve%** |
 | Falsification | Not triggered |
 
@@ -83,7 +83,7 @@ flowchart TB
 | Doctor UI Must coding | Done ([tasks/todo.md](../tasks/todo.md)) |
 | Live EH + release evidence ([TESTING.md](./TESTING.md)) | **READY** — [v0.5.7/SIGN-OFF.md](./validation/release-evidence/v0.5.7/SIGN-OFF.md); cut tagged / shipping |
 | Heavy-user interviews | **Open** |
-| Staged publish 0.5.7 → 0.5.9 → 0.6.0 ([RELEASE.md](./RELEASE.md)) | **0.5.7 shipping** — start ≥3-day soak after Open VSX + G0; then 0.5.8 fold or 0.5.9 |
+| Staged publish 0.5.7 → 0.5.9 → 0.6.0 ([RELEASE.md](./RELEASE.md)) | **0.5.7 published** — ≥3-day soak in progress; Instinct drafting Doctor UI announce; then 0.5.8 fold or 0.5.9 |
 | Public diagnose% / resolve% | **Open** (after field data) |
 
 ---
