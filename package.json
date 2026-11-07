@@ -1,8 +1,8 @@
 {
   "name": "mcp-watchdog",
   "displayName": "MCP Watchdog",
-  "description": "Independent MCP health for Cursor and VS Code: status, latency, and Accept / Fix… / Remove when a server fails — plus opt-in Cloud bridge (names-only). Anonymous product telemetry via PostHog is on by default (disable in Settings).",
-  "version": "0.5.5",
+  "description": "Independent MCP health for Cursor and VS Code: status, latency, and Accept / Fix… / Remove when a server fails — plus opt-in Cloud bridge (names-only). Anonymous product usage analytics may be collected (see Settings / Privacy).",
+  "version": "0.5.6",
   "publisher": "mcp-watchdog",
   "license": "MIT",
   "keywords": [
@@ -109,6 +109,10 @@
       {
         "command": "mcpWatchdog.removeServer",
         "title": "MCP Watchdog: Remove Server"
+      },
+      {
+        "command": "mcpWatchdog.starOnGitHub",
+        "title": "MCP Watchdog: Star on GitHub"
       }
     ],
     "menus": {
@@ -378,7 +382,7 @@
             "telemetry",
             "usesOnlineServices"
           ],
-          "description": "Share anonymous product usage with MCP Watchdog via PostHog (activation, triage actions, failure classes). On by default; turn off anytime. Also requires the editor’s telemetry setting to be enabled. Never sends env/header values or secrets."
+          "description": "Anonymous product usage via PostHog (activation, triage, commands). Default on. Also requires the editor’s telemetry setting. Never sends env/header values or secrets."
         }
       }
     }

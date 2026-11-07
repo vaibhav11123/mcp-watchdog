@@ -194,7 +194,7 @@ Watchdog keeps an in-memory ring of the last ~200 state transitions (not written
 | `reviewAfterRecoveries` | `3` | After N recoveries, ask once for an Open VSX/Marketplace review (`0` = off). |
 | `cloudBridge.enabled` | `false` | Opt-in: POST names-only incidents to self-hosted Watchdog Cloud. |
 | `cloudBridge.url` | `""` | Cloud base URL (e.g. `http://127.0.0.1:8787`). |
-| `telemetry.enabled` | `true` | Anonymous product usage via PostHog (activation, triage actions, failure classes). Also requires the editor’s telemetry setting. |
+| `telemetry.enabled` | `true` | Anonymous product usage via PostHog (allowlisted events). Also requires the editor’s telemetry setting. |
 | `perServer.*.authProbe` | unset | Optional post-ping `tools/call` to verify credentials (may have side effects). |
 
 ### Opt-in advisories
@@ -224,7 +224,8 @@ Settings changes apply within ~1s without reloading the window; **`mcp.json`** e
 
 ## Privacy & data
 
-- **Product telemetry (PostHog)** is **on by default** (`mcpWatchdog.telemetry.enabled`). It sends anonymous events (activation, triage actions, failure classes) using a random install id — never env/header **values**, secrets, workspace paths, or raw error text. Turn it off anytime in Settings. Events are also blocked when the **editor’s telemetry** setting is off. Full dictionary: [`telemetry.json`](telemetry.json).
+- **Product telemetry (PostHog)** is **on by default** (`mcpWatchdog.telemetry.enabled`). Anonymous allowlisted events (activation, triage, commands) use a random install id — never env/header **values**, secrets, workspace paths, or raw error text. Setting is in Settings (search “telemetry”); also blocked when the **editor’s telemetry** setting is off. Dictionary: [`telemetry.json`](telemetry.json).
+- Watchdog monitors servers from **merged mcp.json layers**. Cursor may list additional editor/plugin MCPs that are not in those files; the status-bar `N/M` is healthy/total of Watchdog’s set.
 - Separate from telemetry: traffic to **your configured** MCP servers only (stdio / HTTP as in `mcp.json`).
 - Opt-in **Cloud bridge** (`cloudBridge.enabled`, default off) posts **names-only** incidents to your self-hosted Cloud (fail-soft if unreachable).
 - Do **not** commit secrets inside `mcp.json` in shared repos; use environment variables or secret stores appropriate to your team.

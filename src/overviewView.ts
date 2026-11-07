@@ -60,6 +60,9 @@ export class OverviewViewProvider implements vscode.WebviewViewProvider {
             );
           }
           break;
+        case 'starOnGitHub':
+          void vscode.commands.executeCommand('mcpWatchdog.starOnGitHub');
+          break;
       }
     });
   }

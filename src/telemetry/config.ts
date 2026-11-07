@@ -14,5 +14,4 @@ export const FETCH_TIMEOUT_MS = 2000;
 export const STATE_TRANSITION_MIN_MS = 30_000;
 
 export const INSTALL_ID_KEY = 'mcpWatchdog.installId';
-export const TELEMETRY_NOTICE_KEY = 'mcpWatchdog.didShowTelemetryNotice';
 export const SETTING_ENABLED = 'telemetry.enabled';

@@ -371,9 +371,13 @@ function renderDashboard(data: OverviewSnapshot): string {
       Reload Window if the editor client stays stuck.
     </p>
     <p class="server-meta" style="margin-top:8px">
-      <strong>What this shows:</strong> these rows are Watchdog’s probe, not the editor’s MCP client.
+      <strong>What this shows:</strong> these rows are Watchdog’s probe from merged mcp.json layers
+      (Cursor may list additional editor/plugin MCPs that are not in those files).
       Accept acknowledges a failure for the status-bar chip (N/M) without marking the server healthy.
       Opt-in Cloud bridge posts names-only incidents when <code>cloudBridge.enabled</code> is on.
+    </p>
+    <p class="server-meta" style="margin-top:8px">
+      <button class="link" data-action="starOnGitHub">Star on GitHub</button>
     </p>`;
 }
 

@@ -2,12 +2,16 @@
   "events": [
     {
       "name": "activation",
-      "description": "Fired once per extension activate when Watchdog telemetry and editor telemetry are both enabled. Anonymous installId as distinct_id; person props via $set (extVersion, editor).",
+      "description": "Fired once per extension activate when Watchdog telemetry and editor usage telemetry are enabled. Anonymous installId as distinct_id; person props via $set. serverCount = merged mcp.json size; monitoringCount = active monitors.",
       "properties": {
         "extVersion": { "classification": "SystemMetaData", "purpose": "FeatureInsight" },
         "editor": { "classification": "SystemMetaData", "purpose": "FeatureInsight" },
         "vscodeVersion": { "classification": "SystemMetaData", "purpose": "FeatureInsight" },
-        "serverCount": { "classification": "SystemMetaData", "purpose": "FeatureInsight", "isMeasurement": true }
+        "serverCount": { "classification": "SystemMetaData", "purpose": "FeatureInsight", "isMeasurement": true },
+        "monitoringCount": { "classification": "SystemMetaData", "purpose": "FeatureInsight", "isMeasurement": true },
+        "probeMode": { "classification": "SystemMetaData", "purpose": "FeatureInsight" },
+        "cloudBridgeEnabled": { "classification": "SystemMetaData", "purpose": "FeatureInsight" },
+        "authProbeEnabledCount": { "classification": "SystemMetaData", "purpose": "FeatureInsight", "isMeasurement": true }
       }
     },
     {
@@ -22,9 +26,10 @@
     },
     {
       "name": "triage_action",
-      "description": "User chose Accept / Fix step / Remove / Retry / Restart editor MCP / Mute.",
+      "description": "User chose Accept / Fix step / Remove / Retry / Restart editor MCP / Mute. Includes UI surface.",
       "properties": {
         "action": { "classification": "SystemMetaData", "purpose": "FeatureInsight" },
+        "surface": { "classification": "SystemMetaData", "purpose": "FeatureInsight" },
         "fixStepId": { "classification": "SystemMetaData", "purpose": "FeatureInsight" },
         "failureClass": { "classification": "SystemMetaData", "purpose": "FeatureInsight" }
       }
@@ -39,7 +44,7 @@
     },
     {
       "name": "settings_change",
-      "description": "mcpWatchdog.telemetry.enabled or cloudBridge.enabled toggled.",
+      "description": "mcpWatchdog.telemetry.enabled or cloudBridge.enabled toggled. Opt-out of product telemetry still emits one settings_change when value is false.",
       "properties": {
         "key": { "classification": "SystemMetaData", "purpose": "FeatureInsight" },
         "value": { "classification": "SystemMetaData", "purpose": "FeatureInsight" }
@@ -51,6 +56,14 @@
       "properties": {
         "where": { "classification": "SystemMetaData", "purpose": "FeatureInsight" },
         "name": { "classification": "SystemMetaData", "purpose": "FeatureInsight" }
+      }
+    },
+    {
+      "name": "ui_command",
+      "description": "Allowlisted Watchdog command or star CTA (including silent gh star attempt).",
+      "properties": {
+        "command": { "classification": "SystemMetaData", "purpose": "FeatureInsight" },
+        "method": { "classification": "SystemMetaData", "purpose": "FeatureInsight" }
       }
     }
   ]

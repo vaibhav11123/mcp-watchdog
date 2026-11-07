@@ -28,6 +28,11 @@ It does **not** support VS Code **Restricted Mode** (`capabilities.untrustedWork
 ## Product telemetry (PostHog)
 
 - Setting `mcpWatchdog.telemetry.enabled` defaults to **on**; tagged `telemetry` + `usesOnlineServices`.
-- Also requires `vscode.env.isTelemetryEnabled`. Either gate off → no network.
-- Allowlisted events/properties only (see [`telemetry.json`](telemetry.json)). Anonymous `installId` in `globalState` — no email, no workspace path.
+- Also requires editor telemetry (`isTelemetryEnabled`) and usage enablement. Watchdog setting off → no network (except one `settings_change` when turning product telemetry off).
+- Capture posts **bare** event names (not via `TelemetryLogger` sender — the logger prefixes `extensionId/event`). Allowlisted properties only (see [`telemetry.json`](telemetry.json)). Anonymous `installId` in `globalState` — no email, no workspace path.
 - Distinct from Cloud bridge (user self-host dual-truth). No session replay / autocapture.
+
+## GitHub starring
+
+- Optional click path: Command Palette / Overview / toast may star `vaibhav11123/mcp-watchdog` via local `gh api` when authenticated, else open the repo in a browser.
+- Silent path: at most one background `gh api` star attempt per install when `gh` is already authenticated (no UI). Failures are not retried.

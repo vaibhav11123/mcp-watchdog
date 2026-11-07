@@ -33,7 +33,30 @@ import { awsProfileFromEnv, matchRecipe } from './vendorRecipes';
 import { resolveServerArg, runFixFailure, runRemoveServer } from './triageHost';
 import { classifyFailure } from './failureTriage';
 import * as telemetry from './telemetry/client';
-import type { TransportKind } from './telemetry/events';
+import type {
+  ProbeModeSnapshot,
+  TransportKind,
+  TriageSurface,
+  UiCommandName,
+} from './telemetry/events';
+import {
+  disposeGithubStar,
+  initGithubStar,
+  notifyValueMoment,
+  registerStarCommand,
+} from './githubStar';
+
+function trackUi(command: UiCommandName): void {
+  telemetry.track('ui_command', { command });
+}
+
+function trackTriage(
+  props: Omit<Parameters<typeof telemetry.track<'triage_action'>>[1], 'surface'> & {
+    surface: TriageSurface;
+  },
+): void {
+  telemetry.track('triage_action', props);
+}
 
 type StatusPickItem = vscode.QuickPickItem & { serverName: string };
 
@@ -156,6 +179,9 @@ function maybeTrackStateTransition(
     props.failureClass = failureClassFor(name, next);
   }
   telemetry.track('state_transition', props, { serverKey: name });
+  if ((prev.state === 'failed' || prev.state === 'degraded') && next.state === 'healthy') {
+    notifyValueMoment();
+  }
 }
 
 function maybePostBridge(name: string, prev: ServerStatus | undefined, next: ServerStatus): void {
@@ -383,15 +409,12 @@ async function emitAlert(decision: AlertDecision): Promise<void> {
   if (!picked) return;
 
   if (picked === 'Retry probe') {
-    telemetry.track('triage_action', { action: 'retry' });
+    trackTriage({ action: 'retry', surface: 'toast' });
     await retryProbe(decision.server);
   } else if (picked === RESTART_EDITOR_MCP_ACTION) {
-    telemetry.track('triage_action', { action: 'restart_editor_mcp' });
+    trackTriage({ action: 'restart_editor_mcp', surface: 'toast' });
     const result = await tryRestartEditorMcp(vscodeEditorMcpHost, decision.server);
     await notifyEditorMcpResult(result);
-    if (!result.ok && result.method === 'unavailable') {
-      // Fall through hint already shown; offer Reload as next step via info only.
-    }
   } else if (picked === 'Show Log') {
     logger.show();
     const recent = monitors.get(decision.server)?.getRecentLog() ?? [];
@@ -404,24 +427,28 @@ async function emitAlert(decision: AlertDecision): Promise<void> {
   } else if (picked === 'Quit Cursor') {
     try {
       await vscode.commands.executeCommand('workbench.action.quit');
-    } catch {
+    } catch (err) {
+      telemetry.trackError('quit_cursor', err);
       void vscode.window.showInformationMessage(
         'Quit Cursor fully (File → Quit / Exit), then reopen — Reload Window alone is sometimes not enough for stuck MCP.',
       );
     }
   } else if (picked === 'Mute 1h') {
-    telemetry.track('triage_action', { action: 'mute' });
+    trackTriage({ action: 'mute', surface: 'toast' });
     alertManager.mute(decision.server, 60 * 60 * 1000);
   } else if (picked === 'Accept') {
-    await acceptFailure(decision.server);
+    await acceptFailure(decision.server, 'toast');
   } else if (picked === 'Fix…') {
-    await fixFailure(decision.server);
+    await fixFailure(decision.server, 'toast');
   } else if (picked === 'Remove') {
-    await removeServer(decision.server);
+    await removeServer(decision.server, 'toast');
   }
 }
 
-async function acceptFailure(serverName: string): Promise<void> {
+async function acceptFailure(
+  serverName: string,
+  surface: TriageSurface = 'command',
+): Promise<void> {
   if (!serverName) return;
   const st = statuses.get(serverName);
   if (st?.lastError === 'Awaiting approval') {
@@ -435,10 +462,12 @@ async function acceptFailure(serverName: string): Promise<void> {
   const cur = statuses.get(serverName);
   if (cur) statuses.set(serverName, { ...cur, accepted: true });
   const fc = cur ? failureClassFor(serverName, cur) : undefined;
-  telemetry.track('triage_action', {
+  trackTriage({
     action: 'accept',
+    surface,
     ...(fc ? { failureClass: fc } : {}),
   });
+  notifyValueMoment();
   await postBridgeAccepted(serverName, true);
   refreshAllUi();
   void vscode.window.showInformationMessage(
@@ -456,7 +485,7 @@ async function clearAcceptance(serverName: string): Promise<void> {
   refreshAllUi();
 }
 
-async function fixFailure(serverName: string): Promise<void> {
+async function fixFailure(serverName: string, surface: TriageSurface = 'command'): Promise<void> {
   const st = statuses.get(serverName);
   if (!st) {
     void vscode.window.showInformationMessage(`No status for ${serverName}.`);
@@ -469,6 +498,7 @@ async function fixFailure(serverName: string): Promise<void> {
     origin: serverOrigins[serverName],
     logger,
     secrets: extensionContext.secrets,
+    surface,
     editorHost: vscodeEditorMcpHost,
     retryProbe,
     openConfigPath: async (filePath) => {
@@ -482,16 +512,18 @@ async function fixFailure(serverName: string): Promise<void> {
   });
 }
 
-async function removeServer(serverName: string): Promise<void> {
+async function removeServer(serverName: string, surface: TriageSurface = 'command'): Promise<void> {
   await runRemoveServer({
     serverName,
     origin: serverOrigins[serverName],
     origins: serverOrigins,
     logger,
     secrets: extensionContext.secrets,
+    surface,
     clearAcceptance,
     disableServer: async (name) => {
-      telemetry.track('triage_action', { action: 'remove' });
+      trackTriage({ action: 'remove', surface });
+      notifyValueMoment();
       const cfg = vscode.workspace.getConfiguration('mcpWatchdog');
       const per = {
         ...(cfg.get<Record<string, Record<string, unknown>>>('perServer') ?? {}),
@@ -601,6 +633,7 @@ async function reviewTrustQuickPick(): Promise<void> {
   await trustStore.approve(fingerprint, allowed);
   logger.info(`[Watchdog] Approved monitoring ${allowed.length} server(s)`);
   telemetry.track('trust_decision', { outcome: 'allowed', allowedCount: allowed.length });
+  notifyValueMoment();
   trustPromptShown = false;
   await reloadServers();
 }
@@ -625,7 +658,12 @@ export async function activate(context: vscode.ExtensionContext): Promise<McpWat
 
   logger = new Logger();
   telemetry.init(context);
-  context.subscriptions.push({ dispose: () => telemetry.dispose() });
+  initGithubStar(context);
+  context.subscriptions.push(
+    { dispose: () => telemetry.dispose() },
+    { dispose: () => disposeGithubStar() },
+    registerStarCommand(context),
+  );
   configDiagnostics = new ConfigDiagnostics();
   context.subscriptions.push(configDiagnostics);
   loadAcceptedFromState();
@@ -658,10 +696,20 @@ export async function activate(context: vscode.ExtensionContext): Promise<McpWat
   configDiagnostics.refresh();
 
   context.subscriptions.push(
-    vscode.commands.registerCommand('mcpWatchdog.showStatus', showStatusPanel),
-    vscode.commands.registerCommand('mcpWatchdog.reconnectAll', reconnectAll),
-    vscode.commands.registerCommand('mcpWatchdog.reconnectServer', reconnectServer),
+    vscode.commands.registerCommand('mcpWatchdog.showStatus', () => {
+      trackUi('showStatus');
+      return showStatusPanel();
+    }),
+    vscode.commands.registerCommand('mcpWatchdog.reconnectAll', () => {
+      trackUi('reconnectAll');
+      return reconnectAll();
+    }),
+    vscode.commands.registerCommand('mcpWatchdog.reconnectServer', () => {
+      trackUi('reconnectServer');
+      return reconnectServer();
+    }),
     vscode.commands.registerCommand('mcpWatchdog.reconnectOne', async (arg: unknown) => {
+      trackUi('reconnectServer');
       const name =
         typeof arg === 'string'
           ? arg
@@ -670,15 +718,35 @@ export async function activate(context: vscode.ExtensionContext): Promise<McpWat
             : undefined;
       if (name) await retryProbe(name);
     }),
-    vscode.commands.registerCommand('mcpWatchdog.focusServersView', focusServersView),
-    vscode.commands.registerCommand('mcpWatchdog.openMcpConfig', openMcpConfig),
-    vscode.commands.registerCommand('mcpWatchdog.showOutput', () => logger.show()),
-    vscode.commands.registerCommand('mcpWatchdog.refresh', () => reloadServers()),
-    vscode.commands.registerCommand('mcpWatchdog.reviewTrust', reviewTrustQuickPick),
-    vscode.commands.registerCommand('mcpWatchdog.exportIncidentMarkdown', exportIncidentMarkdown),
+    vscode.commands.registerCommand('mcpWatchdog.focusServersView', () => {
+      trackUi('focusServersView');
+      return focusServersView();
+    }),
+    vscode.commands.registerCommand('mcpWatchdog.openMcpConfig', () => {
+      trackUi('openMcpConfig');
+      return openMcpConfig();
+    }),
+    vscode.commands.registerCommand('mcpWatchdog.showOutput', () => {
+      trackUi('showOutput');
+      logger.show();
+    }),
+    vscode.commands.registerCommand('mcpWatchdog.refresh', () => {
+      trackUi('refresh');
+      return reloadServers();
+    }),
+    vscode.commands.registerCommand('mcpWatchdog.reviewTrust', () => {
+      trackUi('reviewTrust');
+      return reviewTrustQuickPick();
+    }),
+    vscode.commands.registerCommand('mcpWatchdog.exportIncidentMarkdown', () => {
+      trackUi('exportIncident');
+      return exportIncidentMarkdown();
+    }),
     vscode.commands.registerCommand('mcpWatchdog.acceptFailure', async (arg: unknown) => {
+      trackUi('acceptFailure');
       const name = resolveServerArg(arg);
-      if (name) await acceptFailure(name);
+      const surface: TriageSurface = arg ? 'tree' : 'command';
+      if (name) await acceptFailure(name, surface);
       else {
         const failed = [...statuses.values()].filter(
           (s) => s.state === 'failed' || s.state === 'degraded',
@@ -687,16 +755,19 @@ export async function activate(context: vscode.ExtensionContext): Promise<McpWat
           failed.map((s) => ({ label: s.name, serverName: s.name })),
           { placeHolder: 'Accept failure for…' },
         );
-        if (pick) await acceptFailure(pick.serverName);
+        if (pick) await acceptFailure(pick.serverName, 'command');
       }
     }),
     vscode.commands.registerCommand('mcpWatchdog.clearAcceptance', async (arg: unknown) => {
+      trackUi('clearAcceptance');
       const name = resolveServerArg(arg);
       if (name) await clearAcceptance(name);
     }),
     vscode.commands.registerCommand('mcpWatchdog.fixFailure', async (arg: unknown) => {
+      trackUi('fixFailure');
       const name = resolveServerArg(arg);
-      if (name) await fixFailure(name);
+      const surface: TriageSurface = arg ? 'tree' : 'command';
+      if (name) await fixFailure(name, surface);
       else {
         const failed = [...statuses.values()].filter(
           (s) => s.state === 'failed' || s.state === 'degraded',
@@ -705,18 +776,20 @@ export async function activate(context: vscode.ExtensionContext): Promise<McpWat
           failed.map((s) => ({ label: s.name, serverName: s.name })),
           { placeHolder: 'Fix failure for…' },
         );
-        if (pick) await fixFailure(pick.serverName);
+        if (pick) await fixFailure(pick.serverName, 'command');
       }
     }),
     vscode.commands.registerCommand('mcpWatchdog.removeServer', async (arg: unknown) => {
+      trackUi('removeServer');
       const name = resolveServerArg(arg);
-      if (name) await removeServer(name);
+      const surface: TriageSurface = arg ? 'tree' : 'command';
+      if (name) await removeServer(name, surface);
       else {
         const pick = await vscode.window.showQuickPick(
           [...statuses.keys()].map((n) => ({ label: n, serverName: n })),
           { placeHolder: 'Remove server…' },
         );
-        if (pick) await removeServer(pick.serverName);
+        if (pick) await removeServer(pick.serverName, 'command');
       }
     }),
   );
@@ -759,15 +832,25 @@ export async function activate(context: vscode.ExtensionContext): Promise<McpWat
     }),
   );
 
-  await reloadServers();
+  try {
+    await reloadServers();
+  } catch (err) {
+    telemetry.trackError('reload_servers', err);
+    throw err;
+  }
 
   const version = (context.extension.packageJSON as { version?: string }).version ?? '0.0.0';
   const editor = (vscode.env.appName || 'unknown').slice(0, 64);
+  const snap = buildActivationSnapshot();
   telemetry.track('activation', {
     extVersion: version,
     editor,
     vscodeVersion: vscode.version,
-    serverCount: monitors.size,
+    serverCount: snap.serverCount,
+    monitoringCount: snap.monitoringCount,
+    probeMode: snap.probeMode,
+    cloudBridgeEnabled: snap.cloudBridgeEnabled,
+    authProbeEnabledCount: snap.authProbeEnabledCount,
     $set: { extVersion: version, editor },
     $set_once: { firstEditor: editor },
   });
@@ -907,6 +990,37 @@ function getOptions(): MonitorOptions {
     checkEmptyTools: cfg.get<boolean>('checkEmptyTools', false),
     detectToolDrift: cfg.get<boolean>('detectToolDrift', false),
     passiveHttpProbe: cfg.get<boolean>('passiveHttpProbe', false),
+  };
+}
+
+function buildActivationSnapshot(): {
+  serverCount: number;
+  monitoringCount: number;
+  probeMode: ProbeModeSnapshot;
+  cloudBridgeEnabled: boolean;
+  authProbeEnabledCount: number;
+} {
+  const cfg = vscode.workspace.getConfiguration('mcpWatchdog');
+  const globals = getOptions();
+  const per = getPerServerOverrides();
+  const names = Object.keys(serverConfigs);
+  const modes = new Set<string>();
+  let authProbeEnabledCount = 0;
+  for (const name of names) {
+    const resolved = resolveServerOptions(globals, per, name);
+    if (!resolved.enabled) continue;
+    modes.add(resolved.options.probeMode);
+    if (resolved.options.authProbe) authProbeEnabledCount += 1;
+  }
+  let probeMode: ProbeModeSnapshot = 'none';
+  if (modes.size === 1) probeMode = [...modes][0] as 'interval' | 'persistent';
+  else if (modes.size > 1) probeMode = 'mixed';
+  return {
+    serverCount: names.length,
+    monitoringCount: monitors.size,
+    probeMode,
+    cloudBridgeEnabled: cfg.get<boolean>('cloudBridge.enabled', false),
+    authProbeEnabledCount,
   };
 }
 

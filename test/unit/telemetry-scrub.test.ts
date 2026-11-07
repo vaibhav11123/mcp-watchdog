@@ -21,20 +21,19 @@ describe('scrubProperties', () => {
     });
   });
 
-  it('drops unknown and banned keys', () => {
+  it('drops unknown and banned keys; keeps allowlisted command enum', () => {
     const out = scrubProperties({
       action: 'accept',
+      command: 'showStatus',
       secretToken: 'x',
       password: 'y',
       lastError: 'boom',
       workspacePath: '/tmp',
-      command: 'npx',
       args: ['a'],
       mystery: 'nope',
     });
-    expect(out).toEqual({ action: 'accept' });
+    expect(out).toEqual({ action: 'accept', command: 'showStatus' });
     expect(JSON.stringify(out)).not.toContain('boom');
-    expect(JSON.stringify(out)).not.toContain('npx');
   });
 
   it('scrubs $set nested objects and JSON strings', () => {

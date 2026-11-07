@@ -19,6 +19,8 @@ import { tryRestartEditorMcp, type EditorMcpHost } from './editorMcp';
 import type { ServerStatus } from './monitor';
 import type { Logger } from './logger';
 import * as telemetry from './telemetry/client';
+import type { TriageSurface } from './telemetry/events';
+import { notifyValueMoment } from './githubStar';
 
 const ALLOWED_LOGIN_HOSTS = new Set(['mcp.exa.ai', 'dashboard.exa.ai']);
 
@@ -37,6 +39,7 @@ export async function runFixFailure(deps: {
   origin?: ServerOrigin;
   logger: Logger;
   secrets: vscode.SecretStorage;
+  surface?: TriageSurface;
   editorHost: EditorMcpHost;
   retryProbe: (name: string) => Promise<void>;
   openConfigPath: (filePath: string) => Promise<void>;
@@ -72,9 +75,11 @@ export async function runFixFailure(deps: {
   if (!picked) return;
   telemetry.track('triage_action', {
     action: 'fix_step',
+    surface: deps.surface ?? 'quickpick',
     fixStepId: picked.step.id,
     failureClass: cls,
   });
+  notifyValueMoment();
   await executeFixStep(picked.step, deps, recipe?.credSlot, recipe?.loginUrl, awsProfile);
 }
 
@@ -308,6 +313,7 @@ export async function runRemoveServer(deps: {
   origins: Record<string, ServerOrigin>;
   logger: Logger;
   secrets: vscode.SecretStorage;
+  surface?: TriageSurface;
   disableServer: (name: string) => Promise<void>;
   clearAcceptance: (name: string) => Promise<void>;
 }): Promise<void> {
@@ -375,7 +381,11 @@ export async function runRemoveServer(deps: {
 
   fs.writeFileSync(origin.path, result.raw, 'utf8');
   deps.logger.info(`[Watchdog] Removed ${deps.serverName} from ${origin.path}`);
-  telemetry.track('triage_action', { action: 'remove' });
+  telemetry.track('triage_action', {
+    action: 'remove',
+    surface: deps.surface ?? 'command',
+  });
+  notifyValueMoment();
 
   // Best-effort clear secrets
   try {

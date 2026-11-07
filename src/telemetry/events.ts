@@ -1,5 +1,6 @@
-import type { FailureClass } from '../failureTriage';
+import type { FailureClass, FixStepId } from '../failureTriage';
 import type { ServerState } from '../monitor';
+import type { ProbeMode } from '../options';
 
 export type TelemetryEventName =
   | 'activation'
@@ -7,7 +8,8 @@ export type TelemetryEventName =
   | 'triage_action'
   | 'trust_decision'
   | 'settings_change'
-  | 'error';
+  | 'error'
+  | 'ui_command';
 
 export type TriageAction =
   | 'accept'
@@ -17,21 +19,51 @@ export type TriageAction =
   | 'restart_editor_mcp'
   | 'mute';
 
+export type TriageSurface = 'toast' | 'tree' | 'overview' | 'command' | 'quickpick' | 'unknown';
+
 export type TrustOutcome = 'allowed' | 'revoked' | 'deferred';
 
 export type SettingsKey = 'telemetry.enabled' | 'cloudBridge.enabled';
 
 export type TransportKind = 'stdio' | 'http' | 'sse' | 'unknown';
 
-/** Allowlisted property bag after scrub — string/number/boolean only. */
-export type TelemetryProps = Record<string, string | number | boolean>;
+export type ProbeModeSnapshot = ProbeMode | 'mixed' | 'none';
+
+export type UiCommandName =
+  | 'showStatus'
+  | 'reconnectAll'
+  | 'reconnectServer'
+  | 'focusServersView'
+  | 'openMcpConfig'
+  | 'showOutput'
+  | 'refresh'
+  | 'reviewTrust'
+  | 'exportIncident'
+  | 'acceptFailure'
+  | 'fixFailure'
+  | 'removeServer'
+  | 'clearAcceptance'
+  | 'starOnGitHub';
+
+export type StarMethod =
+  | 'gh_api'
+  | 'browser'
+  | 'already'
+  | 'silent_gh'
+  | 'silent_already'
+  | 'silent_skipped';
 
 export interface ActivationProps {
   extVersion: string;
   editor: string;
   vscodeVersion: string;
+  /** Merged mcp.json server count (configured). */
   serverCount: number;
-  /** Person props for PostHog Retention / WAU (not stored on the event row). */
+  /** Servers with an active monitor. */
+  monitoringCount: number;
+  probeMode: ProbeModeSnapshot;
+  cloudBridgeEnabled: boolean;
+  authProbeEnabledCount: number;
   $set?: Record<string, string | number | boolean>;
   $set_once?: Record<string, string | number | boolean>;
 }
@@ -45,7 +77,8 @@ export interface StateTransitionProps {
 
 export interface TriageActionProps {
   action: TriageAction;
-  fixStepId?: string;
+  surface: TriageSurface;
+  fixStepId?: FixStepId | string;
   failureClass?: FailureClass;
 }
 
@@ -64,6 +97,11 @@ export interface ErrorProps {
   name: string;
 }
 
+export interface UiCommandProps {
+  command: UiCommandName;
+  method?: StarMethod;
+}
+
 export type EventPropsMap = {
   activation: ActivationProps;
   state_transition: StateTransitionProps;
@@ -71,4 +109,5 @@ export type EventPropsMap = {
   trust_decision: TrustDecisionProps;
   settings_change: SettingsChangeProps;
   error: ErrorProps;
+  ui_command: UiCommandProps;
 };

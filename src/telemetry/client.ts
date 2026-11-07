@@ -8,7 +8,6 @@ import {
   POSTHOG_HOST,
   SETTING_ENABLED,
   STATE_TRANSITION_MIN_MS,
-  TELEMETRY_NOTICE_KEY,
 } from './config';
 import type { EventPropsMap, TelemetryEventName } from './events';
 import { isAllowedEvent, materializeCaptureProperties, scrubProperties } from './scrub';
@@ -30,11 +29,13 @@ export interface CanSendInput {
   apiKey: string;
   /** Force-send in Development when set. */
   debugEnv?: string | undefined;
+  /** Skip Watchdog setting gate (telemetry opt-out event only). */
+  ignoreWatchdogSetting?: boolean;
 }
 
 export function canSend(input: CanSendInput): boolean {
   if (!input.apiKey.trim()) return false;
-  if (!input.watchdogEnabled) return false;
+  if (!input.ignoreWatchdogSetting && !input.watchdogEnabled) return false;
   if (!input.vscodeTelemetryEnabled) return false;
   if (input.extensionMode === vscode.ExtensionMode.Test) return false;
   if (input.extensionMode === vscode.ExtensionMode.Development) {
@@ -171,47 +172,61 @@ function ensureInstallId(context: vscode.ExtensionContext): string {
   return id;
 }
 
-class PostHogSender implements vscode.TelemetrySender {
-  sendEventData(eventName: string, data?: Record<string, unknown>): void {
-    const ctx = contextRef;
-    if (!ctx) return;
-    if (
-      !canSend({
-        watchdogEnabled: watchdogEnabled(),
-        vscodeTelemetryEnabled: vscode.env.isTelemetryEnabled,
-        extensionMode: ctx.extensionMode,
-        apiKey: resolveApiKey(),
-        debugEnv: process.env.MCP_WATCHDOG_TELEMETRY_DEBUG,
-      })
-    ) {
-      return;
-    }
-    const id = installId ?? ensureInstallId(ctx);
-    const scrubbed = scrubProperties(data);
-    const body = buildCaptureBody({
-      apiKey: resolveApiKey(),
-      distinctId: id,
-      event: eventName,
-      properties: materializeCaptureProperties(scrubbed),
-    });
-    if (!body) return;
-    void postCapture(resolveHost(), body, fetchImpl);
+/**
+ * No-op sender. VS Code/Cursor's TelemetryLogger prefixes event names as
+ * `publisher.name/event` and may run in logging-only mode — so Capture must
+ * go through {@link track} → {@link postCapture}, not the sender. The logger
+ * is kept for `isUsageEnabled` + Trace Output echo via `logUsage`.
+ */
+class EchoOnlySender implements vscode.TelemetrySender {
+  sendEventData(_eventName: string, _data?: Record<string, unknown>): void {
+    /* echo handled by TelemetryLogger Trace channel */
   }
 
-  sendErrorData(error: Error, data?: Record<string, unknown>): void {
-    this.sendEventData('error', {
-      where: typeof data?.where === 'string' ? data.where : 'unknown',
-      name: error.name || 'Error',
-    });
+  sendErrorData(_error: Error, _data?: Record<string, unknown>): void {
+    /* unused — errors go through track('error', …) */
   }
+}
+
+function gatesOpen(opts?: { ignoreWatchdogSetting?: boolean }): boolean {
+  const ctx = contextRef;
+  if (!ctx) return false;
+  if (
+    !canSend({
+      watchdogEnabled: watchdogEnabled(),
+      vscodeTelemetryEnabled: vscode.env.isTelemetryEnabled,
+      extensionMode: ctx.extensionMode,
+      apiKey: resolveApiKey(),
+      debugEnv: process.env.MCP_WATCHDOG_TELEMETRY_DEBUG,
+      ignoreWatchdogSetting: opts?.ignoreWatchdogSetting,
+    })
+  ) {
+    return false;
+  }
+  if (logger && !logger.isUsageEnabled) return false;
+  return true;
+}
+
+function emitCapture(event: string, data: Record<string, unknown>): void {
+  const ctx = contextRef;
+  if (!ctx) return;
+  const id = installId ?? ensureInstallId(ctx);
+  const scrubbed = scrubProperties(data);
+  const body = buildCaptureBody({
+    apiKey: resolveApiKey(),
+    distinctId: id,
+    event,
+    properties: materializeCaptureProperties(scrubbed),
+  });
+  if (!body) return;
+  void postCapture(resolveHost(), body, fetchImpl);
 }
 
 export function init(context: vscode.ExtensionContext): void {
   dispose();
   contextRef = context;
   ensureInstallId(context);
-  const sender = new PostHogSender();
-  logger = vscode.env.createTelemetryLogger(sender, {
+  logger = vscode.env.createTelemetryLogger(new EchoOnlySender(), {
     ignoreBuiltInCommonProperties: true,
   });
   context.subscriptions.push(logger);
@@ -234,36 +249,6 @@ export function init(context: vscode.ExtensionContext): void {
     /* canSend re-reads isTelemetryEnabled on each track */
   });
   context.subscriptions.push(vscodeTelListener);
-
-  void maybeShowFirstRunNotice(context);
-}
-
-async function maybeShowFirstRunNotice(context: vscode.ExtensionContext): Promise<void> {
-  if (context.globalState.get<boolean>(TELEMETRY_NOTICE_KEY)) return;
-  if (!watchdogEnabled()) {
-    await context.globalState.update(TELEMETRY_NOTICE_KEY, true);
-    return;
-  }
-  if (context.extensionMode === vscode.ExtensionMode.Test) {
-    await context.globalState.update(TELEMETRY_NOTICE_KEY, true);
-    return;
-  }
-  await context.globalState.update(TELEMETRY_NOTICE_KEY, true);
-  const pick = await vscode.window.showInformationMessage(
-    'MCP Watchdog shares anonymous product usage (activation, triage actions, failure classes) via PostHog. On by default; never sends env/header values or secrets. Also requires the editor’s telemetry setting.',
-    'Disable',
-    'Open Settings',
-  );
-  if (pick === 'Disable') {
-    await vscode.workspace
-      .getConfiguration('mcpWatchdog')
-      .update(SETTING_ENABLED, false, vscode.ConfigurationTarget.Global);
-  } else if (pick === 'Open Settings') {
-    await vscode.commands.executeCommand(
-      'workbench.action.openSettings',
-      'mcpWatchdog.telemetry.enabled',
-    );
-  }
 }
 
 export function track<E extends TelemetryEventName>(
@@ -275,30 +260,36 @@ export function track<E extends TelemetryEventName>(
   if (event === 'state_transition' && opts?.serverKey) {
     if (!rateLimit.allow(opts.serverKey)) return;
   }
-  if (
-    !canSend({
-      watchdogEnabled: watchdogEnabled(),
-      vscodeTelemetryEnabled: vscode.env.isTelemetryEnabled,
-      extensionMode: contextRef.extensionMode,
-      apiKey: resolveApiKey(),
-      debugEnv: process.env.MCP_WATCHDOG_TELEMETRY_DEBUG,
-    })
-  ) {
-    return;
-  }
-  // Flatten nested $set for TelemetryLogger (primitives only); sender rehydrates via scrub.
-  const data: Record<string, string | number | boolean> = {};
+
+  const isTelemetryOptOut =
+    event === 'settings_change' &&
+    (props as EventPropsMap['settings_change']).key === 'telemetry.enabled' &&
+    (props as EventPropsMap['settings_change']).value === false;
+
+  if (!gatesOpen({ ignoreWatchdogSetting: isTelemetryOptOut })) return;
+
+  const echo: Record<string, string | number | boolean> = {};
+  const capture: Record<string, unknown> = {};
   for (const [k, v] of Object.entries(props as unknown as Record<string, unknown>)) {
     if (k === '$set' || k === '$set_once') {
-      if (v && typeof v === 'object') data[k] = JSON.stringify(v);
+      if (v && typeof v === 'object') {
+        capture[k] = v;
+        echo[k] = JSON.stringify(v);
+      }
       continue;
     }
     if (typeof v === 'string' || typeof v === 'number' || typeof v === 'boolean') {
-      data[k] = v;
+      echo[k] = v;
+      capture[k] = v;
     }
   }
-  // Prefer logger.logUsage so VS Code applies enable states + Trace Output (never call sender directly).
-  logger.logUsage(event, data);
+
+  emitCapture(event, capture);
+  try {
+    logger.logUsage(event, echo);
+  } catch {
+    /* ignore */
+  }
 }
 
 export function trackError(where: string, err: unknown): void {

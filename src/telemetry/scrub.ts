@@ -6,11 +6,16 @@ export const ALLOWED_PROP_KEYS = new Set([
   'editor',
   'vscodeVersion',
   'serverCount',
+  'monitoringCount',
+  'probeMode',
+  'cloudBridgeEnabled',
+  'authProbeEnabledCount',
   'transport',
   'stateFrom',
   'stateTo',
   'failureClass',
   'action',
+  'surface',
   'fixStepId',
   'outcome',
   'allowedCount',
@@ -18,6 +23,8 @@ export const ALLOWED_PROP_KEYS = new Set([
   'value',
   'where',
   'name',
+  'command',
+  'method',
   '$lib',
   '$set',
   '$set_once',
@@ -35,7 +42,7 @@ const BANNED_KEY_SUBSTR = [
   'env',
   'path',
   'args',
-  'command',
+  // 'command' is allowlisted as ui_command prop — ban substring only for non-allowlisted keys
   'url',
   'error',
   'stack',
@@ -52,6 +59,7 @@ export const EVENT_NAMES = new Set<string>([
   'trust_decision',
   'settings_change',
   'error',
+  'ui_command',
 ]);
 
 export type ScrubbedValue = string | number | boolean | Record<string, string | number | boolean>;

@@ -23,7 +23,7 @@ Already in Watchdog DNA:
 | Source | Steal |
 |---|---|
 | VS Code telemetry | Respect `isTelemetryEnabled` + `onDidChangeTelemetryEnabled`; custom setting tags `telemetry` + `usesOnlineServices`; minimize data; no PII |
-| Product telemetry (PostHog, 0.5.5+) | **Default on** via `mcpWatchdog.telemetry.enabled` + VS Code gate; allowlisted Capture fetch behind `TelemetryLogger`; anonymous `installId`; ≠ opt-in `cloudBridge` |
+| Product telemetry (PostHog, 0.5.5+) | **Default on** via `mcpWatchdog.telemetry.enabled` + VS Code gate + usage enablement; allowlisted bare-name Capture fetch; `TelemetryLogger` for Trace echo only; anonymous `installId`; ≠ opt-in `cloudBridge` |
 | Copilot token usage | Cloud **opt-in default off**; SecretStorage for keys (never Settings Sync); privacy profiles (Off / Solo / Team anonymized); aggregates not raw secrets; explicit consent when upgrading privacy |
 | dsh-scan-mcp | UI and catalog show **env/header NAMES only**; handshake-only probes; never invoke tools for discovery |
 

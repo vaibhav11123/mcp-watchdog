@@ -91,4 +91,4 @@ Evidence / handoff: [validation/triage-evidence/PUBLISH-HANDOFF.md](./validation
 MCP Watchdog 0.5.5 — Accept / Fix… / Remove when MCP fails, plus anonymous product telemetry (PostHog, on by default; disable in Settings). Opt-in Cloud bridge stays separate. Open VSX + Marketplace.
 
 **HN / forum (longer):**  
-Editor can still list tools after a server goes quiet. Watchdog runs its own probe, shows status/latency, then Accept (chip), Fix… (guided), or Remove (edit mcp.json). 0.5.5 adds anonymous PostHog usage (activation / triage) behind a dual gate with the editor’s telemetry setting — turn off in Settings anytime. Cloud bridge remains opt-in self-host dual-truth.
+Editor can still list tools after a server goes quiet. Watchdog runs its own probe, shows status/latency, then Accept (chip), Fix… (guided), or Remove (edit mcp.json). Anonymous PostHog usage (activation / triage / commands) is on by default behind a dual gate with the editor’s telemetry setting. Cloud bridge remains opt-in self-host dual-truth.

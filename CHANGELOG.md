@@ -6,12 +6,30 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [0.5.6] - 2026-11-07
+
+### Fixed
+
+- Product telemetry never reached PostHog from real installs: `TelemetryLogger` prefixes events as `extensionId/event`, which our allowlist then dropped. Capture now posts bare event names after the dual gate (+ usage enablement); the logger is Trace-echo only.
+- Activation `serverCount` now reflects merged mcp.json size; added `monitoringCount` for active probes (status bar `N/M` remains healthy/total of Watchdog’s set — not Cursor’s full MCP panel).
+
+### Added
+
+- Telemetry: `ui_command`, triage `surface`, activation `probeMode` / `cloudBridgeEnabled` / `authProbeEnabledCount`; opt-out still emits one `settings_change` when telemetry is turned off.
+- GitHub star: Overview link + command; value-triggered toast (max 3, 24h age, cooldowns); click uses `gh api` then browser fallback; silent once-per-install `gh` star when authenticated.
+- `MCP_WATCHDOG_STAR_DEBUG=1` bypasses toast install-age for local checks.
+
+### Changed
+
+- Removed first-run telemetry Disable toast (soft-hide opt-out; Settings toggle remains).
+- README/Overview: Watchdog monitors merged mcp.json layers; Cursor may list additional editor/plugin MCPs.
+
 ## [0.5.5] - 2026-11-05
 
 ### Added
 
-- **Product telemetry (PostHog)** — anonymous activation / triage / failure-class events for retention. Setting `mcpWatchdog.telemetry.enabled` **default on**; also requires the editor’s telemetry setting (`vscode.env.isTelemetryEnabled`). Allowlisted properties only; never env/header values, paths, or raw errors. Event dictionary: [`telemetry.json`](telemetry.json). One-time first-run notice with Disable / Open Settings.
-- Dual gate + `TelemetryLogger` custom sender (no new runtime deps); silent in `ExtensionMode.Test`.
+- **Product telemetry (PostHog)** — anonymous activation / triage / failure-class events for retention. Setting `mcpWatchdog.telemetry.enabled` **default on**; also requires the editor’s telemetry setting (`vscode.env.isTelemetryEnabled`). Allowlisted properties only; never env/header values, paths, or raw errors. Event dictionary: [`telemetry.json`](telemetry.json). One-time first-run notice with Disable / Open Settings (removed in 0.5.6).
+- Dual gate + allowlisted PostHog Capture (no new runtime deps); `TelemetryLogger` for usage enablement + Trace echo; silent in `ExtensionMode.Test`.
 
 ### Changed
 
@@ -223,7 +241,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - Reads **`.vscode/mcp.json`** (`servers`); expands **`${workspaceFolder}`** in strings.
 - Stdio and streamable HTTP transports via `@modelcontextprotocol/sdk`.
 
-[Unreleased]: https://github.com/vaibhav11123/mcp-watchdog/compare/v0.5.4...HEAD
+[Unreleased]: https://github.com/vaibhav11123/mcp-watchdog/compare/v0.5.6...HEAD
+[0.5.6]: https://github.com/vaibhav11123/mcp-watchdog/releases/tag/v0.5.6
+[0.5.5]: https://github.com/vaibhav11123/mcp-watchdog/releases/tag/v0.5.5
 [0.5.4]: https://github.com/vaibhav11123/mcp-watchdog/releases/tag/v0.5.4
 [0.5.3]: https://github.com/vaibhav11123/mcp-watchdog/releases/tag/v0.5.3
 [0.5.2]: https://github.com/vaibhav11123/mcp-watchdog/releases/tag/v0.5.2
