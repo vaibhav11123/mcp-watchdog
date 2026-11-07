@@ -26,6 +26,7 @@ Lock every Doctor case an agent must get right: example error text → `causeId`
 | Derive UI state | [`packages/probe-core/src/diagnostics/deriveState.ts`](../../packages/probe-core/src/diagnostics/deriveState.ts) |
 | Extension shim | [`src/failureTriage.ts`](../../src/failureTriage.ts) |
 | Existing tests | [`test/unit/diagnose.test.ts`](../../test/unit/diagnose.test.ts) |
+| Phase 4 golden fixtures | [`test/unit/goldenFixtures.test.ts`](../../test/unit/goldenFixtures.test.ts) — same `causeId` across vendor-looking names |
 
 Observation shape: [TECHNICAL-ARCHITECTURE.md §4](../TECHNICAL-ARCHITECTURE.md) — do not restate here.
 
