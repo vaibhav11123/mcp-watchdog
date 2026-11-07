@@ -5,6 +5,8 @@
 
 **You are here (one line):** On the **0.5.7 Doctor announce soak** clock. Code for Phases 1–3 + HostCaps honesty is on `main` / registries (cadence **0.5.8**). Verify announce (**0.5.9**) and bake-off win (**0.6.0**) are **not** public yet. Phases 4–6 are **scaffolds only** (not the brand). Claim stage for marketing: **Now+**.
 
+**Live QA (2026-11-08):** [validation/release-evidence/v0.5.8-live/LIVE-RESULTS.md](./validation/release-evidence/v0.5.8-live/LIVE-RESULTS.md) — `ci:local` + smoke + **Live EH 15 pass / 1 skip**; Overview stills L3/L4/L7; VSIX packed. Human Cursor F5 click-GIF still blocked (Computer Use needs Accessibility + Screen Recording).
+
 ---
 
 ## Progress train (read this first)

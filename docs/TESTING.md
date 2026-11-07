@@ -1,6 +1,7 @@
 # MCP Watchdog — Testing (pre-ship SoT)
 
-**Last updated:** 2026-11-07  
+**Last updated:** 2026-11-08  
+**Latest live pack:** [validation/release-evidence/v0.5.8-live/LIVE-RESULTS.md](./validation/release-evidence/v0.5.8-live/LIVE-RESULTS.md)  
 **Role:** Rigorous automated + live + capture evidence before any tagged cut.  
 **Progress / release train:** [STATUS.md](./STATUS.md) · [RELEASE.md](./RELEASE.md).  
 **UI scenarios:** [design/SCREEN-SPEC.md](./design/SCREEN-SPEC.md). **Cause fixtures:** [design/CAUSE-CATALOG.md](./design/CAUSE-CATALOG.md).
