@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="en">
+<head><!-- FALLBACK_THEME --><style>:root{--vscode-editor-background:#1e1e1e;--vscode-foreground:#cccccc;--vscode-descriptionForeground:#9d9d9d;--vscode-errorForeground:#f48771;--vscode-textLink-foreground:#3794ff;--vscode-button-background:#0e639c;--vscode-button-foreground:#fff;--vscode-button-secondaryBackground:#3a3d41;--vscode-button-secondaryForeground:#fff;--vscode-focusBorder:#007fd4;--vscode-charts-green:#89d185;--vscode-charts-yellow:#e2c08d;--vscode-charts-red:#f48771;--vscode-charts-orange:#ee9d28;--vscode-widget-border:#454545;font-family:-apple-system,BlinkMacSystemFont,sans-serif}body{margin:16px;background:var(--vscode-editor-background);color:var(--vscode-foreground)}</style>
+  <meta charset="UTF-8" />
+  <meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'unsafe-inline'; script-src 'nonce-live-qa';" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <style>
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      padding: 12px 14px 16px;
+      font-family: var(--vscode-font-family);
+      font-size: var(--vscode-font-size);
+      color: var(--vscode-foreground);
+      background: var(--vscode-sideBar-background);
+      line-height: 1.45;
+      overflow-x: hidden;
+    }
+    h1 {
+      margin: 0 0 4px;
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      color: var(--vscode-descriptionForeground);
+    }
+    .summary {
+      font-size: 15px;
+      font-weight: 600;
+      margin-bottom: 12px;
+    }
+    .metrics {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 8px;
+      margin-bottom: 14px;
+    }
+    .metric {
+      padding: 10px 8px;
+      border-radius: 6px;
+      background: var(--vscode-editor-inactiveSelectionBackground);
+      border: 1px solid var(--vscode-widget-border, transparent);
+      text-align: center;
+    }
+    .metric strong {
+      display: block;
+      font-size: 18px;
+      font-weight: 600;
+      margin-bottom: 2px;
+    }
+    .metric span {
+      font-size: 10px;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      color: var(--vscode-descriptionForeground);
+    }
+    .metric.ok strong { color: #22c55e; }
+    .metric.warn strong { color: var(--vscode-editorWarning-foreground); }
+    .metric.bad strong { color: var(--vscode-errorForeground); }
+    ul {
+      list-style: none;
+      margin: 0 0 14px;
+      padding: 0;
+    }
+    li {
+      display: flex;
+      align-items: flex-start;
+      gap: 8px;
+      padding: 8px 0;
+      border-bottom: 1px solid var(--vscode-sideBarSectionHeader-border, var(--vscode-widget-border, #333));
+    }
+    li:last-child { border-bottom: none; }
+    .dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      margin-top: 5px;
+      flex-shrink: 0;
+    }
+    .dot.ok { background: #22c55e; }
+    .dot.warn { background: var(--vscode-editorWarning-foreground); }
+    .dot.bad { background: var(--vscode-errorForeground); }
+    .dot.muted { background: var(--vscode-descriptionForeground); }
+    .server-name { font-weight: 600; }
+    .server-meta {
+      font-size: 12px;
+      color: var(--vscode-descriptionForeground);
+    }
+    .server-error {
+      font-size: 11px;
+      color: var(--vscode-errorForeground);
+      margin-top: 4px;
+      word-break: break-word;
+    }
+    .sparkline {
+      display: inline-block;
+      vertical-align: middle;
+      margin-left: 6px;
+      color: var(--vscode-descriptionForeground);
+      opacity: 0.9;
+    }
+    .actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+    }
+    button {
+      cursor: pointer;
+      border: none;
+      border-radius: 4px;
+      padding: 6px 10px;
+      font-size: 12px;
+      font-family: inherit;
+      background: var(--vscode-button-background);
+      color: var(--vscode-button-foreground);
+    }
+    button:hover { background: var(--vscode-button-hoverBackground); }
+    button.secondary {
+      background: var(--vscode-button-secondaryBackground);
+      color: var(--vscode-button-secondaryForeground);
+    }
+    button.secondary:hover { background: var(--vscode-button-secondaryHoverBackground); }
+    button.link {
+      background: transparent;
+      color: var(--vscode-textLink-foreground);
+      padding: 6px 4px;
+      text-decoration: underline;
+    }
+    .empty {
+      padding: 8px 0;
+    }
+    .empty p { margin: 0 0 10px; color: var(--vscode-descriptionForeground); }
+    @media (prefers-reduced-motion: reduce) {
+      * { transition: none !important; }
+    }
+  </style>
+</head>
+<body>
+  
+    <h1>MCP Watchdog</h1>
+    <div class="summary">1 failed · 0/1 healthy</div>
+    <div class="metrics">
+      <div class="metric ok"><strong>0</strong><span>Healthy</span></div>
+      <div class="metric warn"><strong>0</strong><span>Reconnecting</span></div>
+      <div class="metric bad"><strong>1</strong><span>Failed</span></div>
+    </div>
+    <ul>
+    <li>
+      <span class="dot bad" aria-hidden="true"></span>
+      <div style="flex:1;min-width:0">
+        <div class="server-name">echo</div>
+        <div class="server-meta">Failed · —</div>
+        
+        <div class="server-error">Could not classify the failure — open the log, then MCP config.</div>
+        
+        <div class="server-meta">Editor session: Unknown</div>
+        <div class="server-meta">Verified: unresolved</div>
+        <div class="actions" style="margin-top:6px"><button class="link" data-action="reconnect" data-server="echo">Retry probe</button></div>
+      </div>
+    </li></ul>
+    <div class="actions">
+      <button data-action="reconnectAll">Retry all probes</button>
+      <button class="secondary" data-action="openConfig">MCP config</button>
+      <button class="secondary" data-action="showOutput">Logs</button>
+    </div>
+  <script nonce="live-qa">
+    const vscode = acquireVsCodeApi();
+    document.querySelectorAll('[data-action]').forEach((el) => {
+      el.addEventListener('click', () => {
+        const action = el.getAttribute('data-action');
+        const server = el.getAttribute('data-server');
+        if (action === 'reconnect' && server) {
+          vscode.postMessage({ type: 'reconnect', server });
+        } else if (action) {
+          vscode.postMessage({ type: action });
+        }
+      });
+    });
+  </script>
+</body>
+</html>

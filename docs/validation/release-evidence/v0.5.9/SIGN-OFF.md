@@ -15,7 +15,8 @@
 
 - Live EH L7 test + `setVerifiedOutcomeForTests` host hook in tree.  
 - Overview unit asserts `Verified:` meta.  
-- GIF script: [docs/media/GIF-RECORDING.md](../../media/GIF-RECORDING.md) — capture still pending human EH session after soak (not blocking unit/host prep).
+- GIF script: [docs/media/GIF-RECORDING.md](../../media/GIF-RECORDING.md) — capture still pending human EH session after soak (not blocking unit/host prep).  
+- Extra Live QA pack (not a substitute for READY): [../v0.5.8-live/LIVE-RESULTS.md](../v0.5.8-live/LIVE-RESULTS.md) — host matrix **15 pass**; Overview stills under `v0.5.8-live/stills/`.
 
 ## Blockers to READY
 
