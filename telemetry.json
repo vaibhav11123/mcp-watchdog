@@ -21,7 +21,8 @@
         "transport": { "classification": "SystemMetaData", "purpose": "FeatureInsight" },
         "stateFrom": { "classification": "SystemMetaData", "purpose": "FeatureInsight" },
         "stateTo": { "classification": "SystemMetaData", "purpose": "FeatureInsight" },
-        "failureClass": { "classification": "SystemMetaData", "purpose": "FeatureInsight" }
+        "failureClass": { "classification": "SystemMetaData", "purpose": "FeatureInsight" },
+        "causeId": { "classification": "SystemMetaData", "purpose": "FeatureInsight" }
       }
     },
     {
@@ -31,7 +32,8 @@
         "action": { "classification": "SystemMetaData", "purpose": "FeatureInsight" },
         "surface": { "classification": "SystemMetaData", "purpose": "FeatureInsight" },
         "fixStepId": { "classification": "SystemMetaData", "purpose": "FeatureInsight" },
-        "failureClass": { "classification": "SystemMetaData", "purpose": "FeatureInsight" }
+        "failureClass": { "classification": "SystemMetaData", "purpose": "FeatureInsight" },
+        "causeId": { "classification": "SystemMetaData", "purpose": "FeatureInsight" }
       }
     },
     {

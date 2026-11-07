@@ -9,6 +9,7 @@ import type { McpServerConfig } from './config-core';
 import {
   buildFixSteps,
   classifyFailure,
+  diagnoseFailure,
   type FixStep,
   type ClassifyFailureInput,
 } from './failureTriage';
@@ -21,6 +22,11 @@ import type { Logger } from './logger';
 import * as telemetry from './telemetry/client';
 import type { TriageSurface } from './telemetry/events';
 import { notifyValueMoment } from './githubStar';
+import { observationFromStatus } from './observationFromStatus';
+import { verifyAfterFix, type VerifiedOutcome } from './verifyRecovery';
+import type { HostCapabilities } from './hostCapabilities';
+import { appendIncidentRecord, type DoctorMetrics } from './incidentStore';
+
 
 const ALLOWED_LOGIN_HOSTS = new Set(['mcp.exa.ai', 'dashboard.exa.ai']);
 
@@ -31,6 +37,13 @@ export function resolveServerArg(arg: unknown): string | undefined {
   }
   return undefined;
 }
+
+const VERIFY_AFTER_STEP = new Set([
+  'retry.probe',
+  'restart.editorMcp',
+  'credential.wizard',
+  'terminal.awsLogin',
+]);
 
 export async function runFixFailure(deps: {
   serverName: string;
@@ -44,6 +57,12 @@ export async function runFixFailure(deps: {
   retryProbe: (name: string) => Promise<void>;
   openConfigPath: (filePath: string) => Promise<void>;
   onWatchdogOnlyCred?: (name: string) => void;
+  /** Current status after probe (for verify). */
+  getStatus?: (name: string) => ServerStatus | undefined;
+  onVerified?: (name: string, outcome: VerifiedOutcome) => void;
+  hostCaps?: HostCapabilities;
+  workspaceRoot?: string;
+  doctorMetrics?: DoctorMetrics;
 }): Promise<void> {
   const recipe = matchRecipe({ name: deps.serverName, config: deps.config });
   let awsProfile: string | undefined;
@@ -60,9 +79,14 @@ export async function runFixFailure(deps: {
     loginUrl: recipe?.loginUrl,
     wave2Actions: true,
   };
+  const diagnosis = diagnoseFailure(input);
+  deps.doctorMetrics?.recordDiagnose();
   const cls = classifyFailure(input);
+  // Full recommend list (S-FIX-QP-01) — never toast-cap the Quick Pick.
   const steps = buildFixSteps(cls, input);
-  deps.logger.info(`[Watchdog] Fix ${deps.serverName}: class=${cls}`);
+  deps.logger.info(
+    `[Watchdog] Fix ${deps.serverName}: causeId=${diagnosis.causeId} class=${cls}`,
+  );
 
   const picked = await vscode.window.showQuickPick(
     steps.map((s) => ({
@@ -70,7 +94,10 @@ export async function runFixFailure(deps: {
       description: s.id,
       step: s,
     })),
-    { title: `Fix ${deps.serverName} (${cls})`, placeHolder: 'Choose a remediation step' },
+    {
+      title: `Fix ${deps.serverName} (${diagnosis.causeId})`,
+      placeHolder: 'Choose a remediation step',
+    },
   );
   if (!picked) return;
   telemetry.track('triage_action', {
@@ -78,9 +105,56 @@ export async function runFixFailure(deps: {
     surface: deps.surface ?? 'quickpick',
     fixStepId: picked.step.id,
     failureClass: cls,
+    causeId: diagnosis.causeId,
   });
   notifyValueMoment();
+
+  const before = observationFromStatus(deps.status);
   await executeFixStep(picked.step, deps, recipe?.credSlot, recipe?.loginUrl, awsProfile);
+
+  if (!VERIFY_AFTER_STEP.has(picked.step.id)) return;
+
+  // Re-probe so verify uses fresh observation, not “command ran”.
+  if (picked.step.id !== 'retry.probe') {
+    await deps.retryProbe(deps.serverName);
+  }
+  const afterStatus = deps.getStatus?.(deps.serverName) ?? deps.status;
+  const after = observationFromStatus(afterStatus);
+  const outcome = verifyAfterFix({ before, after });
+  deps.doctorMetrics?.recordVerify(outcome);
+  deps.onVerified?.(deps.serverName, outcome);
+  deps.logger.info(`[Watchdog] Fix verify ${deps.serverName}: ${outcome}`);
+
+  const transport =
+    deps.config?.type === 'stdio'
+      ? 'stdio'
+      : deps.config?.type === 'http'
+        ? 'http'
+        : deps.config?.type === 'sse'
+          ? 'sse'
+          : 'unknown';
+  appendIncidentRecord({
+    workspaceRoot: deps.workspaceRoot,
+    serverName: deps.serverName,
+    hostId: deps.hostCaps?.hostId ?? 'unknown',
+    hostVersion: deps.hostCaps?.hostVersion,
+    transport,
+    causeId: diagnosis.causeId,
+    evidenceSummary: diagnosis.evidence.join('; ') || diagnosis.causeId,
+    observation: after,
+    actionsAttempted: [{ actionId: picked.step.id, at: new Date().toISOString() }],
+    verifiedOutcome: outcome,
+  });
+
+  if (outcome === 'resolved') {
+    void vscode.window.showInformationMessage(
+      `MCP ${deps.serverName}: verified recovered (${outcome}).`,
+    );
+  } else {
+    void vscode.window.showWarningMessage(
+      `MCP ${deps.serverName}: fix ran but verify=${outcome} (not counted as recovered).`,
+    );
+  }
 }
 
 async function executeFixStep(

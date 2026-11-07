@@ -47,6 +47,8 @@ export interface ServerStatus {
   lastFailedAt?: Date;
   disabled?: boolean;
   probeMode?: MonitorOptions['probeMode'];
+  /** Last Fix verifyRecovery outcome (Phase 3); presentation only. */
+  verifiedOutcome?: 'resolved' | 'unresolved' | 'unknown' | 'worsened';
   flapping?: boolean;
 }
 

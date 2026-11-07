@@ -14,6 +14,7 @@ export const ALLOWED_PROP_KEYS = new Set([
   'stateFrom',
   'stateTo',
   'failureClass',
+  'causeId',
   'action',
   'surface',
   'fixStepId',

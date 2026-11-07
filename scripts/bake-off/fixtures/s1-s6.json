@@ -1,0 +1,51 @@
+[
+  {
+    "id": "S1",
+    "serverName": "posthog",
+    "lastError": "No token provided. Please provide a valid token.",
+    "expectedCauseId": "auth.missing",
+    "notes": "Same class required for acme twin"
+  },
+  {
+    "id": "S1b",
+    "serverName": "acme",
+    "lastError": "No token provided. Please provide a valid token.",
+    "expectedCauseId": "auth.missing",
+    "notes": "Twin of S1"
+  },
+  {
+    "id": "S2",
+    "serverName": "remote",
+    "lastError": "Auth required (HTTP 401)",
+    "expectedCauseId": "auth.rejected"
+  },
+  {
+    "id": "S3",
+    "serverName": "user-aws-mcp",
+    "lastError": "Your session has expired — run aws login",
+    "expectedCauseId": "auth.expired"
+  },
+  {
+    "id": "S4",
+    "serverName": "broken-stdio",
+    "lastError": "spawn /usr/bin/missing-mcp ENOENT",
+    "expectedCauseId": "spawn.enoent"
+  },
+  {
+    "id": "S5",
+    "serverName": "svc",
+    "lastError": "Max retries exceeded",
+    "lastProbeError": "No token provided",
+    "failureContext": "Max retries exceeded\n[svc] Probe failed: No token provided",
+    "expectedCauseId": "auth.missing",
+    "expectRetryExhausted": true
+  },
+  {
+    "id": "S6",
+    "serverName": "healthy-probe",
+    "lastError": "",
+    "expectedCauseId": "generic",
+    "hostConnection": "unknown",
+    "notes": "Honesty: host Unknown must not claim editor healthy — scored via product dual-truth docs/UI"
+  }
+]

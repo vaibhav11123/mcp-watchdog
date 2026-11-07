@@ -17,11 +17,10 @@ function matchingEchoAlert(api: McpWatchdogApi) {
     alert &&
     alert.server === ECHO &&
     (alert.kind === 'error' || alert.kind === 'warning') &&
-    alert.actions.includes('Retry probe') &&
-    alert.actions.includes('Reload Window') &&
-    alert.actions.includes('Accept') &&
+    alert.actions.includes('Mute 1h') &&
     alert.actions.includes('Fix…') &&
-    alert.actions.includes('Remove')
+    alert.actions.includes('Show Log') &&
+    alert.actions.length <= 3
   ) {
     return alert;
   }
@@ -29,7 +28,7 @@ function matchingEchoAlert(api: McpWatchdogApi) {
 }
 
 suite('MCP Watchdog alerts (host)', () => {
-  test('kill echo server → alert with Retry probe and Reload Window', async function () {
+  test('kill echo server → toast ≤3 with Fix / Show Log / Mute', async function () {
     this.timeout(90_000);
 
     const cfg = vscode.workspace.getConfiguration('mcpWatchdog');
@@ -84,17 +83,7 @@ suite('MCP Watchdog alerts (host)', () => {
         `expected echo alert; last=${JSON.stringify(api.getLastAlert())}; statuses=${JSON.stringify(api.getStatuses())}`,
       );
       assert.strictEqual(alert!.server, ECHO);
-      assert.ok(alert!.actions.includes('Retry probe') && alert!.actions.includes('Reload Window'));
-      assert.ok(
-        alert!.actions.includes('Accept') &&
-          alert!.actions.includes('Fix…') &&
-          alert!.actions.includes('Remove'),
-        `actions=${JSON.stringify(alert!.actions)}`,
-      );
-      assert.ok(
-        alert!.actions.includes('Quit Cursor'),
-        `actions=${JSON.stringify(alert!.actions)}`,
-      );
+      assert.deepStrictEqual(alert!.actions, ['Fix…', 'Show Log', 'Mute 1h']);
       assert.match(alert!.message, /echo/i);
     } finally {
       clearInterval(killTimer);

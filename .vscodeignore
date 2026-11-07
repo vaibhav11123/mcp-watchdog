@@ -1,6 +1,9 @@
 .vscode/**
 .github/**
 .cursor/**
+.agents/**
+.claude/**
+.codex/**
 src/**
 packages/**
 docs/**
@@ -21,6 +24,7 @@ vitest.config.ts
 eslint.config.mjs
 .vscode-test.mjs
 .gitignore
+skills-lock.json
 *.map
 *.vsix
 *.local.md

@@ -1,11 +1,17 @@
-# Build brief — raise-oriented expand
+# Build brief — raise-oriented expand (historical)
 
-**Authority:** [PRODUCT-DECISION.md](../PRODUCT-DECISION.md) (revised for fundability).
+> **Authority (2026-11-07):** [STRATEGY-THESIS.md](../STRATEGY-THESIS.md) + [TECHNICAL-ARCHITECTURE.md](../TECHNICAL-ARCHITECTURE.md). Bake-off: [BAKE-OFF.md](../BAKE-OFF.md).  
+> [PRODUCT-DECISION.md](../PRODUCT-DECISION.md) is historical raise narrative only. **Do not** prioritize Cloud MVP over Doctor Phases 1–3.
 
-## Build now
+## Build now (current)
 
-1. **Free IDE core** — visibility, recover CTAs, dual-truth, trust (PLG wedge).  
-2. **Cloud MVP (new)** — author handshake/tools-list monitor + Slack/email; Teams gateway-lite (allowlist + approval audit); optional bridge from Watchdog incidents.
+1. **Free IDE Doctor path** — RuntimeObservation, agnostic auth taxonomy, dual-truth, Fix + verify (ARCH Phases 1–3).  
+2. **Bake-off** — run [BAKE-OFF.md](../BAKE-OFF.md) before moat claims.
+
+## Build later (raise expand — not Phase 1–3)
+
+1. Cloud author handshake/tools-list monitor + alerts.  
+2. Team gateway-lite (allowlist + approval audit); optional bridge from Watchdog incidents.
 
 ## Do not build yet
 

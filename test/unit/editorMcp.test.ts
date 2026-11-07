@@ -26,13 +26,28 @@ describe('editorMcp', () => {
     expect(editorMcpCommandsAvailable([EDITOR_MCP_RESTART])).toBe(true);
   });
 
-  it('inserts Restart editor MCP before Reload Window', () => {
+  it('toast-sized base stays ≤3 without Restart (S-TOAST-01)', () => {
     const actions = failureAlertActionsWithEditorMcp(true);
+    expect(actions).toEqual(['Fix…', 'Show Log', 'Mute 1h']);
+    expect(actions).not.toContain(RESTART_EDITOR_MCP_ACTION);
+  });
+
+  it('inserts Restart editor MCP before Reload Window on long lists', () => {
+    const long = [
+      'Accept',
+      'Fix…',
+      'Remove',
+      'Retry probe',
+      'Show Log',
+      'Reload Window',
+      'Mute 1h',
+    ];
+    const actions = failureAlertActionsWithEditorMcp(true, long);
     expect(actions).toContain(RESTART_EDITOR_MCP_ACTION);
     expect(actions.indexOf(RESTART_EDITOR_MCP_ACTION)).toBeLessThan(
       actions.indexOf('Reload Window'),
     );
-    expect(failureAlertActionsWithEditorMcp(false)).not.toContain(RESTART_EDITOR_MCP_ACTION);
+    expect(failureAlertActionsWithEditorMcp(false, long)).not.toContain(RESTART_EDITOR_MCP_ACTION);
   });
 
   it('restart id candidates include the server name', () => {

@@ -1,13 +1,27 @@
 # MCP Watchdog — Technical Design Document
 
+> **Demoted as primary SoT (2026-11-07).**  
+> - **Shipped behaviour / current version:** [CHANGELOG.md](../CHANGELOG.md), [README.md](../README.md), `package.json` (**0.5.6** at demotion), and code under `src/` / `packages/`.  
+> - **Product identity:** [STRATEGY-THESIS.md](./STRATEGY-THESIS.md).  
+> - **Target architecture Phases 1–3:** [TECHNICAL-ARCHITECTURE.md](./TECHNICAL-ARCHITECTURE.md).  
+> - **Code debt map:** [architecture/SCAN-2026-11-07.md](./architecture/SCAN-2026-11-07.md).  
+> This file remains a **dense historical design dump** (originally written for **0.2.1**). Sections that say cloud is “not fed,” telemetry is fully deferred, or version 0.2.1 are **stale** — do not implement from them without checking code. Prefer ARCH for Doctor / RuntimeObservation / auth taxonomy.
+
+**Do not implement from (stale claims in the body below):**
+
+- Documented version **0.2.1** / evolution sections that predate 0.5.x Fix / Accept / bridge / PostHog  
+- “Cloud is a preview and is **not fed** by the extension” — bridge posting exists in `src/cloudBridge.ts`  
+- “Opt-in telemetry” as fully deferred — product telemetry ships default-on with Settings opt-out (see CHANGELOG / `src/telemetry/`)  
+- Any Doctor / `RuntimeObservation` / agnostic auth taxonomy — those live only in [TECHNICAL-ARCHITECTURE.md](./TECHNICAL-ARCHITECTURE.md) until coded  
+
 **Product:** MCP Watchdog (VS Code / Cursor extension)  
-**Version documented:** 0.2.1  
+**Version originally documented:** 0.2.1 (stale — see banner)  
 **Publisher:** `mcp-watchdog`  
 **License:** MIT  
 **Repository:** https://github.com/vaibhav11123/mcp-watchdog  
-**Audience:** Engineers, reviewers, and curious non-engineers who want the full “what / why / how” of this codebase.
+**Audience:** Engineers seeking deep historical detail of early design.
 
-This document is the single dense reference for architecture, product decisions, security model, state machines, settings, testing, and evolution. User-facing how-to lives in the [README](../README.md); release history lives in the [CHANGELOG](../CHANGELOG.md).
+User-facing how-to: [README](../README.md). Releases: [CHANGELOG](../CHANGELOG.md).
 
 ---
 

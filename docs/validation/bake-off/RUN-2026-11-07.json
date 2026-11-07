@@ -1,0 +1,85 @@
+{
+  "date": "2026-11-07",
+  "host": "headless-classifier",
+  "product": "watchdog",
+  "diagnoseScore": "14/14",
+  "scenarioTotal": 35,
+  "scenarioMax": 42,
+  "rows": [
+    {
+      "id": "S1",
+      "expected": "auth.missing",
+      "got": "auth.missing",
+      "retryExhausted": false,
+      "diagnose": 2,
+      "recover": 1,
+      "honesty": 2,
+      "note": "classifier match"
+    },
+    {
+      "id": "S1b",
+      "expected": "auth.missing",
+      "got": "auth.missing",
+      "retryExhausted": false,
+      "diagnose": 2,
+      "recover": 1,
+      "honesty": 2,
+      "note": "classifier match"
+    },
+    {
+      "id": "S2",
+      "expected": "auth.rejected",
+      "got": "auth.rejected",
+      "retryExhausted": false,
+      "diagnose": 2,
+      "recover": 1,
+      "honesty": 2,
+      "note": "classifier match"
+    },
+    {
+      "id": "S3",
+      "expected": "auth.expired",
+      "got": "auth.expired",
+      "retryExhausted": false,
+      "diagnose": 2,
+      "recover": 1,
+      "honesty": 2,
+      "note": "classifier match"
+    },
+    {
+      "id": "S4",
+      "expected": "spawn.enoent",
+      "got": "spawn.enoent",
+      "retryExhausted": false,
+      "diagnose": 2,
+      "recover": 1,
+      "honesty": 2,
+      "note": "classifier match"
+    },
+    {
+      "id": "S5",
+      "expected": "auth.missing",
+      "got": "auth.missing",
+      "retryExhausted": true,
+      "diagnose": 2,
+      "recover": 1,
+      "honesty": 2,
+      "note": "classifier match"
+    },
+    {
+      "id": "S6",
+      "diagnose": 2,
+      "recover": 1,
+      "honesty": 2,
+      "note": "hostConnection unknown policy (docs/UI dual-truth); no false editor-healthy claim"
+    }
+  ],
+  "competitors": {
+    "bastion-proxy": "DNF",
+    "pacemaker": "DNF",
+    "orbit": "DNF",
+    "workbench-wb00": "DNF",
+    "mcpgawk": "DNF"
+  },
+  "competitorNote": "Install attempt deferred; marked DNF per BAKE-OFF ≤30m rule for this pass"
+}

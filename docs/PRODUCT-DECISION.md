@@ -1,5 +1,10 @@
 # Product decision — raise-oriented expand (desk research)
 
+> **Superseded for product identity (2026-11-07).**  
+> Current locked thesis: [STRATEGY-THESIS.md](./STRATEGY-THESIS.md) — IDE-native reliability + recovery intelligence; Cloud/team later; compatibility as engine not brand.  
+> Target architecture: [TECHNICAL-ARCHITECTURE.md](./TECHNICAL-ARCHITECTURE.md).  
+> This file is retained as historical raise narrative (author monitor + gateway-lite). Do not treat Cloud-as-co-headline as current engineering priority for Phases 1–3.
+
 **As of:** 2026-10-30 (revised)  
 **Constraint:** No founder interviews. Goal includes a path that can **raise**.  
 **Why revise:** Operator IDE recovery is a real job but **commercially empty** vs author monitors and enterprise gateways (where checks and SKUs already exist). A toast-only company is not venture-scale. We **expand**, we do not abandon the IDE wedge.

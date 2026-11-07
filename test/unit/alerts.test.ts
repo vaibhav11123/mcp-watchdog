@@ -12,26 +12,19 @@ const base = (state: ServerStatus['state'], extra?: Partial<ServerStatus>): Serv
 const emptyFlap = { failureTimes: [] as number[], flapping: false, flapAlertSent: false };
 
 describe('decideAlert', () => {
-  it('failed transition emits error with four actions', () => {
+  it('failed transition emits error with ≤3 toast actions (S-TOAST-01)', () => {
     const r = decideAlert(
       base('healthy'),
-      base('failed', { lastError: 'down' }),
+      base('failed', { lastError: 'No token provided' }),
       undefined,
       'failures',
       1000,
       emptyFlap,
     );
     expect(r.alert?.kind).toBe('error');
-    expect(r.alert?.actions).toEqual([
-      'Accept',
-      'Fix…',
-      'Remove',
-      'Retry probe',
-      'Show Log',
-      'Reload Window',
-      'Quit Cursor',
-      'Mute 1h',
-    ]);
+    expect(r.alert?.actions).toEqual(['Fix…', 'Show Log', 'Mute 1h']);
+    expect(r.alert?.actions.length).toBeLessThanOrEqual(3);
+    expect(r.alert?.message).toMatch(/Missing credential/);
   });
 
   it('degraded→failed (maxRetries exhausted) emits error alert', () => {
@@ -45,7 +38,7 @@ describe('decideAlert', () => {
       500,
     );
     expect(r.alert?.kind).toBe('error');
-    expect(r.alert?.message).toMatch(/failed: Max retries exceeded/);
+    expect(r.alert?.message).toMatch(/^MCP mem:/);
     expect(r.degradedSince).toBeUndefined();
   });
 

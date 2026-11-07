@@ -38,20 +38,19 @@ export function editorMcpRestartIdCandidates(serverName: string): string[] {
   return [...new Set(out.filter((s) => s.length > 0))];
 }
 
+/**
+ * Legacy helper for long action lists. Toast uses ≤3 actions (S-TOAST-01);
+ * Restart editor MCP belongs on Fix Quick Pick, not the toast.
+ */
 export function failureAlertActionsWithEditorMcp(
   commandsAvailable: boolean,
-  base: readonly string[] = [
-    'Accept',
-    'Fix…',
-    'Remove',
-    'Retry probe',
-    'Show Log',
-    'Reload Window',
-    'Quit Cursor',
-    'Mute 1h',
-  ],
+  base: readonly string[] = ['Fix…', 'Show Log', 'Mute 1h'],
 ): string[] {
   if (!commandsAvailable) return [...base];
+  // Cap toast at 3 — do not inject Restart into short toast lists.
+  if (base.length <= 3 && !base.includes('Reload Window')) {
+    return [...base];
+  }
   const actions = [...base];
   const reloadIdx = actions.indexOf('Reload Window');
   if (reloadIdx >= 0) {

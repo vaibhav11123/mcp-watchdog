@@ -1,6 +1,8 @@
 import type { McpConfigStatus } from '../config-core';
 import type { ServerStatus, ServerState } from '../monitor';
 import { sparklineSvg } from '../latencyHistory';
+import { causeSentence } from '../../packages/probe-core/src/diagnostics/index';
+import { diagnoseFailure } from '../failureTriage';
 import { STATE_LABELS } from './stateLabels';
 
 export interface OverviewSnapshot {
@@ -15,14 +17,18 @@ export interface OverviewSnapshot {
     state: ServerState;
     label: string;
     ping: string;
+    /** Raw lastError — only for non-Doctor rows; failed/degraded use causeSentence. */
     error?: string;
+    causeSentence?: string;
+    firstActionLabel?: string;
+    hostSessionUnknown?: boolean;
+    verifiedOutcome?: string;
     dotClass: string;
     mode?: string;
     disabled?: boolean;
     accepted?: boolean;
     watchdogOnlyCred?: boolean;
     toolCount?: number;
-    failureContext?: string;
     sparkline?: string;
   }>;
 }
@@ -44,12 +50,25 @@ export function statusesSnapshot(
             : 'muted';
     const samples = latencyByServer[s.name] ?? [];
     const spark = sparklineSvg(samples);
+    const needsDoctor = s.state === 'failed' || s.state === 'degraded';
+    const diagnosis = needsDoctor
+      ? diagnoseFailure({
+          serverName: s.name,
+          lastError: s.lastError,
+          lastProbeError: s.lastProbeError,
+          failureContext: s.failureContext,
+        })
+      : undefined;
     return {
       name: s.name,
       state: s.state,
       label: p.label,
       ping: s.lastPingMs !== undefined ? `${s.lastPingMs} ms` : '—',
-      error: s.lastError,
+      error: needsDoctor ? undefined : s.lastError,
+      causeSentence: diagnosis ? causeSentence(diagnosis.causeId) : undefined,
+      firstActionLabel: diagnosis?.actions[0]?.label,
+      hostSessionUnknown: needsDoctor,
+      verifiedOutcome: s.verifiedOutcome,
       dotClass,
       mode:
         s.probeMode === 'interval'
@@ -61,9 +80,6 @@ export function statusesSnapshot(
       accepted: s.accepted,
       watchdogOnlyCred: s.watchdogOnlyCred,
       toolCount: s.toolCount,
-      failureContext: s.failureContext
-        ? s.failureContext.split('\n').slice(-3).join('\n')
-        : undefined,
       sparkline: spark || undefined,
     };
   });
@@ -113,6 +129,7 @@ export function wrapOverviewDocument(body: string, nonce: string): string {
       color: var(--vscode-foreground);
       background: var(--vscode-sideBar-background);
       line-height: 1.45;
+      overflow-x: hidden;
     }
     h1 {
       margin: 0 0 4px;
@@ -339,11 +356,13 @@ function renderDashboard(data: OverviewSnapshot): string {
         <div class="server-name">${escapeHtml(s.name)}${s.accepted ? ' <span class="server-meta">(Accepted)</span>' : ''}${s.sparkline ? `<span class="sparkline">${s.sparkline}</span>` : ''}</div>
         <div class="server-meta">${escapeHtml(s.label)} · ${escapeHtml(s.ping)}${s.mode ? ` · ${escapeHtml(s.mode)}` : ''}${s.toolCount !== undefined ? ` · ${s.toolCount} tools` : ''}${s.disabled ? ' · disabled' : ''}${s.accepted ? ' · accepted' : ''}</div>
         ${s.watchdogOnlyCred ? `<div class="server-meta">Watchdog authenticated; editor may still need key</div>` : ''}
-        ${s.error ? `<div class="server-error">${escapeHtml(s.error)}</div>` : ''}
-        ${s.failureContext ? `<pre class="server-error" style="white-space:pre-wrap;margin:4px 0 0;font-size:11px">${escapeHtml(s.failureContext)}</pre>` : ''}
+        ${s.causeSentence ? `<div class="server-error">${escapeHtml(s.causeSentence)}</div>` : ''}
+        ${s.error && !s.causeSentence ? `<div class="server-error">${escapeHtml(s.error)}</div>` : ''}
+        ${s.hostSessionUnknown ? `<div class="server-meta">Editor session: Unknown</div>` : ''}
+        ${s.verifiedOutcome ? `<div class="server-meta">Verified: ${escapeHtml(s.verifiedOutcome)}</div>` : ''}
         ${
           s.state === 'failed' || s.state === 'degraded'
-            ? `<div class="actions" style="margin-top:6px"><button class="link" data-action="reconnect" data-server="${escapeHtml(s.name)}">Retry probe</button></div>`
+            ? `<div class="actions" style="margin-top:6px"><button class="link" data-action="reconnect" data-server="${escapeHtml(s.name)}">${escapeHtml(s.firstActionLabel ?? 'Retry probe')}</button></div>`
             : ''
         }
       </div>
@@ -356,7 +375,7 @@ function renderDashboard(data: OverviewSnapshot): string {
     <div class="summary">${escapeHtml(summary)}</div>
     <div class="metrics">
       <div class="metric ok"><strong>${data.healthy}</strong><span>Healthy</span></div>
-      <div class="metric warn"><strong>${data.attention}</strong><span>Active</span></div>
+      <div class="metric warn"><strong>${data.attention}</strong><span>Reconnecting</span></div>
       <div class="metric bad"><strong>${data.failed}</strong><span>Failed</span></div>
     </div>
     <ul>${rows}</ul>
@@ -364,21 +383,7 @@ function renderDashboard(data: OverviewSnapshot): string {
       <button data-action="reconnectAll">Retry all probes</button>
       <button class="secondary" data-action="openConfig">MCP config</button>
       <button class="secondary" data-action="showOutput">Logs</button>
-    </div>
-    <p class="server-meta" style="margin-top:12px">
-      <strong>Next step:</strong> Retry probe checks Watchdog’s own connection again.
-      Restart editor MCP is a separate failure-toast action when the host exposes <code>workbench.mcp.*</code>.
-      Reload Window if the editor client stays stuck.
-    </p>
-    <p class="server-meta" style="margin-top:8px">
-      <strong>What this shows:</strong> these rows are Watchdog’s probe from merged mcp.json layers
-      (Cursor may list additional editor/plugin MCPs that are not in those files).
-      Accept acknowledges a failure for the status-bar chip (N/M) without marking the server healthy.
-      Opt-in Cloud bridge posts names-only incidents when <code>cloudBridge.enabled</code> is on.
-    </p>
-    <p class="server-meta" style="margin-top:8px">
-      <button class="link" data-action="starOnGitHub">Star on GitHub</button>
-    </p>`;
+    </div>`;
 }
 
 function escapeHtml(s: string): string {

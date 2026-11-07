@@ -1,4 +1,6 @@
 import type { ServerStatus } from './monitor';
+import { causeSentence } from '../packages/probe-core/src/diagnostics/index';
+import { diagnoseFailure } from './failureTriage';
 
 export type NotifyMode = 'all' | 'failures' | 'none';
 
@@ -25,17 +27,19 @@ const FLAP_WINDOW_MS = 10 * 60 * 1000;
 const FLAP_THRESHOLD = 3;
 const DEFAULT_DEGRADED_ALERT_DELAY_MS = 60_000;
 
-/** Failed / sustained-degraded toast actions (Accept/Fix/Remove first; Quit before Mute). */
-export const FAILURE_ALERT_ACTIONS = [
-  'Accept',
-  'Fix…',
-  'Remove',
-  'Retry probe',
-  'Show Log',
-  'Reload Window',
-  'Quit Cursor',
-  'Mute 1h',
-] as const;
+/** Toast ≤3 actions (S-TOAST-01). Restart / Accept / Remove live elsewhere (Fix QP / commands). */
+export const FAILURE_ALERT_ACTIONS = ['Fix…', 'Show Log', 'Mute 1h'] as const;
+
+/** Prefer cause sentence over raw lastError (S-TOAST-02). */
+export function failureAlertMessage(status: ServerStatus): string {
+  const d = diagnoseFailure({
+    serverName: status.name,
+    lastError: status.lastError,
+    lastProbeError: status.lastProbeError,
+    failureContext: status.failureContext,
+  });
+  return `MCP ${status.name}: ${causeSentence(d.causeId)}`;
+}
 
 export function decideAlert(
   prev: ServerStatus | undefined,
@@ -122,7 +126,7 @@ export function decideAlert(
       alert: {
         kind: 'warning',
         server: next.name,
-        message: `MCP server ${next.name} degraded: ${next.lastError ?? 'unreachable'}`,
+        message: failureAlertMessage(next),
         actions: [...FAILURE_ALERT_ACTIONS],
       },
       flap: outFlap,
@@ -140,7 +144,7 @@ export function decideAlert(
       alert: {
         kind: 'error',
         server: next.name,
-        message: `MCP server ${next.name} failed: ${next.lastError ?? 'unknown'}`,
+        message: failureAlertMessage(next),
         actions: [...FAILURE_ALERT_ACTIONS],
       },
       flap: outFlap,
@@ -255,6 +259,8 @@ export class AlertManager {
   clearServer(name: string): void {
     this.prev.delete(name);
     this.degradedSince.delete(name);
+    this.flaps.delete(name);
+    this.mutes.delete(name);
     this.clearDegradedTimer(name);
   }
 

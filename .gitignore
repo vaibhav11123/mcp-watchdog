@@ -4,6 +4,12 @@ node_modules
 *.local.md
 launch/
 /media/
+
+# Local agent skill installs (npx skills add) — do not ship in the extension repo
+.agents/
+.claude/skills/
+.codex/
+skills-lock.json
 # Track docs/media (GIF script + demo-x.mp4); ignore only root media/
 !docs/media/
 .DS_Store
@@ -33,3 +39,17 @@ docs/spikes/rea-evidence/*.json
 docs/validation/priya-evidence/stills/g1/
 docs/validation/priya-evidence/stills/g1b/*.png
 !docs/validation/priya-evidence/stills/g1b/frames/
+
+# Bake-off local downloads / runs (keep docs/validation/bake-off/*.md)
+scripts/bake-off/competitors/
+scripts/bake-off/.artifacts/
+
+# Workspace-local Doctor incidents (Phase 3)
+.mcp-watchdog/
+
+# Release QA capture clips (keep SIGN-OFF.md + small stills)
+docs/validation/release-evidence/**/clips/
+docs/validation/release-evidence/**/*.mp4
+docs/validation/release-evidence/**/*.mov
+docs/validation/release-evidence/**/*.webm
+

@@ -10,7 +10,12 @@ suite('MCP Watchdog trust gate (host)', () => {
     try {
       // Gate on first, then revoke so reload sees an empty trust store.
       await setupEchoOnlyHost(api, { requireApproval: true });
-      await delay(1000);
+      await delay(1500);
+
+      const gated = vscode.workspace
+        .getConfiguration('mcpWatchdog')
+        .get<boolean>('requireApproval', true);
+      assert.strictEqual(gated, true, 'requireApproval must stay true during assertion');
 
       const statuses = api.getStatuses();
       const echo = statuses.find((s) => s.name === 'echo');

@@ -33,9 +33,10 @@ export async function setupEchoOnlyHost(
   opts: { requireApproval: boolean },
 ): Promise<void> {
   const cfg = vscode.workspace.getConfiguration('mcpWatchdog');
+  // Workspace target writes mcp-watchdog-test/.vscode/settings.json (window-scoped setting).
   await cfg.update('requireApproval', opts.requireApproval, vscode.ConfigurationTarget.Workspace);
   // Ensure the configuration service has applied the write before any reload.
-  await delay(200);
+  await delay(300);
   const applied = vscode.workspace
     .getConfiguration('mcpWatchdog')
     .get<boolean>('requireApproval', true);
@@ -79,5 +80,5 @@ export async function setupEchoOnlyHost(
   } else {
     await vscode.commands.executeCommand('mcpWatchdog.refresh');
   }
-  await delay(300);
+  await delay(500);
 }

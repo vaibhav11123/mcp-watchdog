@@ -1,8 +1,12 @@
 # MCP Watchdog — execution bible
 
-Living execution doc. Product: **MCP Watchdog** (IDE) + **Watchdog Cloud** (monitor + **policy/trust plane**). Never call MVP a bare “MCP Gateway”.
+Living execution doc for **historical Gates E0–E9** (IDE probe-core → Cloud preview → policy plane). Never call MVP a bare “MCP Gateway”.
 
-**Authority:** [PRODUCT-DECISION.md](./PRODUCT-DECISION.md), [spikes/](./spikes/), MCP spec **2025-11-25**. GTM/publish: [GTM-PUBLISH.md](./GTM-PUBLISH.md).
+> **Authority (2026-11-07):** Product identity → [STRATEGY-THESIS.md](./STRATEGY-THESIS.md). Near-term engineering (Phases 1–3 Doctor / adapters / verified recovery) → [TECHNICAL-ARCHITECTURE.md](./TECHNICAL-ARCHITECTURE.md). Bake-off → [BAKE-OFF.md](./BAKE-OFF.md).  
+> [PRODUCT-DECISION.md](./PRODUCT-DECISION.md) is **historical raise narrative** (Cloud co-headline) — superseded for identity; do not prioritize Cloud/policy over Doctor for Phases 1–3.  
+> Protocol default for shipped IDE probes: handshake-era **2025-11-25** until a modern-era spike closes (see ARCH §12). GTM/publish: [GTM-PUBLISH.md](./GTM-PUBLISH.md). Spikes: [spikes/](./spikes/).
+
+**Phase numbering:** Thesis/ARCH “Phase 1–3” (Doctor → adapters → verify+KB) ≠ this file’s Gate 2–3 (Cloud / policy). Prefer thesis/ARCH names for new work.
 
 ---
 

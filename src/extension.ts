@@ -31,8 +31,15 @@ import { buildBridgePayload, postBridgeIncident, workspaceIdHash } from './cloud
 import { mergeCredentialOverlay, secretStorageKey } from './credentialOverlay';
 import { awsProfileFromEnv, matchRecipe } from './vendorRecipes';
 import { resolveServerArg, runFixFailure, runRemoveServer } from './triageHost';
-import { classifyFailure } from './failureTriage';
+import { classifyFailure, diagnoseFailure } from './failureTriage';
+import {
+  resolveHostCapabilities,
+  type HostCapabilities,
+} from './hostCapabilities';
+import { DoctorMetrics } from './incidentStore';
+import type { VerifiedOutcome } from './verifyRecovery';
 import * as telemetry from './telemetry/client';
+
 import type {
   ProbeModeSnapshot,
   TransportKind,
@@ -97,6 +104,9 @@ let serverConfigs: Record<string, McpServerConfig> = {};
 const watchdogOnlyCred = new Set<string>();
 let bridgeFailLogged = false;
 let acceptedNames = new Set<string>();
+let hostCaps: HostCapabilities | undefined;
+const doctorMetrics = new DoctorMetrics();
+
 
 /** Joined sorted folder paths — trust key covers the full multi-root workspace. */
 function workspacePath(): string {
@@ -159,6 +169,19 @@ function failureClassFor(name: string, st: ServerStatus): ReturnType<typeof clas
   });
 }
 
+function diagnosisFor(name: string, st: ServerStatus) {
+  const cfg = serverConfigs[name];
+  const awsProfile = cfg?.type === 'stdio' && cfg.env ? awsProfileFromEnv(cfg.env) : undefined;
+  return diagnoseFailure({
+    serverName: name,
+    lastError: st.lastError,
+    lastProbeError: st.lastProbeError,
+    failureContext: st.failureContext,
+    config: cfg,
+    awsProfileId: awsProfile,
+  });
+}
+
 function maybeTrackStateTransition(
   name: string,
   prev: ServerStatus | undefined,
@@ -170,13 +193,16 @@ function maybeTrackStateTransition(
     stateFrom: ServerState;
     stateTo: ServerState;
     failureClass?: ReturnType<typeof classifyFailure>;
+    causeId?: ReturnType<typeof diagnosisFor>['causeId'];
   } = {
     transport: transportOf(name),
     stateFrom: prev.state,
     stateTo: next.state,
   };
   if (next.state === 'failed' || next.state === 'degraded') {
+    const d = diagnosisFor(name, next);
     props.failureClass = failureClassFor(name, next);
+    props.causeId = d.causeId;
   }
   telemetry.track('state_transition', props, { serverKey: name });
   if ((prev.state === 'failed' || prev.state === 'degraded') && next.state === 'healthy') {
@@ -282,6 +308,9 @@ function onServerStatus(name: string, s: ServerStatus): void {
     ...s,
     flapping: alertManager.getFlapping(name),
     accepted: acceptedNames.has(name),
+    // Keep last Fix verify until healthy (S-VERIFY-01).
+    verifiedOutcome:
+      s.state === 'healthy' ? undefined : (s.verifiedOutcome ?? prev?.verifiedOutcome),
   };
   statuses.set(name, withFlap);
   alertManager.onStatusChange(withFlap);
@@ -290,6 +319,7 @@ function onServerStatus(name: string, s: ServerStatus): void {
     flapping: alertManager.getFlapping(name),
     accepted: acceptedNames.has(name),
   });
+
   maybePostBridge(name, prev, withFlap);
   maybeTrackStateTransition(name, prev, withFlap);
   if (s.toolDrift) {
@@ -485,6 +515,13 @@ async function clearAcceptance(serverName: string): Promise<void> {
   refreshAllUi();
 }
 
+function setVerifiedOutcome(serverName: string, outcome: VerifiedOutcome): void {
+  const cur = statuses.get(serverName);
+  if (!cur) return;
+  statuses.set(serverName, { ...cur, verifiedOutcome: outcome });
+  refreshAllUi();
+}
+
 async function fixFailure(serverName: string, surface: TriageSurface = 'command'): Promise<void> {
   const st = statuses.get(serverName);
   if (!st) {
@@ -509,6 +546,11 @@ async function fixFailure(serverName: string, surface: TriageSurface = 'command'
       watchdogOnlyCred.add(name);
       refreshAllUi();
     },
+    getStatus: (name) => statuses.get(name),
+    onVerified: setVerifiedOutcome,
+    hostCaps,
+    workspaceRoot: vscode.workspace.workspaceFolders?.[0]?.uri.fsPath,
+    doctorMetrics,
   });
 }
 
@@ -817,6 +859,20 @@ export async function activate(context: vscode.ExtensionContext): Promise<McpWat
   resetConfigWatcher();
   context.subscriptions.push({ dispose: () => configWatcher?.dispose() });
 
+  hostCaps = await resolveHostCapabilities(
+    {
+      appName: vscode.env.appName,
+      appRoot: vscode.env.appRoot,
+      appHost: vscode.env.appHost,
+      uiKind: String(vscode.env.uiKind),
+    },
+    vscodeEditorMcpHost,
+    vscode.version,
+  );
+  logger.info(
+    `[Watchdog] HostCapabilities hostId=${hostCaps.hostId} canRestartServer=${hostCaps.canRestartServer} canObserveConnectionState=${hostCaps.canObserveConnectionState}`,
+  );
+
   const debouncedSettingsReload = debounce(() => {
     logger.info('[Watchdog] Settings changed — reloading servers');
     void reloadServers();
@@ -890,6 +946,7 @@ async function reloadServers(): Promise<void> {
   for (const name of monitors.keys()) {
     alertManager.clearServer(name);
   }
+  lastAlertForTest = undefined;
   monitors.clear();
   statuses.clear();
 

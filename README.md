@@ -11,7 +11,7 @@
 
 The editor can still show tools after a server has gone quiet — after idle, sleep, or a network drop. MCP Watchdog is an independent check of the servers you approved. It shows status, latency, and failure details, then offers a next step.
 
-Works in **Cursor**, **Windsurf**, **VS Code**, **VSCodium**, and other forks that install from [Open VSX](https://open-vsx.org/).
+Works in **Cursor**, **Windsurf**, **VS Code**, **VSCodium**, and other forks that install from [Open VSX](https://open-vsx.org/). Host roadmap (Claude Code–class CLI later, not JetBrains-first): [docs/STRATEGY-THESIS.md](./docs/STRATEGY-THESIS.md) — *Where Watchdog exists*.
 
 **Install (recommended for Cursor):** [MCP Watchdog on Open VSX](https://open-vsx.org/extension/mcp-watchdog/mcp-watchdog) — primary download channel for Cursor, Windsurf, VSCodium, and most VS Code forks.
 
@@ -46,7 +46,7 @@ That result is Watchdog’s probe. It does not read the editor’s MCP client, s
 When a check fails, the next steps are separate:
 
 - **Accept** — acknowledge the failure; status-bar chip drops that server from **N/M** (Overview still shows Failed + Accepted). Probing continues.
-- **Fix…** — guided remediation (copy commands, open owning config, AWS login terminal, credential wizard, retry).
+- **Fix…** — guided remediation by cause class (e.g. missing token vs 401 vs expired session vs spawn path); copy commands, open owning config, AWS login terminal, credential wizard, retry.
 - **Remove** — delete the server key from the owning config file (or Disable Watchdog monitoring).
 - **Retry probe** — run Watchdog’s check again.
 - **Restart editor MCP** — only on the failure toast, and only when the host exposes `workbench.mcp.*`. Cursor and some forks do not.
@@ -264,9 +264,16 @@ npm run build
 - **Run Extension** / **Run Extension (mcp-watchdog-test workspace)** from `.vscode/launch.json`.
 - Fixture: `mcp-watchdog-test/` (optional; not shipped in VSIX).
 - Headless smoke: `npm run smoke`.
-- Deep dive: [docs/TECHNICAL.md](./docs/TECHNICAL.md) — architecture, design decisions, state machine, trust model, and testing.
+- **Start here (progress / routing):** [docs/STATUS.md](./docs/STATUS.md) — bird’s-eye phase, claim ladder, what to update next.
+- Release train / soak: [docs/RELEASE.md](./docs/RELEASE.md) · Pre-ship testing: [docs/TESTING.md](./docs/TESTING.md).
+- GTM role (Instinct): [docs/GTM-ROLE.md](./docs/GTM-ROLE.md) · Guardrails: [docs/GTM-GUARDRAILS.md](./docs/GTM-GUARDRAILS.md) · Comms: [docs/GTM-COMMS.md](./docs/GTM-COMMS.md) · Publish checklist: [docs/GTM-PUBLISH.md](./docs/GTM-PUBLISH.md).
+- Strategy thesis: [docs/STRATEGY-THESIS.md](./docs/STRATEGY-THESIS.md) — reliability + recovery intelligence; claim ladder; metric formulas.
+- Target architecture: [docs/TECHNICAL-ARCHITECTURE.md](./docs/TECHNICAL-ARCHITECTURE.md) — Doctor, dual-truth, verified recovery (Phases 1–3).
+- Bake-off method: [docs/BAKE-OFF.md](./docs/BAKE-OFF.md) — pinned competitors + scenarios + dated results.
+- Agent skills toolkit: [docs/AGENT-SKILLS.md](./docs/AGENT-SKILLS.md) — allowlist + selective install; catalog browse-only (not bulk installs).
+- Historical technical dump: [docs/TECHNICAL.md](./docs/TECHNICAL.md) — demoted; prefer CHANGELOG + code for shipped 0.x, ARCH for Doctor target.
 - Execution bible: [docs/EXECUTION.md](./docs/EXECUTION.md) · GTM/publish: [docs/GTM-PUBLISH.md](./docs/GTM-PUBLISH.md).
-- Product lock: [docs/PRODUCT-DECISION.md](./docs/PRODUCT-DECISION.md) — editor health checks plus Watchdog Cloud preview (remote health, schema changes, configuration policy checks).
+- Historical raise notes: [docs/PRODUCT-DECISION.md](./docs/PRODUCT-DECISION.md) (superseded for identity by STRATEGY-THESIS).
 - Cloud self-host: [packages/cloud/README.md](./packages/cloud/README.md).
 - Validation notes: [docs/CUSTOMER-VALIDATION.md](./docs/CUSTOMER-VALIDATION.md).
 
@@ -274,12 +281,17 @@ See [CHANGELOG.md](./CHANGELOG.md).
 
 ## Ship checklist (maintainers)
 
-1. Record the live clip in [docs/media/GIF-RECORDING.md](./docs/media/GIF-RECORDING.md) (server stop, Watchdog result, **Retry probe**, then **Restart editor MCP** as a different action) and put it in `images/demo.gif` before announce. Do not ship the old Reconnect GIF with a caption that calls it live.
-2. Bump `package.json` version (maintainer only) + move CHANGELOG Unreleased → versioned section.
-3. `npm test` && `npx vsce package` — confirm `vsce ls` has no `test/`, `*.local.md`, `launch/`.
-4. Set GitHub secrets: **`VSCE_PAT`**, **`OVSX_PAT`** (see [CONTRIBUTING.md](./CONTRIBUTING.md)).
-5. `./scripts/ship-release.sh` or push tag `v*` to run [release.yml](./.github/workflows/release.yml) (Marketplace + Open VSX).
-6. Post GTM from gitignored `launch/` (X-THREAD, FORUM-PASTE, HN-SHOW, REDDIT, SCHEDULE).
+Progress board: [docs/STATUS.md](./docs/STATUS.md). Staged train + soak: [docs/RELEASE.md](./docs/RELEASE.md). Pre-ship QA: [docs/TESTING.md](./docs/TESTING.md). Marketing sync + **release map** (0.5.7 → 0.5.9 → 0.6.0): [docs/GTM-PUBLISH.md](./docs/GTM-PUBLISH.md). Claims: [docs/STRATEGY-THESIS.md](./docs/STRATEGY-THESIS.md).
+
+0. Complete [RELEASE.md](./docs/RELEASE.md) hard gates and [TESTING.md](./docs/TESTING.md) `SIGN-OFF.md` **READY** for this version (do not skip soak / collapse Unreleased into one blast).
+1. Confirm the cut matches the [release map](./docs/GTM-PUBLISH.md) (do not mix Doctor UI + verify + win in one patch without re-scoping the map).
+2. Record/update the live clip in [docs/media/GIF-RECORDING.md](./docs/media/GIF-RECORDING.md) when the failure→Fix→verify story changed; put it in `images/demo.gif` before announce.
+3. Bump `package.json` version (maintainer only) + move CHANGELOG Unreleased → versioned section (include Marketing claim-stage line from GTM template).
+4. Update README / store description only for user-visible deltas; Open VSX link stays primary for Cursor.
+5. `npm test` && `npx vsce package` — confirm `vsce ls` has no `test/`, `*.local.md`, `launch/`.
+6. Set GitHub secrets: **`VSCE_PAT`**, **`OVSX_PAT`** (see [CONTRIBUTING.md](./CONTRIBUTING.md)).
+7. `./scripts/ship-release.sh` or push tag `v*` to run [release.yml](./.github/workflows/release.yml) (**same VSIX** → Marketplace + Open VSX).
+8. G0 smoke on **published** Cursor (Open VSX), then post `launch/` drafts — claim stage must match thesis for this version.
 
 ```bash
 export VSCE_PAT=... OVSX_PAT=...   # one-time

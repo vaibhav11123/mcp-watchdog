@@ -4,5 +4,10 @@
   "mcpWatchdog.pingIntervalMs": 3000,
   "mcpWatchdog.notify": "failures",
   "mcpWatchdog.degradedAlertDelayMs": 2500,
-  "mcpWatchdog.maxRetries": 0
+  "mcpWatchdog.maxRetries": 0,
+  "mcpWatchdog.perServer": {
+    "aws-mcp": {
+      "enabled": false
+    }
+  }
 }

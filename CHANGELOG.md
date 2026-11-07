@@ -6,6 +6,26 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [0.5.7] - 2026-11-07
+
+Marketing: claim stage **Now+**. Public announce story for this cut is **Doctor UI Must** only (cause sentences, toast ≤3, Reconnecting). HostCapabilities / verify ship in the same VSIX; GTM beats for those stay on the 0.5.8 / 0.5.9 map. No bake-off win claim until **0.6.0**.
+
+### Added
+
+- Doctor Phase 1 (vscode-free): `RuntimeObservation`, agnostic `causeId` taxonomy (`auth.missing` / `rejected` / `expired` / …), `diagnose` / `verifyRecovery` / `deriveServerState` in `packages/probe-core`; Fix UI shows causeId; telemetry allowlists `causeId` alongside legacy `failureClass`.
+- Doctor UI Must (`SCREEN-SPEC`): cause sentences on Overview/toast/status; toast ≤3 (`Fix…` / `Show Log` / `Mute 1h`); Reconnecting metric; footer essays removed.
+- Phase 2 `HostCapabilities` (`src/hostCapabilities.ts`): cursor/vscode/windsurf detection; `canObserveConnectionState: false` on Cursor (announce deferred to 0.5.8 if user-visible).
+- Phase 3 verified recovery: post-Fix `verifyRecovery` + Overview `Verified:` line; `.mcp-watchdog/incidents.jsonl` (redacted); DoctorMetrics hooks (announce / GIF beat deferred to 0.5.9).
+- Bake-off competitive + Phase 3 re-bake evidence: [docs/validation/bake-off/](./docs/validation/bake-off/) — eng win **35/36**; public announce waits for **0.6.0**.
+
+### Changed
+
+- Overview webview clamps horizontal overflow (`overflow-x: hidden`).
+- Host Live EH matrix: `test/host/liveEh.test.ts` (TESTING L2–L6/L8); `AlertManager.clearServer` clears flap/mute between host suites.
+- Pre-tag secret scan: [scripts/check-no-secrets.sh](./scripts/check-no-secrets.sh) — RELEASE hard gate.
+- Host-test trust gate: `mcp-watchdog-test` default `requireApproval: true`.
+- Staged release / QA / GTM docs: [docs/STATUS.md](./docs/STATUS.md), [docs/RELEASE.md](./docs/RELEASE.md), [docs/TESTING.md](./docs/TESTING.md), [docs/GTM-ROLE.md](./docs/GTM-ROLE.md), [docs/GTM-GUARDRAILS.md](./docs/GTM-GUARDRAILS.md), [docs/GTM-COMMS.md](./docs/GTM-COMMS.md), [docs/STRATEGY-THESIS.md](./docs/STRATEGY-THESIS.md), [docs/TECHNICAL-ARCHITECTURE.md](./docs/TECHNICAL-ARCHITECTURE.md).
+
 ## [0.5.6] - 2026-11-07
 
 ### Fixed
@@ -241,7 +261,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - Reads **`.vscode/mcp.json`** (`servers`); expands **`${workspaceFolder}`** in strings.
 - Stdio and streamable HTTP transports via `@modelcontextprotocol/sdk`.
 
-[Unreleased]: https://github.com/vaibhav11123/mcp-watchdog/compare/v0.5.6...HEAD
+[Unreleased]: https://github.com/vaibhav11123/mcp-watchdog/compare/v0.5.7...HEAD
+[0.5.7]: https://github.com/vaibhav11123/mcp-watchdog/releases/tag/v0.5.7
 [0.5.6]: https://github.com/vaibhav11123/mcp-watchdog/releases/tag/v0.5.6
 [0.5.5]: https://github.com/vaibhav11123/mcp-watchdog/releases/tag/v0.5.5
 [0.5.4]: https://github.com/vaibhav11123/mcp-watchdog/releases/tag/v0.5.4

@@ -1,8 +1,13 @@
 # MCP Watchdog — product strategy (industry-grade)
 
-**Status:** Strategy document. Not a build sprint. Monetization is **deferred** until free adoption is large enough.  
-**Inputs:** [MARKET-RESEARCH.md](./MARKET-RESEARCH.md), codebase audit (v0.5.2), Open VSX / Marketplace stats (2026-10-30), PLG / open-core / JTBD practice.  
-**Decision rule (revised for raise):** Own **operator IDE as free PLG wedge**, then **expand into author monitor + gateway-lite** (the lanes that already have SKUs and VC checks). See [PRODUCT-DECISION.md](./PRODUCT-DECISION.md). Operator pain remains real; IDE-only is not venture-scale.
+> **Authority (2026-11-07):** [STRATEGY-THESIS.md](./STRATEGY-THESIS.md) + [TECHNICAL-ARCHITECTURE.md](./TECHNICAL-ARCHITECTURE.md). Prefer those over this file when they conflict.  
+> **Phase numbering:** This file’s **PLG Phase 1–5** are monetization/PLG phases — not thesis Doctor Phases 1–3.  
+> [PRODUCT-DECISION.md](./PRODUCT-DECISION.md) = historical raise expand only.
+
+**Status:** Historical PLG / monetization strategy notes. Not a build sprint. Monetization remains **deferred**.  
+**Inputs:** [MARKET-RESEARCH.md](./MARKET-RESEARCH.md), codebase audit (v0.5.2 era), Open VSX / Marketplace stats (2026-10-30).  
+**Current product rule:** IDE reliability + recovery intelligence first; Cloud/author monitor later per STRATEGY-THESIS.  
+**Where to ship:** host coverage ladder in STRATEGY-THESIS (Cursor/Open VSX → Claude Code–class CLI Phase 6 → JetBrains later) — not “every IDE.”
 
 ---
 
@@ -97,7 +102,7 @@ flowchart LR
 - Success metric: qualitative — users say Watchdog caught a dead MCP before a failed tool call.
 - **Do not** build author SaaS, paywalls, or cloud accounts.
 
-### Phase 1 — Make the free core undeniable (next 1–3 releases)
+### PLG Phase 1 — Make the free core undeniable (next 1–3 releases)
 
 Map product work to operator need ranks. Prefer depth on ranks 2–3–5 (what we can own) over pretending to solve rank 1 fully.
 
@@ -115,7 +120,7 @@ Map product work to operator need ranks. Prefer depth on ranks 2–3–5 (what w
 
 **Instrumentation (privacy-preserving):** Local counters only at first (recoveries, Reload clicks). Optional later: anonymous opt-in funnel. No PII, no header/env values (existing security rule).
 
-### Phase 2 — Distribution into the pain (ongoing with Phase 1)
+### PLG Phase 2 — Distribution into the pain (ongoing with PLG Phase 1)
 
 Pain lives on **Cursor forum / GitHub / Claude issues**, not Reddit.
 
@@ -124,7 +129,7 @@ Pain lives on **Cursor forum / GitHub / Claude issues**, not Reddit.
 - Demo GIF: kill server → toast → Reconnect/Reload (replace placeholder when ready).
 - Target narrative: grow Open VSX downloads from **~1.3k → 10k → 50k** before any paid talk.
 
-### Phase 3 — Prove retention before revenue (gate to Phase 4)
+### PLG Phase 3 — Prove retention before revenue (gate to PLG Phase 4)
 
 Do **not** monetize until most of these are true:
 
@@ -136,11 +141,11 @@ Do **not** monetize until most of these are true:
 | Pull signal | Unprompted issues/PRs/forum mentions; people recommend Watchdog in MCP threads |
 | Org signal | Repeated asks: multi-seat policy, audit of who approved which MCP, fleet view |
 
-If gates fail: stay in Phase 1–2. Do not paywall.
+If gates fail: stay in PLG Phase 1–2. Do not paywall.
 
-### Phase 4 — Design paid for the **org buyer** (still no charge)
+### PLG Phase 4 — Design paid for the **org buyer** (still no charge)
 
-When Phase 3 gates pass, **design** (docs + prototypes) a paid tier that does **not** gut the free core.
+When PLG Phase 3 gates pass, **design** (docs + prototypes) a paid tier that does **not** gut the free core.
 
 **Free forever (individual operator):** probes, status bar, toasts, Reconnect/Reload CTAs, single-workspace trust gate, basic incident export, config lint.
 
@@ -154,11 +159,11 @@ When Phase 3 gates pass, **design** (docs + prototypes) a paid tier that does **
 | Shared “MCP health” dashboard for eng managers | Team visibility | New surface; still operator-side |
 | Priority support / SLA | Risk transfer | Ops, not code |
 
-**Explicitly not Phase 4:** Competing with Merlonix on remote author monitoring as the primary business.
+**Explicitly not PLG Phase 4:** Competing with Merlonix on remote author monitoring as the primary business.
 
 Price anchor when the time comes (market FACT, not a commitment): individual Pro tooling often **$19–29/mo**; teams higher. Final number only after org WTP conversations.
 
-### Phase 5 — Monetize (only after gates)
+### PLG Phase 5 — Monetize (only after gates)
 
 Sequence from OSS→SaaS playbooks:
 
@@ -171,14 +176,14 @@ Sequence from OSS→SaaS playbooks:
 
 ## 5. What to build next (priority order for engineering)
 
-Until Phase 3 gates: **only free-core operator recovery.**
+Until PLG Phase 3 gates: **only free-core operator recovery.**
 
 1. **Recovery UX clarity** — Separate “Reconnect Watchdog probe” vs “Reload Window (editor MCP)”; make Reload primary when appropriate (`src/alerts.ts`, `src/extension.ts`).
 2. **Visibility** — Status bar copy for failed/degraded matches user language (“Not connected” / needs recover).
 3. **Trust surface** — Clearer pre-connect review of command/args/URL (`src/trust.ts` + UI).
 4. **First-run** — Walkthrough sells aha: failure → toast → recover.
 5. **GTM** — Forum playbook + demo GIF (maintainer ops, not product code).
-6. **Defer** — Author SaaS, accounts, Stripe, paywalls, Claude Code multi-host (Phase 3+ adjacency test only).
+6. **Defer** — Author SaaS, accounts, Stripe, paywalls. **Claude Code / terminal harness** reach is no longer “maybe adjacency”: it is **P1 on the host ladder** in [STRATEGY-THESIS.md](./STRATEGY-THESIS.md) / eng Phase 6 (CLI) — do **not** build it before Cursor/Open VSX penetration + Doctor proof; do **not** pretend JetBrains is the next seat.
 
 ---
 

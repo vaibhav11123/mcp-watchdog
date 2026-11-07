@@ -1,4 +1,5 @@
 import type { FailureClass, FixStepId } from '../failureTriage';
+import type { CauseId } from '../../packages/probe-core/src/diagnostics/index';
 import type { ServerState } from '../monitor';
 import type { ProbeMode } from '../options';
 
@@ -72,14 +73,18 @@ export interface StateTransitionProps {
   transport: TransportKind;
   stateFrom: ServerState;
   stateTo: ServerState;
+  /** @deprecated prefer causeId; kept for one-minor compat. */
   failureClass?: FailureClass;
+  causeId?: CauseId;
 }
 
 export interface TriageActionProps {
   action: TriageAction;
   surface: TriageSurface;
   fixStepId?: FixStepId | string;
+  /** @deprecated prefer causeId; kept for one-minor compat. */
   failureClass?: FailureClass;
+  causeId?: CauseId;
 }
 
 export interface TrustDecisionProps {

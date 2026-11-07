@@ -26,6 +26,20 @@ describe('buildStatusBarModel', () => {
     expect(m.text).toContain('Watchdog: 1/2');
   });
 
+  it('prefers cause sentence over raw Error line (S-STATUS-01)', () => {
+    const m = buildStatusBarModel([
+      {
+        name: 'bad',
+        state: 'failed',
+        retryCount: 1,
+        lastError: 'No token provided. Please provide a valid token.',
+      },
+    ]);
+    const joined = m.tooltipLines.join('\n');
+    expect(joined).toMatch(/Missing credential/);
+    expect(joined).not.toMatch(/^Error: No token/m);
+  });
+
   it('untrusted uses warning shield', () => {
     const m = buildStatusBarModel([], {
       kind: 'untrusted',

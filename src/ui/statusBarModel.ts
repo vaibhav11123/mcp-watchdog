@@ -1,5 +1,7 @@
 import type { McpConfigStatus } from '../config-core';
 import type { ServerStatus } from '../monitor';
+import { causeSentence } from '../../packages/probe-core/src/diagnostics/index';
+import { diagnoseFailure } from '../failureTriage';
 import { STATE_LABELS } from './stateLabels';
 
 export type StatusBarSeverity = 'none' | 'warning' | 'error';
@@ -66,11 +68,16 @@ export function buildStatusBarModel(
     const tools =
       s.toolCount !== undefined ? ` · ${s.toolCount} tool${s.toolCount === 1 ? '' : 's'}` : '';
     tooltipLines.push(`**${s.name}** — ${p.label}${ping}${tools}`);
-    if (s.lastError) tooltipLines.push(`Error: ${s.lastError}`);
-    if (s.failureContext) {
-      for (const line of s.failureContext.split('\n').slice(0, 3)) {
-        tooltipLines.push(line);
-      }
+    if (s.state === 'failed' || s.state === 'degraded') {
+      const d = diagnoseFailure({
+        serverName: s.name,
+        lastError: s.lastError,
+        lastProbeError: s.lastProbeError,
+        failureContext: s.failureContext,
+      });
+      tooltipLines.push(causeSentence(d.causeId));
+    } else if (s.lastError) {
+      tooltipLines.push(`Error: ${s.lastError}`);
     }
   }
 
