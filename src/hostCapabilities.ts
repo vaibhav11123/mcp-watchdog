@@ -2,10 +2,7 @@
  * Thin HostCapabilities adapters (ARCH §9 / §9b).
  * vscode-free detection helpers live here; command probing uses EditorMcpHost.
  */
-import {
-  editorMcpCommandsAvailable,
-  type EditorMcpHost,
-} from './editorMcp';
+import { editorMcpCommandsAvailable, type EditorMcpHost } from './editorMcp';
 
 export type HostId = 'cursor' | 'vscode' | 'windsurf' | 'antigravity' | 'unknown';
 
@@ -47,10 +44,7 @@ export function detectHostId(env: HostEnvLike): HostId {
   return 'unknown';
 }
 
-export function baseHostCapabilities(
-  hostId: HostId,
-  hostVersion?: string,
-): HostCapabilities {
+export function baseHostCapabilities(hostId: HostId, hostVersion?: string): HostCapabilities {
   return {
     hostId,
     hostVersion,

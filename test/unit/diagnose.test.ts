@@ -16,9 +16,9 @@ describe('diagnose / auth taxonomy', () => {
   });
 
   it('401 / unauthorized → auth.rejected', () => {
-    expect(
-      diagnose({ serverName: 'remote', lastError: 'Auth required (HTTP 401)' }).causeId,
-    ).toBe('auth.rejected');
+    expect(diagnose({ serverName: 'remote', lastError: 'Auth required (HTTP 401)' }).causeId).toBe(
+      'auth.rejected',
+    );
   });
 
   it('session expired → auth.expired (legacy aws_session)', () => {
@@ -57,9 +57,9 @@ describe('diagnose / auth taxonomy', () => {
   });
 
   it('C-SPAWN-CLOSED-01: Connection closed → spawn.closed', () => {
-    expect(
-      diagnose({ serverName: 'stdio', lastError: '-32000: Connection closed' }).causeId,
-    ).toBe('spawn.closed');
+    expect(diagnose({ serverName: 'stdio', lastError: '-32000: Connection closed' }).causeId).toBe(
+      'spawn.closed',
+    );
   });
 
   it('C-GENERIC-01: opaque text → generic', () => {
@@ -112,4 +112,3 @@ describe('verifyRecovery', () => {
     expect(verifyRecovery({ before, after })).toBe('unknown');
   });
 });
-

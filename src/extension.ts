@@ -32,10 +32,7 @@ import { mergeCredentialOverlay, secretStorageKey } from './credentialOverlay';
 import { awsProfileFromEnv, matchRecipe } from './vendorRecipes';
 import { resolveServerArg, runFixFailure, runRemoveServer } from './triageHost';
 import { classifyFailure, diagnoseFailure } from './failureTriage';
-import {
-  resolveHostCapabilities,
-  type HostCapabilities,
-} from './hostCapabilities';
+import { resolveHostCapabilities, type HostCapabilities } from './hostCapabilities';
 import { DoctorMetrics } from './incidentStore';
 import type { VerifiedOutcome } from './verifyRecovery';
 import * as telemetry from './telemetry/client';
@@ -106,7 +103,6 @@ let bridgeFailLogged = false;
 let acceptedNames = new Set<string>();
 let hostCaps: HostCapabilities | undefined;
 const doctorMetrics = new DoctorMetrics();
-
 
 /** Joined sorted folder paths — trust key covers the full multi-root workspace. */
 function workspacePath(): string {

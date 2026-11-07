@@ -27,7 +27,6 @@ import { verifyAfterFix, type VerifiedOutcome } from './verifyRecovery';
 import type { HostCapabilities } from './hostCapabilities';
 import { appendIncidentRecord, type DoctorMetrics } from './incidentStore';
 
-
 const ALLOWED_LOGIN_HOSTS = new Set(['mcp.exa.ai', 'dashboard.exa.ai']);
 
 export function resolveServerArg(arg: unknown): string | undefined {
@@ -84,9 +83,7 @@ export async function runFixFailure(deps: {
   const cls = classifyFailure(input);
   // Full recommend list (S-FIX-QP-01) — never toast-cap the Quick Pick.
   const steps = buildFixSteps(cls, input);
-  deps.logger.info(
-    `[Watchdog] Fix ${deps.serverName}: causeId=${diagnosis.causeId} class=${cls}`,
-  );
+  deps.logger.info(`[Watchdog] Fix ${deps.serverName}: causeId=${diagnosis.causeId} class=${cls}`);
 
   const picked = await vscode.window.showQuickPick(
     steps.map((s) => ({

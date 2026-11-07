@@ -5,7 +5,11 @@
 import * as fs from 'fs';
 import * as path from 'path';
 import { redactSecrets } from './secretRedact';
-import type { CauseId, RuntimeObservation, VerifiedOutcome } from '../packages/probe-core/src/diagnostics/index';
+import type {
+  CauseId,
+  RuntimeObservation,
+  VerifiedOutcome,
+} from '../packages/probe-core/src/diagnostics/index';
 import type { HostId } from './hostCapabilities';
 
 export interface IncidentRecord {

@@ -70,12 +70,13 @@ suite('Live EH matrix (TESTING.md L1–L9)', () => {
 
     const qpTitles: string[] = [];
     const originalQp = vscode.window.showQuickPick.bind(vscode.window);
-    (vscode.window as unknown as { showQuickPick: typeof vscode.window.showQuickPick }).showQuickPick =
-      (async (items: unknown, options?: { title?: string }) => {
-        if (options?.title) qpTitles.push(options.title);
-        // Cancel Fix UI — we only assert title shape (S-FIX-QP-01).
-        return undefined;
-      }) as typeof vscode.window.showQuickPick;
+    (
+      vscode.window as unknown as { showQuickPick: typeof vscode.window.showQuickPick }
+    ).showQuickPick = (async (items: unknown, options?: { title?: string }) => {
+      if (options?.title) qpTitles.push(options.title);
+      // Cancel Fix UI — we only assert title shape (S-FIX-QP-01).
+      return undefined;
+    }) as typeof vscode.window.showQuickPick;
 
     killEchoServer();
     const killTimer = setInterval(killEchoServer, 400);
@@ -114,8 +115,9 @@ suite('Live EH matrix (TESTING.md L1–L9)', () => {
       );
     } finally {
       clearInterval(killTimer);
-      (vscode.window as unknown as { showQuickPick: typeof vscode.window.showQuickPick }).showQuickPick =
-        originalQp;
+      (
+        vscode.window as unknown as { showQuickPick: typeof vscode.window.showQuickPick }
+      ).showQuickPick = originalQp;
     }
   });
 

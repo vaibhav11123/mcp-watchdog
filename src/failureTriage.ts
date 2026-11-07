@@ -59,8 +59,7 @@ export function resolveFailureText(input: ClassifyFailureInput): string {
 }
 
 export function diagnoseFailure(input: ClassifyFailureInput): Diagnosis {
-  const stdioCommand =
-    input.config?.type === 'stdio' ? input.config.command : undefined;
+  const stdioCommand = input.config?.type === 'stdio' ? input.config.command : undefined;
   return diagnose({
     serverName: input.serverName,
     lastError: input.lastError,

@@ -1,5 +1,9 @@
 import { describe, expect, it } from 'vitest';
-import { renderOverviewBody, statusesSnapshot, wrapOverviewDocument } from '../../src/ui/overviewHtml';
+import {
+  renderOverviewBody,
+  statusesSnapshot,
+  wrapOverviewDocument,
+} from '../../src/ui/overviewHtml';
 import type { ServerStatus } from '../../src/monitor';
 
 const offline = (name: string): ServerStatus => ({
@@ -79,7 +83,10 @@ describe('overviewHtml', () => {
   });
 
   it('document chrome clamps horizontal overflow (L9)', () => {
-    const doc = wrapOverviewDocument('<h1>MCP Watchdog</h1><button data-action="reconnectAll">Retry all probes</button>', 'nonce');
+    const doc = wrapOverviewDocument(
+      '<h1>MCP Watchdog</h1><button data-action="reconnectAll">Retry all probes</button>',
+      'nonce',
+    );
     expect(doc).toMatch(/overflow-x:\s*hidden/);
     expect(doc).toMatch(/data-action="reconnectAll"/);
   });
