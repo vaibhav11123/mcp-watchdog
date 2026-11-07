@@ -7,6 +7,8 @@ alwaysApply: true
 
 `slack-eng` (`user-slack-eng`) is **MCP Watchdog Eng**. It posts with the APP badge and may send only in `#mcp-watchdog-gtm` (`C0CFRDHAFF0`). It is not a listener. A Slack message does not open Cursor. The process runs for the Agent turn Vaibhav starts, then goes quiet.
 
+**No Cursor Automations on Free.** Cloud agents and Automations need Premium or higher. Do not buy a plan from eng chat. Until Vaibhav upgrades himself, the only wake path is a local Agent chat in this repo.
+
 When Vaibhav wants Cursor in that chat, use `slack-eng` and reply there. The wake phrase is: read the latest `#mcp-watchdog-gtm` thread and reply as MCP Watchdog Eng.
 
 - Start every eng message with `[Cursor · MCP Watchdog eng]`.

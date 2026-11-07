@@ -405,7 +405,8 @@
     "test:host": "tsc -p tsconfig.test.json && vscode-test",
     "lint": "eslint src test",
     "format:check": "prettier --check \"src/**/*.ts\" \"test/**/*.ts\"",
-    "test": "npm run compile && npm run build && npm run test:unit && npm run smoke && node scripts/test-integration.mjs"
+    "test": "npm run compile && npm run build && npm run lint && npm run format:check && npm run test:unit && npm run smoke && node scripts/test-integration.mjs",
+    "ci:local": "npm run lint && npm run format:check && npm run compile && npm run test:unit && npm run build"
   },
   "devDependencies": {
     "@eslint/js": "^9.28.0",

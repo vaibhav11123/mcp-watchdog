@@ -7,9 +7,11 @@ VERSION=$(node -p "require('./package.json').version")
 TAG="v${VERSION}"
 
 echo "==> test + package ${TAG}"
+# lint + format:check are inside npm test (must match ci.yml lint job).
 npm test
+bash scripts/check-no-secrets.sh
 npx vsce package -o "mcp-watchdog-${VERSION}.vsix"
-npx vsce ls | grep -E 'test/|local\.md|launch/' && { echo "VSIX contains forbidden paths"; exit 1; } || true
+npx vsce ls | grep -E 'test/|local\.md|launch/|\.agents/' && { echo "VSIX contains forbidden paths"; exit 1; } || true
 
 if [[ -z "${VSCE_PAT:-}" ]]; then
   echo "WARN: VSCE_PAT not set — skip Marketplace publish"
@@ -27,6 +29,9 @@ echo "==> tag ${TAG} (if not exists) and push to trigger release.yml"
 git tag -a "$TAG" -m "Release ${TAG}" 2>/dev/null || echo "tag ${TAG} already exists"
 git push origin main
 git push origin "$TAG"
+
+echo "==> wait for CI on main (release.yml green is not enough)"
+bash scripts/wait-ci.sh
 
 echo "Done. Verify:"
 echo "  https://open-vsx.org/extension/mcp-watchdog/mcp-watchdog"

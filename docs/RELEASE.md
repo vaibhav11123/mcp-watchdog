@@ -44,13 +44,22 @@ Do **not** tag a user-visible cut until all apply:
 
 - [ ] [STATUS.md](./STATUS.md) next actions agree this cut is next (not “ship everything”)  
 - [ ] `npm run test:unit` · `npm run compile` · `npm run build`  
-- [ ] `npm test` **or** documented subset: `smoke` + `test:host` when UI/Fix/verify changed  
-- [ ] `npx vsce package` + `vsce ls` — no `test/`, `*.local.md`, `launch/`, secrets  
+- [ ] **`npm run lint` · `npm run format:check`** (same as `ci.yml` lint job — Prettier failures are CI red)  
+- [ ] `npm test` **or** documented subset: `smoke` + `test:host` when UI/Fix/verify changed (`npm test` includes lint + format:check)  
+- [ ] `npx vsce package` + `vsce ls` — no `test/`, `*.local.md`, `launch/`, secrets, `.agents/`  
 - [ ] **`bash scripts/check-no-secrets.sh`** — clean (no `xoxb-` / `AKIA` / `sk-live-` outside synthetic redact fixtures). Never commit `~/.cursor/mcp.json` or paste bot tokens into README/CHANGELOG/PRs  
 - [ ] [TESTING.md](./TESTING.md) evidence: `docs/validation/release-evidence/vX.Y.Z/SIGN-OFF.md` = **READY**  
 - [ ] CHANGELOG section for X.Y.Z + README/store deltas per [GTM-PUBLISH.md](./GTM-PUBLISH.md)  
 - [ ] Claim-ladder stage for this version matches [STRATEGY-THESIS.md](./STRATEGY-THESIS.md) (no bake-off win before 0.6.0 announce)  
 - [ ] Demo GIF updated if the failure→Fix→verify story changed ([media/GIF-RECORDING.md](./media/GIF-RECORDING.md))
+
+### After push / tag (agents + maintainer)
+
+- [ ] Wait for GitHub **CI** (`ci.yml`) **success** on the pushed SHA — not only `release.yml`.  
+- [ ] `release.yml` green means publish path ran `npm test`; it does **not** replace watching `ci.yml` (matrix unit / host / lint).  
+- [ ] Do not announce “shipped / done” to Vaibhav or Instinct while CI is red or in progress.
+
+Helper: `bash scripts/wait-ci.sh` (watches the latest `CI` run for `HEAD` on `main`).
 
 Docs-only tags are discouraged; if unavoidable, still run compile/unit and skip Live EH with an explicit SIGN-OFF skip reason.
 

@@ -128,6 +128,8 @@ Three-part test passed: eng bot posts hello as **MCP Watchdog Eng** → Instinct
 
 **On-demand live (not a listener).** A Slack message does not open Cursor. To put the bot in the chat: on this Mac, confirm **Settings → MCP → slack-eng** is enabled, open an Agent chat, and say “read the latest `#mcp-watchdog-gtm` thread and reply as MCP Watchdog Eng.” That turn posts as the APP. When the turn ends, the bot is quiet until the next ask. Cursor rule: `.cursor/rules/slack-eng-on-demand.mdc`.
 
+**Cursor Automations (always-on Slack replies) — blocked on Free.** Cloud agents & Automations require **Premium** or higher ([cursor.com/pricing](https://cursor.com/pricing)). The Safari account we checked was **Free** (`scion2304@gmail.com`) with Privacy Mode (Legacy) also disabling Cloud Agent. Eng must **not** upgrade or spend. If Vaibhav later buys Premium himself, create automation **MCP Watchdog GTM reply** on `#mcp-watchdog-gtm` (thread replies, Read Slack + Send to Slack, self-contained prompt, no-loop on Cursor/eng messages). Until then, local `slack-eng` is the only eng voice.
+
 **Slack handoff fields:** `@Instinct` then version/commit · what changed · release-gate · evidence/demo links · GTM question.
 
 ---

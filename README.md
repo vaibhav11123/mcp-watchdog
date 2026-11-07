@@ -288,9 +288,9 @@ Progress board: [docs/STATUS.md](./docs/STATUS.md). Staged train + soak: [docs/R
 2. Record/update the live clip in [docs/media/GIF-RECORDING.md](./docs/media/GIF-RECORDING.md) when the failure→Fix→verify story changed; put it in `images/demo.gif` before announce.
 3. Bump `package.json` version (maintainer only) + move CHANGELOG Unreleased → versioned section (include Marketing claim-stage line from GTM template).
 4. Update README / store description only for user-visible deltas; Open VSX link stays primary for Cursor.
-5. `npm test` && `npx vsce package` — confirm `vsce ls` has no `test/`, `*.local.md`, `launch/`.
+5. `npm test` && `npx vsce package` — confirm `vsce ls` has no `test/`, `*.local.md`, `launch/`, `.agents/` (`npm test` includes lint + Prettier).
 6. Set GitHub secrets: **`VSCE_PAT`**, **`OVSX_PAT`** (see [CONTRIBUTING.md](./CONTRIBUTING.md)).
-7. `./scripts/ship-release.sh` or push tag `v*` to run [release.yml](./.github/workflows/release.yml) (**same VSIX** → Marketplace + Open VSX).
+7. `./scripts/ship-release.sh` or push tag `v*` to run [release.yml](./.github/workflows/release.yml) (**same VSIX** → Marketplace + Open VSX). Script waits for **CI** (`ci.yml`) green via `scripts/wait-ci.sh` — do not stop at Release-only green.
 8. G0 smoke on **published** Cursor (Open VSX), then post `launch/` drafts — claim stage must match thesis for this version.
 
 ```bash

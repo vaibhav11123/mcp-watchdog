@@ -6,6 +6,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+### Changed
+
+- Release / agent gates: `npm test` now runs `lint` + `format:check` (same failure mode as `ci.yml`); `scripts/wait-ci.sh` + ship-release waits for main CI after push — Release workflow green is not enough.
+
 ## [0.5.7] - 2026-11-07
 
 Marketing: claim stage **Now+**. Public announce story for this cut is **Doctor UI Must** only (cause sentences, toast ≤3, Reconnecting). HostCapabilities / verify ship in the same VSIX; GTM beats for those stay on the 0.5.8 / 0.5.9 map. No bake-off win claim until **0.6.0**.

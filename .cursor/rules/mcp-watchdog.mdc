@@ -4,6 +4,14 @@ alwaysApply: true
 ---
 - VS Code extension, TypeScript strict. Bundle with esbuild (npm run build); typecheck is
   tsc --noEmit (npm run compile). Both must pass before you claim done.
+- **CI is mandatory, not optional.** Before any push to `main` / tag / “shipped” / “done” claim:
+  1. Locally run what `ci.yml` lint job runs: `npm run lint` · `npm run format:check` · `npm run compile`
+     (full `npm test` already includes lint + format:check).
+  2. After push: wait until GitHub **CI** workflow is **success** for that SHA
+     (`gh run list --branch main --limit 1` / `gh run watch <id> --exit-status`).
+  3. **Release workflow green ≠ CI green.** `release.yml` does not run Prettier/`format:check`.
+     Never tell the user a cut is done while main CI is red or still running.
+  4. If CI fails: fix, push, wait again — do not hand-wave or move on.
 - Only runtime dependency is @modelcontextprotocol/sdk. Do not add runtime deps without asking.
   devDependencies for testing/linting are fine.
 - monitor.ts and config-core.ts (after task W1) must stay importable without the vscode module.
