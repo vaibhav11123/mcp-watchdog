@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
-<head><!-- FALLBACK_THEME --><style>:root{--vscode-editor-background:#1e1e1e;--vscode-foreground:#cccccc;--vscode-descriptionForeground:#9d9d9d;--vscode-errorForeground:#f48771;--vscode-textLink-foreground:#3794ff;--vscode-button-background:#0e639c;--vscode-button-foreground:#fff;--vscode-button-secondaryBackground:#3a3d41;--vscode-button-secondaryForeground:#fff;--vscode-focusBorder:#007fd4;--vscode-charts-green:#89d185;--vscode-charts-yellow:#e2c08d;--vscode-charts-red:#f48771;--vscode-charts-orange:#ee9d28;--vscode-widget-border:#454545;font-family:-apple-system,BlinkMacSystemFont,sans-serif}body{margin:16px;background:var(--vscode-editor-background);color:var(--vscode-foreground)}</style>
+<head><!-- FALLBACK_THEME --><style>:root{--vscode-editor-background:#1e1e1e;--vscode-sideBar-background:#1e1e1e;--vscode-foreground:#cccccc;--vscode-descriptionForeground:#9d9d9d;--vscode-errorForeground:#f48771;--vscode-textLink-foreground:#3794ff;--vscode-button-background:#0e639c;--vscode-button-foreground:#fff;--vscode-button-secondaryBackground:#3a3d41;--vscode-button-secondaryForeground:#fff;--vscode-editorWarning-foreground:#e2c08d;--vscode-widget-border:#454545;font-family:-apple-system,sans-serif}body{margin:16px;background:#1e1e1e;color:#ccc}</style>
   <meta charset="UTF-8" />
   <meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'unsafe-inline'; script-src 'nonce-live-qa';" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -151,11 +151,11 @@
         <div class="server-name">echo</div>
         <div class="server-meta">Failed · —</div>
         
-        <div class="server-error">Could not classify the failure — open the log, then MCP config.</div>
+        <div class="server-error">Process closed the connection — check stderr and command/cwd.</div>
         
         <div class="server-meta">Editor session: Unknown</div>
         <div class="server-meta">Verified: unresolved</div>
-        <div class="actions" style="margin-top:6px"><button class="link" data-action="reconnect" data-server="echo">Retry probe</button></div>
+        <div class="actions" style="margin-top:6px"><button class="link" data-action="reconnect" data-server="echo">Show Log (crash often only on stderr)</button></div>
       </div>
     </li></ul>
     <div class="actions">

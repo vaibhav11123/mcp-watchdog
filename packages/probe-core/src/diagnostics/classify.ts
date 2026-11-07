@@ -69,6 +69,12 @@ export function classifyCause(input: ClassifyCauseInput): ClassifyCauseResult {
     return { causeId: 'transport.http', confidence: 'medium', evidence, retryExhausted };
   }
 
+  // Bare "Max retries exceeded" (no deeper probe line) used to fall through as generic —
+  // Doctor UI then said "Could not classify…". Treat retry-exhaustion as process/transport death.
+  if (retryExhausted) {
+    return { causeId: 'spawn.closed', confidence: 'low', evidence, retryExhausted };
+  }
+
   return { causeId: 'generic', confidence: 'low', evidence, retryExhausted };
 }
 
