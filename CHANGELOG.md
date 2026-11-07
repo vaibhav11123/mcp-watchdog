@@ -6,6 +6,15 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [0.5.8] - 2026-11-07
+
+Cadence patch (2h train). No GTM announce. See commits since previous tag.
+
+### Changed
+
+- Automated cadence release from `main` (CI green + commits since last tag).
+
+
 ### Changed
 
 - Release / agent gates: `npm test` now runs `lint` + `format:check` (same failure mode as `ci.yml`); `scripts/wait-ci.sh` + ship-release waits for main CI after push — Release workflow green is not enough.
@@ -266,7 +275,8 @@ Marketing: claim stage **Now+**. Public announce story for this cut is **Doctor 
 - Reads **`.vscode/mcp.json`** (`servers`); expands **`${workspaceFolder}`** in strings.
 - Stdio and streamable HTTP transports via `@modelcontextprotocol/sdk`.
 
-[Unreleased]: https://github.com/vaibhav11123/mcp-watchdog/compare/v0.5.7...HEAD
+[0.5.8]: https://github.com/vaibhav11123/mcp-watchdog/releases/tag/v0.5.8
+[Unreleased]: https://github.com/vaibhav11123/mcp-watchdog/compare/v0.5.8...HEAD
 [0.5.7]: https://github.com/vaibhav11123/mcp-watchdog/releases/tag/v0.5.7
 [0.5.6]: https://github.com/vaibhav11123/mcp-watchdog/releases/tag/v0.5.6
 [0.5.5]: https://github.com/vaibhav11123/mcp-watchdog/releases/tag/v0.5.5
