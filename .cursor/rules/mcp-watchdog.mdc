@@ -25,5 +25,6 @@ alwaysApply: true
 - Unit tests: vitest, in test/unit/, run with npm run test:unit. They must pass with no network
   and no VS Code host. Anything needing npx/network goes in scripts/ (smoke/integration tier).
 - Update CHANGELOG.md (Keep a Changelog format) and README for any user-visible change.
-- Do not bump version; the maintainer does releases.
+- Do not bump version by hand; maintainer or **2h cadence** (`scripts/cadence-release.sh` /
+  `cadence-release.yml`) cuts versions. Cadence patches are silent (no Instinct announce).
 - Do not add Co-authored-by trailers to commits. Never commit *.local.md or *.vsix.

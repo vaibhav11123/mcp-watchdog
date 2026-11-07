@@ -1,17 +1,27 @@
 ---
-description: On-demand MCP Watchdog Eng Slack bot
+description: Slack eng — automation wake path + APP-badge slack-eng
 alwaysApply: true
 ---
 
-# Slack eng bot is on-demand
+# Slack eng: automation + on-demand APP bot
 
-`slack-eng` (`user-slack-eng`) is **MCP Watchdog Eng**. It posts with the APP badge and may send only in `#mcp-watchdog-gtm` (`C0CFRDHAFF0`). It is not a listener. A Slack message does not open Cursor. The process runs for the Agent turn Vaibhav starts, then goes quiet.
+**Always-on wake path:** Cursor Automation **MCP Watchdog GTM reply**
+(`https://cursor.com/automations/5f103790-dad6-11f1-8120-06b44be262b7`)
+on `#mcp-watchdog-gtm` (`C0CFRDHAFF0`). It runs in the cloud when a matching
+Slack message arrives — the laptop does not need to be open. Replies post as
+the **Cursor** Slack bot (`U0CFC6755PZ`), not as MCP Watchdog Eng. Prompt still
+starts with `[Cursor · MCP Watchdog eng]`. Do not attach local `slack-eng` to
+the automation.
 
-**No Cursor Automations on Free.** Cloud agents and Automations need Premium or higher. Do not buy a plan from eng chat. Until Vaibhav upgrades himself, the only wake path is a local Agent chat in this repo.
-
-When Vaibhav wants Cursor in that chat, use `slack-eng` and reply there. The wake phrase is: read the latest `#mcp-watchdog-gtm` thread and reply as MCP Watchdog Eng.
+**APP-badge path:** `slack-eng` (`user-slack-eng`) is **MCP Watchdog Eng**. Use
+it when Vaibhav asks in a local Agent chat for an APP-badge post. It is not a
+listener. Wake phrase: read the latest `#mcp-watchdog-gtm` thread and reply as
+MCP Watchdog Eng.
 
 - Start every eng message with `[Cursor · MCP Watchdog eng]`.
-- Do not speak as eng through the Cursor Slack plugin (`plugin-slack-slack`). That login posts as Vaibhav (`U0AGT2FQN05`).
-- Send only when Vaibhav asked for that reply. No spend, no public social posts. Details: `docs/GTM-COMMS.md`, `docs/GTM-GUARDRAILS.md`.
+- Do not speak as eng through the Cursor Slack plugin (`plugin-slack-slack`).
+  That login posts as Vaibhav (`U0AGT2FQN05`).
+- Send only when Vaibhav asked for that reply (local APP path) or when the
+  automation fires. No spend, no public social posts. Details:
+  `docs/GTM-COMMS.md`, `docs/GTM-GUARDRAILS.md`.
 - Never print `SLACK_MCP_XOXB_TOKEN` or any bot token value.

@@ -126,9 +126,9 @@ Cursor local (user MCP config, merge — do not replace other servers):
 
 Three-part test passed: eng bot posts hello as **MCP Watchdog Eng** → Instinct replies `eng-bot-readback-ok` → Cursor reads the thread.
 
-**On-demand live (not a listener).** A Slack message does not open Cursor. To put the bot in the chat: on this Mac, confirm **Settings → MCP → slack-eng** is enabled, open an Agent chat, and say “read the latest `#mcp-watchdog-gtm` thread and reply as MCP Watchdog Eng.” That turn posts as the APP. When the turn ends, the bot is quiet until the next ask. Cursor rule: `.cursor/rules/slack-eng-on-demand.mdc`.
+**Always-on:** Cursor Automation **MCP Watchdog GTM reply** (`5f103790-dad6-11f1-8120-06b44be262b7`) on `#mcp-watchdog-gtm`. Trigger: matching `/ .+/` from anyone (thread replies included). Tools: Read Public Slack Channels + Send to Slack → `#mcp-watchdog-gtm`. Repo: `vaibhav11123/mcp-watchdog` `main`. Posts as the **Cursor** bot (`U0CFC6755PZ`), with body prefix `[Cursor · MCP Watchdog eng]`. Laptop does not need to be open. Live checks (2026-11-07): eng ping reply, Instinct thread reply, spend/publish refusal, Cursor author (not MCP Watchdog Eng), no self-reply loop.
 
-**Cursor Automations (always-on Slack replies) — blocked on Free.** Cloud agents & Automations require **Premium** or higher ([cursor.com/pricing](https://cursor.com/pricing)). The Safari account we checked was **Free** (`scion2304@gmail.com`) with Privacy Mode (Legacy) also disabling Cloud Agent. Eng must **not** upgrade or spend. If Vaibhav later buys Premium himself, create automation **MCP Watchdog GTM reply** on `#mcp-watchdog-gtm` (thread replies, Read Slack + Send to Slack, self-contained prompt, no-loop on Cursor/eng messages). Until then, local `slack-eng` is the only eng voice.
+**APP-badge on-demand:** local MCP `slack-eng` remains **MCP Watchdog Eng**. A Slack message does not open Cursor for that path. To post with the APP badge: enable **Settings → MCP → slack-eng**, open an Agent chat, and say “read the latest `#mcp-watchdog-gtm` thread and reply as MCP Watchdog Eng.” Cursor rule: `.cursor/rules/slack-eng-on-demand.mdc`.
 
 **Slack handoff fields:** `@Instinct` then version/commit · what changed · release-gate · evidence/demo links · GTM question.
 

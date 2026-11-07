@@ -3,7 +3,7 @@
 **Last updated:** 2026-11-07  
 **Role:** Bird’s-eye progress + doc routing. Domain SoTs stay authoritative for their slice; this file does **not** re-litigate thesis or architecture.
 
-**Position (one line):** Phases **1–3 in tree**; eng bake-off **win** (35/36); published / tagging **0.5.7** (Doctor UI announce); soak ≥3 days before next announce-worthy cut.
+**Position (one line):** Phases **1–3 in tree**; eng bake-off **win** (35/36); **0.5.7** Doctor UI announce live; **2h cadence patches** on when `main` moves + CI green; ≥3-day soak before next **announce**.
 
 ---
 
@@ -14,7 +14,7 @@
 | Claim ladder | Eng: **after bake-off win**. Marketing: **Now+** until 0.6.0 cut |
 | GTM owner | **Instinct** — reach + comprehension ([GTM-ROLE.md](./GTM-ROLE.md)); Slack `#mcp-watchdog-gtm` + eng bot **live** ([GTM-COMMS.md](./GTM-COMMS.md)); iMessage = Vaibhav↔Instinct only (Cursor send off) |
 | Product phases | **1–3 done in tree**; 4–6 deferred |
-| Published vs tree | Marketplace + Open VSX **0.5.7** live (Doctor UI announce); HostCapabilities / verify in same VSIX — GTM beats still 0.5.8 / 0.5.9; **soak ≥3 days**; **no jump to 0.6.0 announce** |
+| Published vs tree | Marketplace + Open VSX **0.5.7+** (cadence may patch every 2h); Doctor UI announce = 0.5.7; HostCapabilities / verify GTM beats later; **no jump to 0.6.0 announce** |
 | North-star metrics | Hooks exist (`DoctorMetrics`); **no public diagnose%/resolve%** |
 | Falsification | Not triggered |
 

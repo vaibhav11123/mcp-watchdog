@@ -9,6 +9,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 ### Changed
 
 - Release / agent gates: `npm test` now runs `lint` + `format:check` (same failure mode as `ci.yml`); `scripts/wait-ci.sh` + ship-release waits for main CI after push — Release workflow green is not enough.
+- **2-hour cadence releases:** [`.github/workflows/cadence-release.yml`](./.github/workflows/cadence-release.yml) + [`scripts/cadence-release.sh`](./scripts/cadence-release.sh) — patch bump + publish when `main` is ahead of the last tag and CI is green; no GTM announce. Disable with repo var `ENABLE_CADENCE_RELEASE=false`.
 
 ## [0.5.7] - 2026-11-07
 

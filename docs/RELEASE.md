@@ -4,17 +4,31 @@
 **Role:** Staged publish so GTM has time and production does not absorb every Unreleased commit at once.  
 **Progress board:** [STATUS.md](./STATUS.md). **QA evidence:** [TESTING.md](./TESTING.md). **Marketing sync:** [GTM-PUBLISH.md](./GTM-PUBLISH.md). **GTM role (Instinct):** [GTM-ROLE.md](./GTM-ROLE.md). **Guardrails / comms:** [GTM-GUARDRAILS.md](./GTM-GUARDRAILS.md) · [GTM-COMMS.md](./GTM-COMMS.md). **Claims:** [STRATEGY-THESIS.md](./STRATEGY-THESIS.md).
 
-Agents land work under CHANGELOG `[Unreleased]` and **do not bump** `package.json`. Maintainer cuts the version. After stable publish + G0, eng pings **Instinct** per [GTM-COMMS.md](./GTM-COMMS.md) (prefixed iMessage or Slack bot) with version + CHANGELOG bullets so GTM can draft within the soak window (see GTM-ROLE operating rhythm).
+Agents land work under CHANGELOG `[Unreleased]` and **do not bump** `package.json` by hand. **Cadence** (below) or maintainer cuts the version. After an **announce-worthy** stable + G0, eng pings **Instinct** per [GTM-COMMS.md](./GTM-COMMS.md) with version + CHANGELOG bullets (soak window — GTM-ROLE operating rhythm). Cadence patches do **not** ping Instinct.
 
 ---
 
 ## Train rules
 
-1. **One user-visible story per tagged cut** — release map in [GTM-PUBLISH.md](./GTM-PUBLISH.md) (`0.5.7` Doctor UI → `0.5.8` hosts → `0.5.9` verify → `0.6.0` bake-off announce).  
-2. **Do not** merge Doctor UI + verify + bake-off win into a single marketplace blast unless the maintainer explicitly re-scopes the map.  
-3. **Soak between announce-worthy stables:** after Open VSX shows the version **and** G0 smoke passes, wait **≥3 calendar days** before the next public announce among **0.5.7**, **0.5.9**, and **0.6.0**. Use that window for GIF, forum draft, and watch for regressions.  
-4. **0.5.8:** if no user-visible delta, skip announce and fold notes into 0.5.9 — still run [TESTING.md](./TESTING.md) if the cut is tagged.  
+1. **One user-visible story per announce-worthy cut** — release map in [GTM-PUBLISH.md](./GTM-PUBLISH.md) (Doctor UI → hosts → verify → bake-off announce). Exact patch numbers may advance via cadence.  
+2. **Do not** merge Doctor UI + verify + bake-off win into a single **announce** unless the maintainer explicitly re-scopes the map.  
+3. **Soak between announce-worthy stables:** after Open VSX shows the version **and** G0 smoke passes, wait **≥3 calendar days** before the next **public announce**. Cadence patches may ship during soak; they are silent.  
+4. **HostCapabilities / verify:** if no user-visible delta worth announcing, skip announce and fold notes — still test if tagged.  
 5. Cursor ICP: **Open VSX first** for announce; Marketplace gets the **same VSIX**.
+
+### 2-hour cadence patches
+
+| | |
+|--|--|
+| Schedule | GitHub Actions [cadence-release.yml](../.github/workflows/cadence-release.yml) — `cron: 0 */2 * * *` (UTC) + `workflow_dispatch` |
+| Script | [scripts/cadence-release.sh](../scripts/cadence-release.sh) |
+| When it ships | `main` has **≥1 commit since last `v*` tag** **and** **CI green** on that SHA |
+| What it does | Patch-bump `package.json` → `npm test` → tag → Marketplace + Open VSX + GitHub Release |
+| What it does **not** | GTM/Instinct announce · Live EH SIGN-OFF · claim-ladder moves |
+| Disable | Repo variable `ENABLE_CADENCE_RELEASE=false` (default **true**) |
+| Optional | Secret `CADENCE_PUSH_TOKEN` (PAT) so tag push can also fire `release.yml`; otherwise cadence self-publishes |
+
+Dry run locally: `CADENCE_DRY_RUN=1 SKIP_CI_WAIT=1 bash scripts/cadence-release.sh` (still mutates the working tree — discard or reset after).
 
 ---
 

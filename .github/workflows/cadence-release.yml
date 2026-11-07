@@ -1,0 +1,67 @@
+name: Cadence release (every 2h)
+
+# Patch-publish when main has moved since the last v* tag and CI is green.
+# No GTM / Instinct announce. Disable via repo variable ENABLE_CADENCE_RELEASE=false.
+
+on:
+  schedule:
+    # Every 2 hours (UTC)
+    - cron: '0 */2 * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: cadence-release
+  cancel-in-progress: false
+
+jobs:
+  cadence:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check enable flag
+        id: gate
+        env:
+          ENABLE_CADENCE_RELEASE: ${{ vars.ENABLE_CADENCE_RELEASE }}
+        run: |
+          FLAG="${ENABLE_CADENCE_RELEASE:-true}"
+          echo "ENABLE_CADENCE_RELEASE=${FLAG}"
+          if [ "$FLAG" != "true" ]; then
+            echo "skip=true" >> "$GITHUB_OUTPUT"
+            echo "Cadence disabled via repo variable ENABLE_CADENCE_RELEASE"
+          else
+            echo "skip=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - uses: actions/checkout@v4
+        if: steps.gate.outputs.skip != 'true'
+        with:
+          fetch-depth: 0
+          # Optional PAT (CADENCE_PUSH_TOKEN) lets the push trigger release.yml; else GITHUB_TOKEN + self-publish.
+          token: ${{ secrets.CADENCE_PUSH_TOKEN || github.token }}
+
+      - uses: actions/setup-node@v4
+        if: steps.gate.outputs.skip != 'true'
+        with:
+          node-version: '22'
+          cache: npm
+
+      - name: Install
+        if: steps.gate.outputs.skip != 'true'
+        run: npm ci
+
+      - name: Cadence release
+        if: steps.gate.outputs.skip != 'true'
+        env:
+          ENABLE_CADENCE_RELEASE: 'true'
+          # Already on the SHA we checked out; wait-ci uses gh for that SHA.
+          GH_TOKEN: ${{ github.token }}
+          CADENCE_PUSH_TOKEN: ${{ secrets.CADENCE_PUSH_TOKEN }}
+          VSCE_PAT: ${{ secrets.VSCE_PAT }}
+          OVSX_PAT: ${{ secrets.OVSX_PAT }}
+          GIT_AUTHOR_NAME: mcp-watchdog-cadence
+          GIT_AUTHOR_EMAIL: 41898282+github-actions[bot]@users.noreply.github.com
+          # Self-publish because GITHUB_TOKEN tag pushes do not re-fire release.yml
+          CADENCE_SELF_PUBLISH: '1'
+        run: bash scripts/cadence-release.sh
