@@ -5,7 +5,7 @@
 
 **You are here (one line):** On the **0.5.7 Doctor announce soak** clock. Code for Phases 1–3 + HostCaps honesty is on `main` / registries (cadence **0.5.8**). Verify announce (**0.5.9**) and bake-off win (**0.6.0**) are **not** public yet. Phases 4–6 are **scaffolds only** (not the brand). Claim stage for marketing: **Now+**.
 
-**Live QA (2026-11-08):** [validation/release-evidence/v0.5.8-live/LIVE-RESULTS.md](./validation/release-evidence/v0.5.8-live/LIVE-RESULTS.md) · nits [DEEP-NITS.md](./validation/release-evidence/v0.5.8-live/DEEP-NITS.md) — Live EH **15 pass / 1 skip**; Overview stills; VSIX packed; **P-CLASS-01** (Max retries→generic) fixed in tree. **Screen record still blocked** until Vaibhav enables Accessibility + Screen Recording for Cursor Computer Use.
+**Live QA (2026-11-08):** [validation/release-evidence/v0.5.8-live/LIVE-RESULTS.md](./validation/release-evidence/v0.5.8-live/LIVE-RESULTS.md) · nits [DEEP-NITS.md](./validation/release-evidence/v0.5.8-live/DEEP-NITS.md) — Live EH **15 pass / 1 skip**; Overview stills; VSIX packed; **P-CLASS-01** (Max retries→generic) fixed in tree. **Live EH screen capture done** (AppleScript + screencapture): [LIVE-SCREEN-CAPTURE.md](./validation/release-evidence/v0.5.8-live/LIVE-SCREEN-CAPTURE.md). Cursor Computer Use MCP toggles still optional for agent-driven CU.
 
 ---
 

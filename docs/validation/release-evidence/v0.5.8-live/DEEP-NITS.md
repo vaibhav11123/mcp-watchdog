@@ -74,3 +74,9 @@ Automation answers Instinct without Vaibhav. Coding eng must keep channel warm w
 2. Screen record: healthy → kill echo → toast ≤3 → Overview cause → Fix QP → Verified.  
 3. Drop clip under `v0.5.8-live/clips/` (gitignored) + stills; update LIVE-RESULTS.  
 4. Decide demo.gif replace vs n/a for 0.5.7 media.
+
+---
+
+## Live screen capture (same session)
+
+See [LIVE-SCREEN-CAPTURE.md](./LIVE-SCREEN-CAPTURE.md) — real EH stills + `.mov` clips under `clips/` (gitignored). Doctor toasts + Overview confirmed live; new nits L-MERGE-01 etc.
