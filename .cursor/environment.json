@@ -1,5 +1,9 @@
 {
-  "install": "npm ci && npm run compile && npm run build",
+  "name": "mcp-watchdog + ops",
+  "install": "bash .cursor/cloud-install.sh",
+  "repositoryDependencies": [
+    "github.com/vaibhav11123/mcp-watchdog-ops"
+  ],
   "terminals": [
     {
       "name": "watchdog-cloud",

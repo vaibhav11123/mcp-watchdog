@@ -17,11 +17,16 @@ From now on, **automated tests + product lookchecks run in a Cloud Agent environ
 
 Both are cloud agents. Self-hosted Mac = Cloud Agent worker, not “local Agent chat.”
 
-### Required environment
+### Required environment (ops docs)
 
-Multi-repo: `vaibhav11123/mcp-watchdog` **and** `vaibhav11123/mcp-watchdog-ops`.  
-Install: `.cursor/environment.json` → `npm ci && npm run compile && npm run build`.  
-Terminal: Watchdog Cloud on `:8787` (curl `/health` or start `tsx packages/cloud/src/server.ts`).
+Vaibhav must create a **multi-repo** Environment in [cursor.com/agents](https://cursor.com/agents) with:
+
+1. `vaibhav11123/mcp-watchdog`  
+2. `vaibhav11123/mcp-watchdog-ops`  
+
+Point it at `.cursor/environment.json` (declares `repositoryDependencies` + `cloud-install.sh` which symlinks ops → `docs/ops`).  
+Without that dashboard step, Cloud Agents **404** private ops — stubs only.  
+Terminal: Watchdog Cloud on `:8787`.
 
 ### Cloud Agent must run
 
