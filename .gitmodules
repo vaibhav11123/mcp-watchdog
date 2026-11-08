@@ -1,0 +1,3 @@
+[submodule "docs/ops"]
+	path = docs/ops
+	url = https://github.com/vaibhav11123/mcp-watchdog-ops.git

@@ -26,34 +26,24 @@ mcp-watchdog-test/vendored/**/filesystem-repo/
 **/.env
 packages/cloud/.env
 
-# Large local capture dumps
-docs/validation/priya-evidence/stills/g1c/
-
 # Spike curriculum clones + bulky REA JSON (keep REA-EVIDENCE.md + *.summary.json)
 docs/spikes/repos/
 docs/spikes/rea-evidence/*.json
 !docs/spikes/rea-evidence/rea-run-meta.json
 !docs/spikes/rea-evidence/*.summary.json
 
-# Local G1 capture dumps (keep frames only)
-docs/validation/priya-evidence/stills/g1/
-docs/validation/priya-evidence/stills/g1b/*.png
-!docs/validation/priya-evidence/stills/g1b/frames/
-
-# Bake-off local downloads / runs (keep docs/validation/bake-off/*.md)
+# Bake-off local downloads / runs
 scripts/bake-off/competitors/
 scripts/bake-off/.artifacts/
 
 # Workspace-local Doctor incidents (Phase 3)
 .mcp-watchdog/
 
-# Release QA capture — local only (SIGN-OFF.md + markdown notes stay in git)
-docs/validation/release-evidence/**/clips/
-docs/validation/release-evidence/**/*.mp4
-docs/validation/release-evidence/**/*.mov
-docs/validation/release-evidence/**/*.webm
-docs/validation/release-evidence/**/*.png
-docs/validation/release-evidence/**/*.jpg
-docs/validation/release-evidence/**/*.jpeg
-docs/validation/release-evidence/**/*.gif
+# Private ops submodule (gtm + validation) — local capture junk stays out of ops too
+# SoT: https://github.com/vaibhav11123/mcp-watchdog-ops
+docs/ops/**/clips/
+docs/ops/**/*.mp4
+docs/ops/**/*.mov
+docs/ops/**/*.webm
+
 

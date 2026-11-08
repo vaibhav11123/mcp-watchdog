@@ -1,7 +1,0 @@
-REG {"id":"f0091c58-9c1f-413f-9c00-51265fc00f5b","name":"priya-live","url":"http://127.0.0.1:9/mcp"}
-POLL {"id":"f0091c58-9c1f-413f-9c00-51265fc00f5b","name":"priya-live","url":"http://127.0.0.1:9/mcp","lastState":"failed","lastError":"fetch failed"}
-BRIDGE {"ok":true,"dualTruth":{"id":"inc-priya-1","workspaceIdHash":"priya-audit-hash","serverName":"priya-live","ide_state":"failed","cloud_probe_state":"failed","at":"2026-10-30T17:50:00.000Z"}}
-INCIDENTS [{"id":"inc-priya-1","workspaceIdHash":"priya-audit-hash","serverName":"priya-live","ide_state":"failed","cloud_probe_state":"failed","at":"2026-10-30T17:50:00.000Z"}]
-DENY {"allow":false,"reason":"denied unpinned npx -y"}
-ALLOW {"allow":true,"reason":"ok"}
-AUDIT [{"id":1,"action":"server.create","detail":"priya-live","at":"2026-10-30T17:52:56.387Z"},{"id":2,"action":"bridge.incident","detail":"priya-live","at":"2026-10-30T17:52:56.477Z"},{"id":3,"action":"policy.deny","detail":"denied unpinned npx -y","at":"2026-10-30T17:52:56.493Z"},{"id":4,"action":"policy.allow","detail":"ok","at":"2026-10-30T17:52:56.501Z"}]
