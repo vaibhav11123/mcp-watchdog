@@ -4,6 +4,16 @@
 
 Outbound license is **MIT** ([LICENSE](./LICENSE)). Contributions are accepted under the same terms and the project **CLA** ([docs/CLA.md](./docs/CLA.md)).
 
+## Private ops docs (optional)
+
+Process / GTM / SIGN-OFF docs live in a **private** submodule. Product code does not depend on them.
+
+```bash
+git submodule update --init docs/ops   # needs access to mcp-watchdog-ops
+```
+
+Map: [docs/OPS.md](./docs/OPS.md). Full model (if you have ops): `docs/ops/DUAL-REPO.md`.
+
 ## Development
 
 ```bash
