@@ -76,7 +76,7 @@ let text = fs.readFileSync('CHANGELOG.md', 'utf8');
 if (text.includes(`## [${next}]`)) throw new Error(`CHANGELOG already has ${next}`);
 const section = `## [${next}] - ${date}
 
-Cadence patch (2h train). No user-visible change. Live public story remains Doctor **0.5.7** (cause sentence / toast / dual-truth green). See commits since previous tag.
+No user-visible change. The Doctor UI from 0.5.7 still applies: a cause sentence, a toast with at most three actions, and a green chip that is Watchdog’s own connection.
 
 ### Changed
 
@@ -149,7 +149,7 @@ if [[ "${CADENCE_SELF_PUBLISH:-1}" == "1" ]]; then
   if command -v gh >/dev/null 2>&1; then
     gh release create "${TAG}" "mcp-watchdog-${NEXT}.vsix" \
       --title "${TAG}" \
-      --notes "Cadence patch ${NEXT}. No user-visible change. Live public story remains Doctor 0.5.7 (cause sentence / toast / dual-truth green). CI was green on the pre-bump SHA; release commit is this tag." \
+      --notes "No user-visible change. The Doctor UI from 0.5.7 still applies: a cause sentence, a toast with at most three actions, and a green chip that is Watchdog’s own connection." \
       --verify-tag || echo "cadence: gh release create skipped/failed (may already exist)"
   fi
 fi
