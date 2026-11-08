@@ -56,7 +56,7 @@ git add docs/ops && git commit -m "Bump ops submodule." && git push
 ```
 
 4. **Do not** copy full process docs back into public stubs — stubs stay one-screen redirects.
-5. **Instinct / Vaibhav:** Slack for eng↔GTM product truth; iMessage for OWNER A / spend; invite Instinct to the **private** repo for draft/SIGN-OFF access.
+5. **Instinct / Vaibhav:** Slack for eng↔GTM product truth; iMessage for OWNER A / spend; invite Instinct’s **GitHub user** to the **private** repo once. Full Instinct dual-repo flow (when Vaibhav is / isn’t needed): **`docs/ops/INSTINCT-DUAL-REPO-FLOW.md`**.
 
 CI on public **does not** recurse the private submodule. Marketplace packaging already excludes `docs/**`.
 
