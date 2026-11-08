@@ -27,7 +27,7 @@ This document is a **product thesis**, not a system-design report. Architecture 
 | Technical moat (target) | Cross-host operational intelligence, supported by protocol-aware compatibility and behavioural evidence |
 | Data moat (target) | Growing, privacy-respecting corpus of diagnosed failures and verified recovery outcomes |
 | Distribution moat | Trusted, local-first IDE workflow (Marketplace, Open VSX, GitHub) |
-| Expansion | CLI, team ops, upgrade protection, optional enforcement |
+| Expansion | Phase 6 harness Doctor CLI; later Phase 7+ forge CLI (product→MCP) **delayed** — Instinct GTM research + interviews before build; team ops / upgrade protection / optional enforcement |
 
 ### Short copy
 
@@ -227,6 +227,8 @@ flowchart TB
 **30-day validation:** Days 1–5 bake-off **done**; Doctor UI Must + Phase 2–3 **shipped in tree**; Phase 3 re-bake **pass** (35/36, Recover=2 on S1–S5). Marketing win announce waits for **0.6.0**. Release map: [GTM-PUBLISH.md](./GTM-PUBLISH.md).
 
 Phase 6 harness/CLI expands **after** Doctor + IDE adapters earn proof — it is not a shortcut around bake-off. A thin CLI spike is allowed earlier only as a **distribution experiment**, not a brand pivot.
+
+**Phase 7+ Expansion (delayed) — forge CLI:** Candidate idea only: if a product has a local CLI but no MCP, a future `mcp-watchdog` subcommand could emit an allowlisted stdio MCP wrapper, write an `mcp.json` entry, then run the same Doctor loop on that wrapper. This is **adjacent** to Doctor (create then doctor), not the brand for Phases 1–6. **Do not build** until Phase 6 Doctor CLI is real **and** Instinct completes fresh market research + customer interviews (go/no-go; Vaibhav A if spend). Do not conflate with Phase 6 (doctor existing harness MCP configs). OpenAPI codegen and unrestricted bash are out of the first wedge. Status board: [STATUS.md](./STATUS.md).
 
 **Competitor (hands-on):** Bastion closest (25/36) on 401/ENOENT status; compete on cause taxonomy + dual-truth + verified Fix — not reconnect alone.
 

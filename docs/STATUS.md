@@ -1,6 +1,6 @@
 # MCP Watchdog — Status switchboard
 
-**Last updated:** 2026-11-08 (post STATUS-train push `21e5cbe`; CI green)  
+**Last updated:** 2026-11-08 (Phase 7+ forge CLI parked; Instinct owns GTM research gate)  
 **Role:** Bird’s-eye progress + doc routing. Domain SoTs stay authoritative for their slice; this file does **not** re-litigate thesis or architecture.
 
 **You are here (one line):** On the **0.5.7 Doctor announce soak** clock. Code for Phases 1–3 + HostCaps honesty is on `main` / registries (cadence **0.5.8**). Verify announce (**0.5.9**) and bake-off win (**0.6.0**) are **not** public yet. Phases 4–6 are **scaffolds only** (not the brand). Claim stage for marketing: **Now+**.
@@ -81,6 +81,7 @@ Phases 4–6 scaffolds on main (fixtures / softStop / CLI bin) — NOT brand ide
 | 4 | Cross-host patterns + golden fixtures | **Fixtures landed** (`test/unit/goldenFixtures.test.ts`); not brand identity |
 | 5 | Compat / behavioural evidence | **softStop** scaffold landed; not user-visible Overview yet; not brand identity |
 | 6 | Harness CLI | **`bin/mcp-watchdog.mjs` scaffold** only; distribution later; not brand pivot |
+| **7+ (Expansion)** | **Forge CLI** (product CLI → stdio MCP, then Doctor) | **Delayed** — not current train; reopen only after Phase 6 Doctor CLI is real. **Instinct owns** GTM market research + customer interviews before any forge build (go/no-go). Not brand now; keep out of 0.5.7–0.6.0 announce copy |
 
 ### GTM / publish beats (separate from “code on main”)
 
@@ -117,7 +118,7 @@ Agents: open **STATUS** first. Before tag/publish: **RELEASE** + **TESTING**. Sl
 ## Next 1–3 actions
 
 1. **Instinct:** post **0.5.7** Doctor UI (Now+) from [gtm/ANNOUNCE-DRAFT-0.5.7.md](./gtm/ANNOUNCE-DRAFT-0.5.7.md); keep soak clock (≥3d from G0 ~2026-11-07 → earliest next announce window ~2026-11-10).  
-2. **After soak:** verify GIF + L7 on cut SHA → [v0.5.9 SIGN-OFF](./validation/release-evidence/v0.5.9/SIGN-OFF.md) READY → Instinct verify announce (still Now+).  
+2. **After soak:** polish Overview `Verified:` still + L7 on cut SHA → [v0.5.9 SIGN-OFF](./validation/release-evidence/v0.5.9/SIGN-OFF.md) READY → Instinct verify announce (still Now+). Early verify toast/GIF already in [EARLY-VERIFY-CAPTURE.md](./validation/release-evidence/v0.5.9/EARLY-VERIFY-CAPTURE.md) (SIGN-OFF still HOLD).  
 3. **Parallel:** interviews ([INTERVIEW-BRIEF](./gtm/INTERVIEW-BRIEF.md)); then **0.6.0** bake-off ([ANNOUNCE-DRAFT-0.6.0](./gtm/ANNOUNCE-DRAFT-0.6.0.md)) — **Vaibhav A** before any public bake-off post.
 
 ---
@@ -126,6 +127,7 @@ Agents: open **STATUS** first. Before tag/publish: **RELEASE** + **TESTING**. Sl
 
 - Collapse Unreleased into one production cut / skip TESTING sign-off  
 - Phase 4–6 product work as the **primary identity** move (scaffolds OK; brand still Doctor/verify/bake-off train)  
+- Phase 7+ **forge CLI** (product→MCP) — delayed until after Phase 6; no forge code or announce until Instinct research go/no-go  
 - Required proxy / Cloud-first / JetBrains-first  
 - Sixth UI state · Doctor wizard webview · sidebar illustrations  
 - Public “best at recovery” / diagnose% without evidence  

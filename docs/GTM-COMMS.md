@@ -120,9 +120,9 @@ Vaibhav Slack clicks:
 2. Invite `@Instinct` + send `@Instinct confirm you can see this`
 3. Copy channel ID from About
 4. https://api.slack.com/apps → Create New App → From scratch → **MCP Watchdog Eng**
-5. Bot scopes only: `channels:history` `channels:read` `channels:join` `chat:write` `users:read`
-6. Install to Workspace
-7. Copy Bot User OAuth Token **locally only** (never iMessage/git)
+5. Bot scopes: `channels:history` `channels:read` `channels:join` `chat:write` `users:read` `files:write` (needed so eng can attach Doctor stills/clips in `#mcp-watchdog-gtm` without posting as Vaibhav)
+6. Install to Workspace (reinstall after any scope change)
+7. Copy Bot User OAuth Token **locally only** (never iMessage/git) — if Slack issues a new token after reinstall, update `SLACK_MCP_XOXB_TOKEN` in local `~/.cursor/mcp.json` only
 8. Invite `@MCP Watchdog Eng` into `#mcp-watchdog-gtm`
 
 Cursor local (user MCP config, merge — do not replace other servers):
