@@ -76,7 +76,7 @@ let text = fs.readFileSync('CHANGELOG.md', 'utf8');
 if (text.includes(`## [${next}]`)) throw new Error(`CHANGELOG already has ${next}`);
 const section = `## [${next}] - ${date}
 
-Cadence patch (2h train). No GTM announce. See commits since previous tag.
+Cadence patch (2h train). No user-visible change. Live public story remains Doctor **0.5.7** (cause sentence / toast / dual-truth green). See commits since previous tag.
 
 ### Changed
 
@@ -101,8 +101,11 @@ NODE
 
 npm test
 npx @vscode/vsce package -o "mcp-watchdog-${NEXT}.vsix"
-if npx @vscode/vsce ls | grep -E 'test/|local\.md|launch/|\.agents/'; then
-  echo "cadence: VSIX contains forbidden paths" >&2
+# Runtime + Marketplace surface only. Process docs (GTM, validation evidence,
+# tasks/todo, agent kits) must stay out of the VSIX.
+if npx @vscode/vsce ls | grep -E '^(docs/|test/|tasks/|launch/|\.agents/)|local\.md|todo\.md|release-evidence|ANNOUNCE-DRAFT|GTM-|SIGN-OFF'; then
+  echo "cadence: VSIX contains forbidden process/dev paths" >&2
+  npx @vscode/vsce ls | grep -E '^(docs/|test/|tasks/|launch/|\.agents/)|local\.md|todo\.md|release-evidence|ANNOUNCE-DRAFT|GTM-|SIGN-OFF' >&2 || true
   exit 1
 fi
 
@@ -142,7 +145,7 @@ if [[ "${CADENCE_SELF_PUBLISH:-1}" == "1" ]]; then
   if command -v gh >/dev/null 2>&1; then
     gh release create "${TAG}" "mcp-watchdog-${NEXT}.vsix" \
       --title "${TAG}" \
-      --notes "Cadence patch ${NEXT}. No GTM announce. CI was green on the pre-bump SHA; release commit is this tag." \
+      --notes "Cadence patch ${NEXT}. No user-visible change. Live public story remains Doctor 0.5.7 (cause sentence / toast / dual-truth green). CI was green on the pre-bump SHA; release commit is this tag." \
       --verify-tag || echo "cadence: gh release create skipped/failed (may already exist)"
   fi
 fi

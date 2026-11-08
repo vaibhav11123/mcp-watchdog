@@ -7,6 +7,10 @@
 src/**
 packages/**
 docs/**
+# Product-making process only — never ship in Marketplace VSIX
+# (GTM drafts, SIGN-OFF / live QA packs, agent checklists, research notes)
+tasks/**
+**/todo.md
 node_modules/**
 **/node_modules/**
 mcp-watchdog-test/**
