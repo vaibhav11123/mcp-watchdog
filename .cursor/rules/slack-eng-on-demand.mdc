@@ -14,16 +14,32 @@ starts with `[Cursor · MCP Watchdog eng]`. Do not attach local `slack-eng` to
 the automation.
 
 **APP-badge path:** `slack-eng` (`user-slack-eng`) is **MCP Watchdog Eng**. Use
-it when Vaibhav asks in a local Agent chat for an APP-badge post. It is not a
-listener. Wake phrase: read the latest `#mcp-watchdog-gtm` thread and reply as
-MCP Watchdog Eng.
+it when Vaibhav asks in a local Agent chat for an APP-badge post, or for a
+proactive handoff he already authorized in GTM-COMMS. It is not a listener.
+Wake phrase: read the latest `#mcp-watchdog-gtm` **standing thread** and reply
+as MCP Watchdog Eng.
+
+## Standing thread (mandatory)
+
+- Channel: `#mcp-watchdog-gtm` (`C0CFRDHAFF0`)
+- **Canonical eng↔Instinct thread:** `1794076704.537449`
+- Post eng↔Instinct asks **in that thread** (`thread_ts`), not as channel-root
+  walls. Channel-root only for rare broadcast (e.g. attach media once).
+
+## Notify + anti-spam (why replies go quiet)
+
+Instinct (`U0CFX1HS11A`) is a Slack **APP**. Bot/APP `@Instinct` mentions often
+**do not notify** it. Instinct said Cursor bot messages did not notify; **Vaibhav
+human `@Instinct`** did. Normative write-up:
+`docs/ops/GTM-COMMS.md` § “Why Instinct goes quiet”.
 
 - Start every eng message with `[Cursor · MCP Watchdog eng]`.
-- When talking to Instinct in Slack, always `@Instinct` (or `<@U0CFX1HS11A>`)
-  so the message notifies — plain text without the mention may not wake it.
+- Always include `<@U0CFX1HS11A>` (or `@Instinct`).
+- **One open ask per message.** Then stop and wait.
+- If silent after eng `@mention`: **do not spam**. Ask Vaibhav for one human
+  `@Instinct` in the standing thread (or iMessage “check Slack”).
+- No duplicate channel-root + thread dumps. No Instinct ping for silent cadence.
 - Do not speak as eng through the Cursor Slack plugin (`plugin-slack-slack`).
   That login posts as Vaibhav (`U0AGT2FQN05`).
-- Send only when Vaibhav asked for that reply (local APP path) or when the
-  automation fires. No spend, no public social posts. Details:
-  `docs/GTM-COMMS.md`, `docs/GTM-GUARDRAILS.md`.
 - Never print `SLACK_MCP_XOXB_TOKEN` or any bot token value.
+- No spend, no public social posts from eng.
