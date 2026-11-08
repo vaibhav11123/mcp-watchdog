@@ -4,4 +4,6 @@
 
 **You are here (2026-11-08):** **Soak** after Doctor UI **0.5.7** Now+ X announce. Next announce-worthy cut = **0.5.9 verify** (earliest ~**2026-11-10**). Claim stage **Now+**. Cadence patches on registries are **silent** — not a product story. Bake-off win not public.
 
+**Verify:** prefer **Cloud Agent** env ([AGENTS.md](../AGENTS.md) · ops `CLOUD-AGENT-VERIFY.md`) — not laptop chat midwife.
+
 **Repos:** [OPS.md](./OPS.md) · [ops/DUAL-REPO.md](./ops/DUAL-REPO.md) · [ops/INSTINCT-DUAL-REPO-FLOW.md](./ops/INSTINCT-DUAL-REPO-FLOW.md) · [../README.md](../README.md) · [../CHANGELOG.md](../CHANGELOG.md).
