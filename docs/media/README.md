@@ -14,7 +14,7 @@ Product: **MCP Watchdog** — editor health checks, plus **Watchdog Cloud (previ
 | Asset | Path | Owner step |
 |---|---|---|
 | Marketplace icon | `images/icon.png` | exists |
-| Demo GIF | `images/demo.gif` | Record [GIF-RECORDING.md](./GIF-RECORDING.md) before announce |
+| Demo GIF | `images/demo.gif` | Failure-toast clip (cause sentence, at most three actions, editor session Unknown). Not the verify clip. Shot list: [GIF-RECORDING.md](./GIF-RECORDING.md) |
 | Demo MP4 | `docs/media/demo-x.mp4` | G1 |
 | connecting | `docs/media/states/connecting.png` | E6 |
 | healthy | `docs/media/states/healthy.png` | E6 |

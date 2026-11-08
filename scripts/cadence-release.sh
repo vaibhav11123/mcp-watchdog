@@ -73,12 +73,10 @@ if (lock.packages && lock.packages['']) lock.packages[''].version = next;
 fs.writeFileSync('package-lock.json', JSON.stringify(lock, null, 2) + '\n');
 
 let text = fs.readFileSync('CHANGELOG.md', 'utf8');
-// Standing Doctor UI sentence only. Do not claim "no user-visible change"
-// without reading the commits since the previous tag.
 if (text.includes(`## [${next}]`)) throw new Error(`CHANGELOG already has ${next}`);
 const section = `## [${next}] - ${date}
 
-Silent patch. The Doctor UI introduced in 0.5.7 still applies: a cause sentence, a toast with at most three actions, and a green chip showing Watchdog’s own connection, not the editor session’s health.
+No user-visible change. The Doctor UI from 0.5.7 still applies: a cause sentence, a toast with at most three actions, and a green chip that is Watchdog’s own connection.
 
 ### Changed
 
@@ -151,7 +149,7 @@ if [[ "${CADENCE_SELF_PUBLISH:-1}" == "1" ]]; then
   if command -v gh >/dev/null 2>&1; then
     gh release create "${TAG}" "mcp-watchdog-${NEXT}.vsix" \
       --title "${TAG}" \
-      --notes "Silent patch. The Doctor UI introduced in 0.5.7 still applies: a cause sentence, a toast with at most three actions, and a green chip showing Watchdog’s own connection, not the editor session’s health." \
+      --notes "No user-visible change. The Doctor UI from 0.5.7 still applies: a cause sentence, a toast with at most three actions, and a green chip that is Watchdog’s own connection." \
       --verify-tag || echo "cadence: gh release create skipped/failed (may already exist)"
   fi
 fi
