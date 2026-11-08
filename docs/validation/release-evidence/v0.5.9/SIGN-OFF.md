@@ -15,12 +15,13 @@
 
 - Live EH L7 test + `setVerifiedOutcomeForTests` host hook in tree.  
 - Overview unit asserts `Verified:` meta.  
-- GIF script: [docs/media/GIF-RECORDING.md](../../media/GIF-RECORDING.md) — capture still pending human EH session after soak (not blocking unit/host prep).  
+- GIF script: [docs/media/GIF-RECORDING.md](../../media/GIF-RECORDING.md).  
 - Extra Live QA pack (not a substitute for READY): [../v0.5.8-live/LIVE-RESULTS.md](../v0.5.8-live/LIVE-RESULTS.md) — host matrix **15 pass**; Overview stills under `v0.5.8-live/stills/`.
+- **Early verify capture (pre-soak):** [EARLY-VERIFY-CAPTURE.md](./EARLY-VERIFY-CAPTURE.md) — live toast **`fix ran but verify=unresolved`** + MOV/GIF under `clips/` (local). Does **not** flip this SIGN-OFF to READY.
 
 ## Blockers to READY
 
 1. Complete ≥3-day soak from 0.5.7 Open VSX + G0 (~started 2026-11-07 → earliest announce window ~2026-11-10).  
 2. Live EH L7 pass on cut SHA (`npm run test:host`).  
-3. Demo GIF includes Verified beat (or document n/a with reason).  
-4. Instinct Slack verify announce draft ask (Now+).  
+3. Demo GIF / still showing Overview **`Verified:`** meta (early pack proves verify toast; Overview line polish still open).  
+4. Instinct Slack verify announce draft ask (Now+) — after soak.  

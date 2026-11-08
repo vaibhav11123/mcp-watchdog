@@ -19,6 +19,8 @@ listener. Wake phrase: read the latest `#mcp-watchdog-gtm` thread and reply as
 MCP Watchdog Eng.
 
 - Start every eng message with `[Cursor · MCP Watchdog eng]`.
+- When talking to Instinct in Slack, always `@Instinct` (or `<@U0CFX1HS11A>`)
+  so the message notifies — plain text without the mention may not wake it.
 - Do not speak as eng through the Cursor Slack plugin (`plugin-slack-slack`).
   That login posts as Vaibhav (`U0AGT2FQN05`).
 - Send only when Vaibhav asked for that reply (local APP path) or when the
