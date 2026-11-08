@@ -7,7 +7,7 @@
   "terminals": [
     {
       "name": "watchdog-cloud",
-      "description": "Watchdog Cloud preview on http://127.0.0.1:8787 (dashboard + bridge). Skip start if /health already OK.",
+      "description": "Watchdog Cloud preview on http://127.0.0.1:8787 only (do not publish). Skip start if /health already OK.",
       "command": "if curl -sf http://127.0.0.1:8787/health >/dev/null 2>&1; then echo 'Watchdog Cloud already listening on 8787'; exit 0; fi; exec ./node_modules/.bin/tsx packages/cloud/src/server.ts"
     }
   ],

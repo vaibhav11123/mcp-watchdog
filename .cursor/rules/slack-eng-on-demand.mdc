@@ -5,13 +5,13 @@ alwaysApply: true
 
 # Slack eng: automation + on-demand APP bot
 
-**Always-on wake path:** Cursor Automation **MCP Watchdog GTM reply**
-(`https://cursor.com/automations/5f103790-dad6-11f1-8120-06b44be262b7`)
-on `#mcp-watchdog-gtm` (`C0CFRDHAFF0`). It runs in the cloud when a matching
-Slack message arrives — the laptop does not need to be open. Replies post as
-the **Cursor** Slack bot (`U0CFC6755PZ`), not as MCP Watchdog Eng. Prompt still
-starts with `[Cursor · MCP Watchdog eng]`. Do not attach local `slack-eng` to
-the automation.
+**Always-on wake path:** Cursor Automation **MCP Watchdog GTM reply** on
+`#mcp-watchdog-gtm`. It runs in the cloud when a matching Slack message
+arrives — the laptop does not need to be open. Replies post as the **Cursor**
+Slack bot, not as MCP Watchdog Eng. Prompt still starts with
+`[Cursor · MCP Watchdog eng]`. Do not attach local `slack-eng` to the
+automation. Concrete channel/user/thread IDs and automation URLs live in
+private ops [`docs/ops/GTM-COMMS.md`](../../docs/ops/GTM-COMMS.md).
 
 **APP-badge path:** `slack-eng` (`user-slack-eng`) is **MCP Watchdog Eng**. Use
 it when Vaibhav asks in a local Agent chat for an APP-badge post, or for a
@@ -21,26 +21,27 @@ as MCP Watchdog Eng.
 
 ## Standing thread (mandatory)
 
-- Channel: `#mcp-watchdog-gtm` (`C0CFRDHAFF0`)
-- **Canonical eng↔Instinct thread:** `1794076704.537449`
-- Post eng↔Instinct asks **in that thread** (`thread_ts`), not as channel-root
-  walls. Channel-root only for rare broadcast (e.g. attach media once).
+- Channel: `#mcp-watchdog-gtm`
+- Canonical eng↔Instinct thread: see private ops `GTM-COMMS.md` (standing
+  `thread_ts`).
+- Post eng↔Instinct asks **in that thread**, not as channel-root walls.
+  Channel-root only for rare broadcast (e.g. attach media once).
 
 ## Notify + anti-spam (why replies go quiet)
 
-Instinct (`U0CFX1HS11A`) is a Slack **APP**. Instant bot notify is **not**
-fixed. Measured scheduled detect sample (~17m); plan up to hourly fallback.
-Happy path: standing thread + one ask + wait. Vaibhav human `@Instinct` /
-iMessage “check Slack” = **fallback only** when stalled past that window.
-Normative: `docs/ops/GTM-COMMS.md` § “Why Instinct goes quiet”. Position SoT:
+Instinct is a Slack **APP**. Instant bot notify is **not** fixed. Measured
+scheduled detect sample (~17m); plan up to hourly fallback. Happy path:
+standing thread + one ask + wait. Vaibhav human `@Instinct` / iMessage
+“check Slack” = **fallback only** when stalled past that window. Normative:
+`docs/ops/GTM-COMMS.md` § “Why Instinct goes quiet”. Position SoT:
 `docs/ops/STATUS.md`.
 
 - Start every eng message with `[Cursor · MCP Watchdog eng]`.
-- Always include `<@U0CFX1HS11A>` (or `@Instinct`).
+- Always include `@Instinct` (or the Instinct APP mention from ops SoT).
 - **One open ask per message.** Then stop and wait.
 - If stalled: **do not spam**. Ask Vaibhav for one human wake only as fallback.
 - No duplicate channel-root + thread dumps. No Instinct ping for silent cadence.
 - Do not speak as eng through the Cursor Slack plugin (`plugin-slack-slack`).
-  That login posts as Vaibhav (`U0AGT2FQN05`).
+  That login posts as Vaibhav’s human user.
 - Never print `SLACK_MCP_XOXB_TOKEN` or any bot token value.
 - No spend, no public social posts from eng.

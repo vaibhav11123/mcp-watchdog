@@ -1,6 +1,7 @@
 /**
  * Watchdog Cloud MVP — monitor registry, poll, bridge ingest, policy audit.
  * In-memory by default; see migrations/ for Postgres ERD.
+ * Binds 127.0.0.1 only — do not publish port 8787.
  */
 import http from 'node:http';
 import { readFileSync } from 'node:fs';
@@ -21,9 +22,20 @@ import {
   servers,
   type WatchedServer,
 } from './store';
+import { assertSafeMonitorUrl, displayUrl } from './safeUrl';
 
 const PORT = Number(process.env.PORT ?? 8787);
 const SLACK = process.env.SLACK_WEBHOOK_URL;
+const MAX_BODY = 1024 * 1024;
+const PROBE_MS = 10_000;
+
+const hostEnv = process.env.HOST?.trim();
+if (hostEnv && hostEnv !== '127.0.0.1' && hostEnv.toLowerCase() !== 'localhost') {
+  console.error(
+    `Watchdog Cloud refuses HOST=${hostEnv}. Unset HOST (binds 127.0.0.1 only). Do not publish port ${PORT}.`,
+  );
+  process.exit(1);
+}
 
 const defaultPolicy: PolicyRule = {
   id: 'default',
@@ -40,10 +52,33 @@ async function slack(text: string): Promise<void> {
   }).catch(() => {});
 }
 
+async function readResponseLimited(res: Response, maxBytes: number): Promise<string> {
+  const reader = res.body?.getReader();
+  if (!reader) return '';
+  const chunks: Uint8Array[] = [];
+  let total = 0;
+  for (;;) {
+    const { done, value } = await reader.read();
+    if (done) break;
+    if (value) {
+      total += value.byteLength;
+      if (total > maxBytes) {
+        reader.cancel().catch(() => {});
+        throw new Error('response body too large');
+      }
+      chunks.push(value);
+    }
+  }
+  return Buffer.concat(chunks.map((c) => Buffer.from(c))).toString('utf8');
+}
+
 async function probeServer(s: WatchedServer): Promise<void> {
   try {
+    assertSafeMonitorUrl(s.url);
     const initRes = await fetch(s.url, {
       method: 'POST',
+      redirect: 'manual',
+      signal: AbortSignal.timeout(PROBE_MS),
       headers: {
         'Content-Type': 'application/json',
         Accept: 'application/json, text/event-stream',
@@ -59,6 +94,12 @@ async function probeServer(s: WatchedServer): Promise<void> {
         },
       }),
     });
+    if (initRes.status >= 300 && initRes.status < 400) {
+      s.lastState = 'failed';
+      s.lastError = `initialize redirect ${initRes.status}`;
+      await slack(`Watchdog: ${s.name} down (redirect)`);
+      return;
+    }
     if (!initRes.ok) {
       s.lastState = 'failed';
       s.lastError = `initialize HTTP ${initRes.status}`;
@@ -68,6 +109,8 @@ async function probeServer(s: WatchedServer): Promise<void> {
     const sid = initRes.headers.get('mcp-session-id');
     const listRes = await fetch(s.url, {
       method: 'POST',
+      redirect: 'manual',
+      signal: AbortSignal.timeout(PROBE_MS),
       headers: {
         'Content-Type': 'application/json',
         Accept: 'application/json, text/event-stream',
@@ -76,7 +119,13 @@ async function probeServer(s: WatchedServer): Promise<void> {
       },
       body: JSON.stringify({ jsonrpc: '2.0', id: 2, method: 'tools/list', params: {} }),
     });
-    const body = (await listRes.json()) as { result?: { tools?: ToolDefinition[] } };
+    if (listRes.status >= 300 && listRes.status < 400) {
+      s.lastState = 'failed';
+      s.lastError = `tools/list redirect ${listRes.status}`;
+      return;
+    }
+    const rawText = await readResponseLimited(listRes, MAX_BODY);
+    const body = JSON.parse(rawText || '{}') as { result?: { tools?: ToolDefinition[] } };
     const tools = body.result?.tools ?? [];
     const hash = toolsSnapshotHash(tools);
     const extended = s as WatchedServer & { lastTools?: ToolDefinition[] };
@@ -111,7 +160,16 @@ async function probeServer(s: WatchedServer): Promise<void> {
 function readJson(req: http.IncomingMessage): Promise<unknown> {
   return new Promise((resolve, reject) => {
     const chunks: Buffer[] = [];
-    req.on('data', (c) => chunks.push(c));
+    let total = 0;
+    req.on('data', (c: Buffer) => {
+      total += c.length;
+      if (total > MAX_BODY) {
+        reject(new Error('request body too large'));
+        req.destroy();
+        return;
+      }
+      chunks.push(c);
+    });
     req.on('end', () => {
       try {
         resolve(JSON.parse(Buffer.concat(chunks).toString('utf8') || '{}'));
@@ -131,6 +189,13 @@ function send(res: http.ServerResponse, status: number, body: unknown): void {
   res.end(data);
 }
 
+function publicServerView(s: WatchedServer): Record<string, unknown> {
+  return {
+    ...s,
+    url: displayUrl(s.url),
+  };
+}
+
 const dashboard = readFileSync(join(__dirname, 'public', 'index.html'), 'utf8');
 
 const server = http.createServer(async (req, res) => {
@@ -145,25 +210,37 @@ const server = http.createServer(async (req, res) => {
     return;
   }
   if (req.method === 'GET' && url.pathname === '/v1/servers') {
-    send(res, 200, [...servers.values()]);
+    send(res, 200, [...servers.values()].map(publicServerView));
     return;
   }
   if (req.method === 'POST' && url.pathname === '/v1/servers') {
-    const body = (await readJson(req)) as { name?: string; url?: string };
-    if (!body.name || !body.url) {
-      send(res, 400, { error: 'name and url required' });
+    try {
+      const body = (await readJson(req)) as { name?: string; url?: string };
+      if (!body.name || !body.url) {
+        send(res, 400, { error: 'name and url required' });
+        return;
+      }
+      let safe: URL;
+      try {
+        safe = assertSafeMonitorUrl(body.url);
+      } catch (e) {
+        send(res, 400, { error: e instanceof Error ? e.message : 'invalid url' });
+        return;
+      }
+      const duplicate = [...servers.values()].find((s) => s.name === body.name);
+      if (duplicate) {
+        send(res, 409, { error: 'duplicate name' });
+        return;
+      }
+      const id = randomUUID();
+      servers.set(id, { id, name: body.name, url: safe.toString() });
+      appendAudit('server.create', body.name);
+      send(res, 201, publicServerView(servers.get(id)!));
+      return;
+    } catch (e) {
+      send(res, 400, { error: e instanceof Error ? e.message : 'bad request' });
       return;
     }
-    const duplicate = [...servers.values()].find((s) => s.name === body.name);
-    if (duplicate) {
-      send(res, 409, { error: 'duplicate name' });
-      return;
-    }
-    const id = randomUUID();
-    servers.set(id, { id, name: body.name, url: body.url });
-    appendAudit('server.create', body.name);
-    send(res, 201, servers.get(id));
-    return;
   }
   if (req.method === 'POST' && url.pathname.startsWith('/v1/servers/') && url.pathname.endsWith('/poll-now')) {
     const id = url.pathname.split('/')[3];
@@ -173,7 +250,7 @@ const server = http.createServer(async (req, res) => {
       return;
     }
     await probeServer(s);
-    send(res, 200, s);
+    send(res, 200, publicServerView(s));
     return;
   }
   if (req.method === 'POST' && url.pathname === '/v1/bridge/incidents') {
@@ -227,5 +304,5 @@ const server = http.createServer(async (req, res) => {
 });
 
 server.listen(PORT, '127.0.0.1', () => {
-  console.log(`Watchdog Cloud on http://127.0.0.1:${PORT}`);
+  console.log(`Watchdog Cloud on http://127.0.0.1:${PORT} (localhost only — do not publish)`);
 });
