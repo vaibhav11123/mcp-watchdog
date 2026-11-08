@@ -25,11 +25,19 @@ It does **not** support VS Code **Restricted Mode** (`capabilities.untrustedWork
 - Credential wizard values go to VS Code SecretStorage (and only into mcp.json if you explicitly dual-write).
 - Opt-in `cloudBridge` posts scrubbed, names-only incidents; default off; fail-soft if unreachable.
 
+## Watchdog Cloud (preview)
+
+- Binds **`127.0.0.1` only** (default port `8787`). Do **not** publish the port, set `HOST=0.0.0.0`, or expose Cloud on the public internet without auth.
+- Probes may target **local** MCP URLs by design (`http://127.0.0.1:…`). Link-local / cloud metadata addresses (`169.254.0.0/16`, metadata hostnames) are rejected.
+- Monitor URLs in API/UI responses omit query strings and fragments.
+- Unset `HOST` unless it is `127.0.0.1` / `localhost` — any other value exits the process.
+
 ## Product telemetry (PostHog)
 
 - Setting `mcpWatchdog.telemetry.enabled` defaults to **on**; tagged `telemetry` + `usesOnlineServices`.
 - Also requires editor telemetry (`isTelemetryEnabled`) and usage enablement. Watchdog setting off → no network (except one `settings_change` when turning product telemetry off).
 - Capture posts **bare** event names (not via `TelemetryLogger` sender — the logger prefixes `extensionId/event`). Allowlisted properties only (see [`telemetry.json`](telemetry.json)). Anonymous `installId` in `globalState` — no email, no workspace path.
+- Project API key (`phc_…` in `src/telemetry/config.ts`) is a **write-oriented public client token** (PostHog documents this as safe to ship in clients). Personal keys (`phx_…`) must never be committed.
 - Distinct from Cloud bridge (user self-host dual-truth). No session replay / autocapture.
 
 ## GitHub starring

@@ -24,7 +24,9 @@ jobs:
       - run: npm test
 
       - name: Package VSIX
-        run: npx @vscode/vsce package -o "mcp-watchdog-${{ github.ref_name }}.vsix"
+        env:
+          REF_NAME: ${{ github.ref_name }}
+        run: npx @vscode/vsce package -o "mcp-watchdog-${REF_NAME}.vsix"
 
       - name: Verify VSIX excludes dev paths
         run: |

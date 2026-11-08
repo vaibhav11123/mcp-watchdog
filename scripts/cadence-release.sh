@@ -120,15 +120,19 @@ git add package.json package-lock.json CHANGELOG.md
 git commit -m "Release ${NEXT}: cadence patch (2h train)."
 git tag -a "${TAG}" -m "Release ${TAG} (cadence)"
 
-REMOTE_URL=$(git remote get-url origin)
-if [[ -n "${CADENCE_PUSH_TOKEN:-}" ]]; then
-  git remote set-url origin "https://x-access-token:${CADENCE_PUSH_TOKEN}@github.com/vaibhav11123/mcp-watchdog.git"
+# Never write PAT into remote.origin.url — env credential helper only (Git 2.31+).
+# Prefer CADENCE_PUSH_TOKEN; else GH_TOKEN / GITHUB_TOKEN (Actions default).
+export CADENCE_PUSH_TOKEN="${CADENCE_PUSH_TOKEN:-${GH_TOKEN:-${GITHUB_TOKEN:-}}}"
+export GIT_TERMINAL_PROMPT=0
+if [[ -n "${CADENCE_PUSH_TOKEN}" ]]; then
+  export GIT_CONFIG_COUNT=2
+  export GIT_CONFIG_KEY_0=credential.helper
+  export GIT_CONFIG_VALUE_0=
+  export GIT_CONFIG_KEY_1=credential.helper
+  export GIT_CONFIG_VALUE_1='!f() { test "$1" = get || exit 0; echo username=x-access-token; echo "password=$CADENCE_PUSH_TOKEN"; }; f'
 fi
 git push origin HEAD:main
 git push origin "${TAG}"
-if [[ -n "${CADENCE_PUSH_TOKEN:-}" ]]; then
-  git remote set-url origin "${REMOTE_URL}"
-fi
 
 # GITHUB_TOKEN tag pushes do not re-trigger release.yml — publish here when asked.
 if [[ "${CADENCE_SELF_PUBLISH:-1}" == "1" ]]; then

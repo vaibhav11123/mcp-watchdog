@@ -11,19 +11,35 @@ export interface TrustApproval {
   allowedServers: string[];
 }
 
+/** Strip query/fragment so tokens in URLs never appear in trust UI. */
+export function displayUrl(raw: string): string {
+  try {
+    const u = new URL(raw);
+    u.search = '';
+    u.hash = '';
+    return u.toString();
+  } catch {
+    return raw.split('?')[0]?.split('#')[0] ?? raw;
+  }
+}
+
 export function formatServerSummary(config: McpServerConfig): string {
   if (config.type === 'http' || config.type === 'sse') {
-    return config.url;
+    return displayUrl(config.url);
   }
   const args = config.args?.join(' ') ?? '';
   return `${config.command}${args ? ` ${args}` : ''}`;
 }
 
-/** Stable fingerprint from server names + command/args/url — excludes env and header values. */
+/** Stable fingerprint — excludes env/header values; includes cwd + env key names. */
 function fingerprintEntry(name: string, config: McpServerConfig): string {
   if (config.type === 'stdio') {
     const args = (config.args ?? []).join('\0');
-    return `${name}\0stdio\0${config.command}\0${args}`;
+    const cwd = config.cwd ?? '';
+    const envKeys = Object.keys(config.env ?? {})
+      .sort()
+      .join(',');
+    return `${name}\0stdio\0${config.command}\0${args}\0${cwd}\0${envKeys}`;
   }
   if (config.type === 'sse') {
     return `${name}\0sse\0${config.url}`;

@@ -35,6 +35,7 @@ import { classifyFailure, diagnoseFailure } from './failureTriage';
 import { resolveHostCapabilities, type HostCapabilities } from './hostCapabilities';
 import { DoctorMetrics } from './incidentStore';
 import type { VerifiedOutcome } from './verifyRecovery';
+import { redactSecrets } from './secretRedact';
 import * as telemetry from './telemetry/client';
 
 import type {
@@ -1253,7 +1254,7 @@ async function showStatusPanel(): Promise<void> {
     return {
       label: `${QUICK_PICK_ICON[s.state]} ${s.name}`,
       description: `${STATE_PRESENTATION[s.state].label}${ping}`,
-      detail: s.lastError,
+      detail: s.lastError ? redactSecrets(s.lastError).slice(0, 240) : undefined,
       serverName: s.name,
     };
   });

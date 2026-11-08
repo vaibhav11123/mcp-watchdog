@@ -1,6 +1,11 @@
 import { describe, expect, it } from 'vitest';
 import type { McpServerConfig } from '../../src/config-core';
-import { computeServerSetFingerprint, TrustStore } from '../../src/trust';
+import {
+  computeServerSetFingerprint,
+  displayUrl,
+  formatServerSummary,
+  TrustStore,
+} from '../../src/trust';
 
 function makeMemoryMemento(): {
   store: Map<string, unknown>;
@@ -102,6 +107,50 @@ describe('computeServerSetFingerprint', () => {
       },
     });
     expect(a).toBe(b);
+  });
+
+  it('changes when cwd or env key set changes', () => {
+    const base = computeServerSetFingerprint({
+      mem: {
+        type: 'stdio',
+        command: 'npx',
+        args: ['pkg'],
+        cwd: '/a',
+        env: { API_KEY: 'one' },
+      },
+    });
+    const cwd = computeServerSetFingerprint({
+      mem: {
+        type: 'stdio',
+        command: 'npx',
+        args: ['pkg'],
+        cwd: '/b',
+        env: { API_KEY: 'one' },
+      },
+    });
+    const envKeys = computeServerSetFingerprint({
+      mem: {
+        type: 'stdio',
+        command: 'npx',
+        args: ['pkg'],
+        cwd: '/a',
+        env: { API_KEY: 'one', OTHER: 'x' },
+      },
+    });
+    expect(cwd).not.toBe(base);
+    expect(envKeys).not.toBe(base);
+  });
+});
+
+describe('formatServerSummary / displayUrl', () => {
+  it('strips query tokens from http summaries', () => {
+    expect(displayUrl('https://x.example/mcp?token=secret')).not.toContain('secret');
+    expect(
+      formatServerSummary({
+        type: 'http',
+        url: 'https://x.example/mcp?token=secret',
+      }),
+    ).not.toContain('secret');
   });
 });
 

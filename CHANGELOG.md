@@ -6,6 +6,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+### Security
+
+- Escape untrusted text in trusted Markdown tooltips (command-URI injection hardening).
+- Validate AWS profile ids before Fix terminal `aws login`; include `cwd` + env key names in trust fingerprint; strip URL query/fragment from trust summaries.
+- Watchdog Cloud: refuse non-loopback `HOST`, reject metadata/link-local monitor URLs, no redirect-follow on probes, mask URL query in API/UI; CI runs tracked-file secret scan; cadence push uses credential helper (no PAT in remote URL).
+
 ## [0.5.10] - 2026-11-08
 
 Cadence patch (2h train). No user-visible change. Live public story remains Doctor **0.5.7**. See commits since previous tag.
