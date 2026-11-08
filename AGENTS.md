@@ -20,7 +20,8 @@ Both are cloud agents. Self-hosted Mac = Cloud Agent worker, not “local Agent 
 ### Required environment
 
 Multi-repo: `vaibhav11123/mcp-watchdog` **and** `vaibhav11123/mcp-watchdog-ops`.  
-Install: `.cursor/environment.json` → `npm ci && npm run compile && npm run build`.
+Install: `.cursor/environment.json` → `npm ci && npm run compile && npm run build`.  
+Terminal: Watchdog Cloud on `:8787` (curl `/health` or start `tsx packages/cloud/src/server.ts`).
 
 ### Cloud Agent must run
 
