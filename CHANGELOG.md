@@ -6,6 +6,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+### Changed
+
+- README leads with the failure-toast demo. Watchdog Cloud sits below Requirements. Silent cadence notes name the 0.5.7 Doctor story instead of an internal announce. `images/demo.gif` is that toast (cause sentence, at most three actions, Editor session Unknown) and stops before Overview `Verified:`.
+
 ### Security
 
 - Escape untrusted text in trusted Markdown tooltips (command-URI injection hardening).

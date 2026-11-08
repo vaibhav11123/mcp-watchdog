@@ -11,6 +11,12 @@
 
 The editor can still show tools after a server has gone quiet — after idle, sleep, or a network drop. MCP Watchdog is an independent check of the servers you approved. It shows status, latency, and failure details, then offers a next step.
 
+## Demo
+
+![MCP Watchdog demo — failure toast with a cause sentence](./images/demo.gif)
+
+A server fails, the toast names the cause, and there are at most three actions. The editor session stays **Unknown**. On Cursor, Reload Window is the step that unsticks the editor client. No secret values in the frame.
+
 Works in **Cursor**, **Windsurf**, **VS Code**, **VSCodium**, and other forks that install from [Open VSX](https://open-vsx.org/). Host roadmap (Claude Code–class CLI later, not JetBrains-first): [docs/STRATEGY-THESIS.md](./docs/STRATEGY-THESIS.md) — *Where Watchdog exists*.
 
 **Install (recommended for Cursor):** [MCP Watchdog on Open VSX](https://open-vsx.org/extension/mcp-watchdog/mcp-watchdog) — primary download channel for Cursor, Windsurf, VSCodium, and most VS Code forks.
@@ -49,20 +55,8 @@ When a check fails, the next steps are separate:
 - **Fix…** — guided remediation by cause class (e.g. missing token vs 401 vs expired session vs spawn path); copy commands, open owning config, AWS login terminal, credential wizard, retry.
 - **Remove** — delete the server key from the owning config file (or Disable Watchdog monitoring).
 - **Retry probe** — run Watchdog’s check again.
-- **Restart editor MCP** — only on the failure toast, and only when the host exposes `workbench.mcp.*`. Cursor and some forks do not.
+- **Restart editor MCP** — only on the failure toast, and only when the host exposes `workbench.mcp.*`. On Cursor this action is usually absent. **Reload Window** is the step that unsticks the editor client.
 - **Reload Window** — when the editor client stays stuck. **Quit Cursor** is the last resort.
-
-## Demo
-
-![MCP Watchdog demo — failure toast and recovery](./images/demo.gif)
-
-Independent probe → cause sentence → Fix… → recovery. Prefer the Accept / Fix… / Remove story in [docs/media/GIF-RECORDING.md](./docs/media/GIF-RECORDING.md) when re-recording (no secret values in frames). The punchline worth sharing is **Verified:** after Fix — when the Overview shows the server came back.
-
-## Watchdog Cloud (preview — optional)
-
-Cloud is **not** required for the editor product. The core customer path is still status bar + failure toast in Cursor/VS Code.
-
-If you self-host later: remote health checks, schema change alerts, and configuration policy checks with an audit trail (policy runs outside the MCP tool-call path). Opt-in via `mcpWatchdog.cloudBridge.enabled` and `cloudBridge.url` (names-only incidents; fail-soft). Default is off. Self-host notes: [packages/cloud/README.md](./packages/cloud/README.md).
 
 ## Requirements
 
@@ -78,6 +72,12 @@ If you self-host later: remote health checks, schema change alerts, and configur
   - **Claude Desktop** — `claude_desktop_config.json` (`mcpServers`; fully quit the app after edits so MCP reloads)
   - Layers merge (workspace project files override globals).
 - In **multi-root** workspaces, workspace **`.vscode/mcp.json`** / **`.cursor/mcp.json`** are merged from **every** folder (later folder wins on the same server name). `${workspaceFolder}` on **global** layers uses the **first** folder only; each workspace layer expands with that folder’s path.
+
+## Watchdog Cloud (preview — optional)
+
+Cloud is **not** required for the editor product. The core customer path is still status bar + failure toast in Cursor/VS Code.
+
+If you self-host later: remote health checks, schema change alerts, and configuration policy checks with an audit trail (policy runs outside the MCP tool-call path). Opt-in via `mcpWatchdog.cloudBridge.enabled` and `cloudBridge.url` (names-only incidents; fail-soft). Default is off. Self-host notes: [packages/cloud/README.md](./packages/cloud/README.md).
 
 ## Where is the UI?
 
@@ -207,7 +207,7 @@ These never force a server into `failed` on their own:
 
 ### Alerts
 
-When a server fails, Watchdog shows **Accept**, **Fix…**, **Remove**, **Retry probe**, **Restart editor MCP** (when `workbench.mcp.*` is available), **Show Log**, **Reload Window**, **Quit Cursor**, and **Mute 1h**. Accept quiets the chip without marking the server healthy; Mute only silences toasts for 1h. Retry probe only restarts Watchdog’s check. Set `mcpWatchdog.notify` to `all` to also get recovery toasts. Repeated failures within 10 minutes collapse into a single **flapping** warning.
+When a server fails, the toast has at most three actions: **Fix…**, **Show Log**, and **Mute 1h**. The message is a cause sentence. **Accept**, **Remove**, and **Retry probe** live on the Overview and the Servers view. **Restart editor MCP** appears only when the host exposes `workbench.mcp.*`; on Cursor it is usually absent, and **Reload Window** is the step that unsticks the editor client. Accept quiets the chip without marking the server healthy. Mute only silences toasts for 1h. Set `mcpWatchdog.notify` to `all` to also get recovery toasts. Repeated failures within 10 minutes collapse into a single **flapping** warning.
 
 ### Auth probe (opt-in)
 
