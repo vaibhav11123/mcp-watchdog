@@ -24,6 +24,9 @@ alwaysApply: true
   and is read via vscode.workspace.getConfiguration('mcpWatchdog').
 - Unit tests: vitest, in test/unit/, run with npm run test:unit. They must pass with no network
   and no VS Code host. Anything needing npx/network goes in scripts/ (smoke/integration tier).
+- **Product verify default = Cloud Agent environment** (see `cloud-verify.mdc` /
+  `docs/ops/CLOUD-AGENT-VERIFY.md`): multi-repo public+ops; Cursor-hosted or self-hosted
+  Mac worker. Local Agent chat is not the primary full-suite / lookcheck runner.
 - Update CHANGELOG.md (Keep a Changelog format) and README for any user-visible change.
 - Do not bump version by hand; maintainer or **2h cadence** (`scripts/cadence-release.sh` /
   `cadence-release.yml`) cuts versions. Cadence patches are silent (no Instinct announce).

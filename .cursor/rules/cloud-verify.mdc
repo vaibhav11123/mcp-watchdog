@@ -1,0 +1,21 @@
+---
+description: Prefer Cloud Agent environments for product tests and lookchecks
+alwaysApply: true
+---
+
+# Cloud verify (not laptop midwife)
+
+**Default:** Run automated tests and product lookchecks in a **Cloud Agent
+environment** (Cursor-hosted Ubuntu or self-hosted Mac worker). Do not treat
+local Agent chat as the place that runs the full suite / UI look.
+
+Normative: `docs/ops/CLOUD-AGENT-VERIFY.md` · public `AGENTS.md`.
+
+- Multi-repo env: `mcp-watchdog` + `mcp-watchdog-ops` (single-repo public
+  tokens 404 ops).
+- Cloud checklist: lint · format:check · compile · test:unit · build ·
+  test:host · smoke (when needed) · computer-use screenshots/artifacts.
+- Self-hosted Mac worker = still a Cloud Agent (for real Cursor F5 / GIF).
+- Local F5 in a chat session = SIGN-OFF capture fallback only when TESTING
+  requires it and no self-hosted worker is available.
+- Never paste private ops into public stubs. No spend. No social posts.
