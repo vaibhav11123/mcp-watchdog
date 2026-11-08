@@ -6,6 +6,15 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [0.5.10] - 2026-11-08
+
+Cadence patch (2h train). No GTM announce. See commits since previous tag.
+
+### Changed
+
+- Automated cadence release from `main` (CI green + commits since last tag).
+
+
 ## [0.5.9] - 2026-11-07
 
 Cadence patch (2h train). No GTM announce. See commits since previous tag.
@@ -304,7 +313,8 @@ Marketing: claim stage **Now+**. Public announce story for this cut is **Doctor 
 
 [0.5.8]: https://github.com/vaibhav11123/mcp-watchdog/releases/tag/v0.5.8
 [0.5.9]: https://github.com/vaibhav11123/mcp-watchdog/releases/tag/v0.5.9
-[Unreleased]: https://github.com/vaibhav11123/mcp-watchdog/compare/v0.5.9...HEAD
+[0.5.10]: https://github.com/vaibhav11123/mcp-watchdog/releases/tag/v0.5.10
+[Unreleased]: https://github.com/vaibhav11123/mcp-watchdog/compare/v0.5.10...HEAD
 [0.5.7]: https://github.com/vaibhav11123/mcp-watchdog/releases/tag/v0.5.7
 [0.5.6]: https://github.com/vaibhav11123/mcp-watchdog/releases/tag/v0.5.6
 [0.5.5]: https://github.com/vaibhav11123/mcp-watchdog/releases/tag/v0.5.5
