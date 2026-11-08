@@ -28,16 +28,17 @@ as MCP Watchdog Eng.
 
 ## Notify + anti-spam (why replies go quiet)
 
-Instinct (`U0CFX1HS11A`) is a Slack **APP**. Bot/APP `@Instinct` mentions often
-**do not notify** it. Instinct said Cursor bot messages did not notify; **Vaibhav
-human `@Instinct`** did. Normative write-up:
-`docs/ops/GTM-COMMS.md` § “Why Instinct goes quiet”.
+Instinct (`U0CFX1HS11A`) is a Slack **APP**. Instant bot notify is **not**
+confirmed fixed. Happy path: standing thread + one ask + wait (Instinct has
+their own poll/fallback). Vaibhav human `@Instinct` / iMessage “check Slack”
+= **fallback only** when stalled — not the normal path. Normative:
+`docs/ops/GTM-COMMS.md` § “Why Instinct goes quiet”. Position SoT:
+`docs/ops/STATUS.md`.
 
 - Start every eng message with `[Cursor · MCP Watchdog eng]`.
 - Always include `<@U0CFX1HS11A>` (or `@Instinct`).
 - **One open ask per message.** Then stop and wait.
-- If silent after eng `@mention`: **do not spam**. Ask Vaibhav for one human
-  `@Instinct` in the standing thread (or iMessage “check Slack”).
+- If stalled: **do not spam**. Ask Vaibhav for one human wake only as fallback.
 - No duplicate channel-root + thread dumps. No Instinct ping for silent cadence.
 - Do not speak as eng through the Cursor Slack plugin (`plugin-slack-slack`).
   That login posts as Vaibhav (`U0AGT2FQN05`).
