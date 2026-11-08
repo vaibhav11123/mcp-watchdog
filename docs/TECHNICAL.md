@@ -846,7 +846,7 @@ That sequencing encodes priority: **testability → safety → light probes → 
 - `${input:…}` is not expanded; `${env:}` / `${userHome}` are.
 - Tool-drift fingerprints are **name-only** (no input/output schema hash).
 - Passive HTTP is HEAD/GET reachability only — not an MCP session substitute.
-- `images/demo.gif` is not the current failure clip. Record `docs/media/GIF-RECORDING.md` before announce.
+- `images/demo.gif` is a live Extension Host failure clip (healthy chip, cause-sentence toast with Fix… / Show Log / Mute 1h, Editor session: Unknown, Fix quick pick). It stops before a later recovery beat.
 
 ### 19.2 Explicitly deferred / out of scope (for now)
 
