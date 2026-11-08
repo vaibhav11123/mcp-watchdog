@@ -6,6 +6,9 @@ on:
   pull_request:
     branches: [main]
 
+permissions:
+  contents: read
+
 jobs:
   lint:
     runs-on: ubuntu-latest
@@ -16,6 +19,9 @@ jobs:
           node-version: '22'
           cache: npm
       - run: npm ci
+      - name: Install ripgrep
+        run: sudo apt-get update && sudo apt-get install -y ripgrep
+      - run: bash scripts/check-no-secrets.sh
       - run: npm run lint
       - run: npm run format:check
       - run: npm run compile

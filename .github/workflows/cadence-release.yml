@@ -38,7 +38,8 @@ jobs:
         if: steps.gate.outputs.skip != 'true'
         with:
           fetch-depth: 0
-          # Optional PAT (CADENCE_PUSH_TOKEN) lets the push trigger release.yml; else GITHUB_TOKEN + self-publish.
+          persist-credentials: false
+          # Optional PAT (CADENCE_PUSH_TOKEN) for push via env credential helper in cadence-release.sh.
           token: ${{ secrets.CADENCE_PUSH_TOKEN || github.token }}
 
       - uses: actions/setup-node@v4

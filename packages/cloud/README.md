@@ -2,6 +2,8 @@
 
 **Watchdog Cloud (preview).** Remote health checks, schema change alerts, and configuration policy checks with an audit trail. Policy decisions run outside the MCP tool-call path. With the opt-in IDE bridge enabled, the extension posts names-only incidents (including accepted failures when marked).
 
+**Localhost only:** the server binds `127.0.0.1`. Do **not** publish port `8787`, set `HOST=0.0.0.0`, or expose this preview on the public internet without auth. Local MCP monitor URLs (`http://127.0.0.1:…`) are allowed; cloud metadata / link-local addresses are rejected.
+
 ## Quick start (T3 target &lt; 30 min)
 
 ```bash

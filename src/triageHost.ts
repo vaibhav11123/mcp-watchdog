@@ -16,6 +16,7 @@ import {
 } from './failureTriage';
 import { deleteServerKey, mergeServerCredential } from './mcpJsonEdit';
 import { awsProfileFromEnv, matchRecipe, type CredSlot } from './vendorRecipes';
+import { isSafeAwsProfileId } from './shellSafe';
 import { secretStorageKey } from './credentialOverlay';
 import { tryRestartEditorMcp, type EditorMcpHost } from './editorMcp';
 import type { ServerStatus } from './monitor';
@@ -211,8 +212,12 @@ async function executeFixStep(
       deps.logger.show();
       return;
     case 'terminal.awsLogin': {
-      const profile = awsProfile?.trim() || '<profile>';
-      const cmd = `aws login --profile ${profile}`;
+      const profile = awsProfile?.trim();
+      if (!isSafeAwsProfileId(profile)) {
+        void vscode.window.showWarningMessage('Refusing aws login: invalid AWS profile id.');
+        return;
+      }
+      const cmd = `aws login --profile '${profile}'`;
       const term = vscode.window.createTerminal({
         name: `MCP Watchdog: aws login (${deps.serverName})`,
       });

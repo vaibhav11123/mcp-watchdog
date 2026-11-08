@@ -1,5 +1,7 @@
 import * as vscode from 'vscode';
 import { ServerStatus } from './monitor';
+import { redactSecrets } from './secretRedact';
+import { escapeMarkdownPlain } from './ui/markdownEscape';
 import { formatTreeDescription, stateThemeIcon, STATE_PRESENTATION } from './ui/statePresentation';
 
 class ServerTreeItem extends vscode.TreeItem {
@@ -46,7 +48,8 @@ class ServerTreeItem extends vscode.TreeItem {
     md.isTrusted = true;
     md.supportHtml = false;
     const p = STATE_PRESENTATION[status.state];
-    md.appendMarkdown(`**${status.name}**\n\n`);
+    const safeName = escapeMarkdownPlain(redactSecrets(status.name));
+    md.appendMarkdown(`**${safeName}**\n\n`);
     md.appendMarkdown(`Status: **${p.label}**\n\n`);
     md.appendMarkdown(
       `Latency: ${status.lastPingMs !== undefined ? `${status.lastPingMs} ms` : '—'}\n\n`,
@@ -66,11 +69,11 @@ class ServerTreeItem extends vscode.TreeItem {
       md.appendMarkdown(`Retries: ${status.retryCount}\n\n`);
     }
     if (status.lastError) {
-      md.appendMarkdown(`Error: ${status.lastError}\n\n`);
+      md.appendMarkdown(`Error: ${escapeMarkdownPlain(redactSecrets(status.lastError))}\n\n`);
     }
     if (status.failureContext) {
       const snippet = status.failureContext.split('\n').slice(-3).join('\n');
-      md.appendMarkdown('```\n' + snippet + '\n```\n\n');
+      md.appendMarkdown('```\n' + escapeMarkdownPlain(redactSecrets(snippet)) + '\n```\n\n');
     }
     const args = encodeURIComponent(JSON.stringify([serverName]));
     md.appendMarkdown(`[Retry probe](command:mcpWatchdog.reconnectOne?${args})`);

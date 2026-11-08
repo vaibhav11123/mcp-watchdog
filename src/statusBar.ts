@@ -1,6 +1,7 @@
 import * as vscode from 'vscode';
 import type { McpConfigStatus } from './config-core';
 import { ServerStatus } from './monitor';
+import { escapeMarkdownPlain } from './ui/markdownEscape';
 import { buildStatusBarModel } from './ui/statusBarModel';
 
 export class McpStatusBar implements vscode.Disposable {
@@ -21,7 +22,7 @@ export class McpStatusBar implements vscode.Disposable {
     md.appendMarkdown('**MCP Watchdog**\n\n');
     for (const line of model.tooltipLines) {
       if (line === '') md.appendMarkdown('\n');
-      else md.appendMarkdown(`${line}\n\n`);
+      else md.appendMarkdown(`${escapeMarkdownPlain(line)}\n\n`);
     }
     md.appendMarkdown(
       '\n[Open dashboard](command:mcpWatchdog.overview.focus) · [Retry all probes](command:mcpWatchdog.reconnectAll)',

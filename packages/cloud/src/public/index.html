@@ -105,6 +105,13 @@
         if (u.protocol !== 'http:' && u.protocol !== 'https:') {
           return 'URL must use http or https.';
         }
+        const host = u.hostname.toLowerCase();
+        if (host === 'metadata.google.internal' || host === 'metadata.azure.com') {
+          return 'Metadata hosts are not allowed.';
+        }
+        if (host === '169.254.169.254' || host.startsWith('169.254.')) {
+          return 'Link-local / metadata addresses are not allowed.';
+        }
       } catch {
         return 'Enter a valid http or https URL.';
       }
