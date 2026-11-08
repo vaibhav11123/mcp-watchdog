@@ -8,7 +8,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [0.5.10] - 2026-11-08
 
-Cadence patch (2h train). No GTM announce. See commits since previous tag.
+Cadence patch (2h train). No user-visible change. Live public story remains Doctor **0.5.7**. See commits since previous tag.
 
 ### Changed
 
@@ -17,7 +17,7 @@ Cadence patch (2h train). No GTM announce. See commits since previous tag.
 
 ## [0.5.9] - 2026-11-07
 
-Cadence patch (2h train). No GTM announce. See commits since previous tag.
+Cadence patch (2h train). No user-visible change. Live public story remains Doctor **0.5.7**. See commits since previous tag.
 
 ### Changed
 
@@ -41,7 +41,7 @@ Cadence patch (2h train). No GTM announce. See commits since previous tag.
 
 ## [0.5.8] - 2026-11-07
 
-Cadence patch (2h train). No GTM announce. See commits since previous tag.
+Cadence patch (2h train). No user-visible change. Live public story remains Doctor **0.5.7**. See commits since previous tag.
 
 ### Changed
 

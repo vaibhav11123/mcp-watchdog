@@ -52,17 +52,17 @@ When a check fails, the next steps are separate:
 - **Restart editor MCP** — only on the failure toast, and only when the host exposes `workbench.mcp.*`. Cursor and some forks do not.
 - **Reload Window** — when the editor client stays stuck. **Quit Cursor** is the last resort.
 
-## Watchdog Cloud (preview)
-
-Watchdog Cloud adds remote health checks, schema change alerts, and configuration policy checks with an audit trail. Its policy decisions run outside the MCP tool-call path.
-
-Opt-in: set `mcpWatchdog.cloudBridge.enabled` and `cloudBridge.url` to post **names-only** health incidents to a self-hosted Cloud (fail-soft if unreachable). Default is off. Dual-truth compares IDE bridge state with Cloud’s own poll — it does not read the editor’s MCP client. Self-host notes: [packages/cloud/README.md](./packages/cloud/README.md).
-
 ## Demo
 
 ![MCP Watchdog demo — failure toast and recovery](./images/demo.gif)
 
-Independent probe → failure toast → recovery. Prefer the Accept / Fix… / Remove story in [docs/media/GIF-RECORDING.md](./docs/media/GIF-RECORDING.md) when re-recording (no secret values in frame).
+Independent probe → cause sentence → Fix… → recovery. Prefer the Accept / Fix… / Remove story in [docs/media/GIF-RECORDING.md](./docs/media/GIF-RECORDING.md) when re-recording (no secret values in frames). The punchline worth sharing is **Verified:** after Fix — when the Overview shows the server came back.
+
+## Watchdog Cloud (preview — optional)
+
+Cloud is **not** required for the editor product. The core customer path is still status bar + failure toast in Cursor/VS Code.
+
+If you self-host later: remote health checks, schema change alerts, and configuration policy checks with an audit trail (policy runs outside the MCP tool-call path). Opt-in via `mcpWatchdog.cloudBridge.enabled` and `cloudBridge.url` (names-only incidents; fail-soft). Default is off. Self-host notes: [packages/cloud/README.md](./packages/cloud/README.md).
 
 ## Requirements
 
