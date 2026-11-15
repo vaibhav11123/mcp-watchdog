@@ -6,6 +6,15 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [0.5.13] - 2026-11-15
+
+Cadence patch (2h train). No user-visible change. Live public story remains Doctor **0.5.7** (cause sentence / toast / dual-truth green). See commits since previous tag.
+
+### Changed
+
+- Automated cadence release from `main` (CI green + commits since last tag).
+
+
 ### Security
 
 - Lock `@modelcontextprotocol/sdk` at 1.32.2 and the transitive ranges Dependabot flagged (hono 4.13.18, qs 6.17.1, proxy-addr 2.0.8, zod 4.6.7). Vitest 4.1.12 drops tinypool.
@@ -348,7 +357,8 @@ Marketing: claim stage **Now+**. Public announce story for this cut is **Doctor 
 [0.5.10]: https://github.com/vaibhav11123/mcp-watchdog/releases/tag/v0.5.10
 [0.5.11]: https://github.com/vaibhav11123/mcp-watchdog/releases/tag/v0.5.11
 [0.5.12]: https://github.com/vaibhav11123/mcp-watchdog/releases/tag/v0.5.12
-[Unreleased]: https://github.com/vaibhav11123/mcp-watchdog/compare/v0.5.12...HEAD
+[0.5.13]: https://github.com/vaibhav11123/mcp-watchdog/releases/tag/v0.5.13
+[Unreleased]: https://github.com/vaibhav11123/mcp-watchdog/compare/v0.5.13...HEAD
 [0.5.7]: https://github.com/vaibhav11123/mcp-watchdog/releases/tag/v0.5.7
 [0.5.6]: https://github.com/vaibhav11123/mcp-watchdog/releases/tag/v0.5.6
 [0.5.5]: https://github.com/vaibhav11123/mcp-watchdog/releases/tag/v0.5.5
