@@ -64,8 +64,10 @@ jobs:
           CADENCE_PUSH_TOKEN: ${{ secrets.CADENCE_PUSH_TOKEN }}
           VSCE_PAT: ${{ secrets.VSCE_PAT }}
           OVSX_PAT: ${{ secrets.OVSX_PAT }}
-          GIT_AUTHOR_NAME: mcp-watchdog-cadence
-          GIT_AUTHOR_EMAIL: 41898282+github-actions[bot]@users.noreply.github.com
+          GIT_AUTHOR_NAME: Vaibhav Singh
+          GIT_AUTHOR_EMAIL: scion2304@gmail.com
+          GIT_COMMITTER_NAME: Vaibhav Singh
+          GIT_COMMITTER_EMAIL: scion2304@gmail.com
           # Self-publish because GITHUB_TOKEN tag pushes do not re-fire release.yml
           CADENCE_SELF_PUBLISH: '1'
         run: bash scripts/cadence-release.sh

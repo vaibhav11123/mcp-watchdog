@@ -114,8 +114,8 @@ if [[ "${CADENCE_DRY_RUN:-0}" == "1" ]]; then
   exit 0
 fi
 
-git config user.name "${GIT_AUTHOR_NAME:-mcp-watchdog-cadence}"
-git config user.email "${GIT_AUTHOR_EMAIL:-cadence@users.noreply.github.com}"
+git config user.name "${GIT_AUTHOR_NAME:-Vaibhav Singh}"
+git config user.email "${GIT_AUTHOR_EMAIL:-scion2304@gmail.com}"
 git add package.json package-lock.json CHANGELOG.md
 git commit -m "Release ${NEXT}: cadence patch (2h train)."
 git tag -a "${TAG}" -m "Release ${TAG} (cadence)"
