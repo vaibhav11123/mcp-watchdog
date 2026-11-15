@@ -6,6 +6,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+### Added
+
+- Community standards files: Code of Conduct, issue/PR templates, accessibility statement.
+
 ## [0.5.11] - 2026-11-08
 
 Cadence patch (2h train). No user-visible change. Live public story remains Doctor **0.5.7** (cause sentence / toast / dual-truth green). See commits since previous tag.

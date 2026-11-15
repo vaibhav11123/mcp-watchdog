@@ -1,0 +1,5 @@
+blank_issues_enabled: true
+contact_links:
+  - name: Security vulnerability
+    url: https://github.com/vaibhav11123/mcp-watchdog/security/advisories/new
+    about: Private advisory — do not file public issues for undisclosed security problems.

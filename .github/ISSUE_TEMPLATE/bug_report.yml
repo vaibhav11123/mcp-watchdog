@@ -1,0 +1,41 @@
+name: Bug report
+description: Something broken in MCP Watchdog
+title: '[bug] '
+labels: ['bug']
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for filing. Do **not** paste env/header **values**, tokens, or secrets.
+  - type: textarea
+    id: what
+    attributes:
+      label: What happened
+      description: Expected vs actual.
+    validations:
+      required: true
+  - type: input
+    id: version
+    attributes:
+      label: Extension version
+      placeholder: e.g. 0.5.11
+    validations:
+      required: true
+  - type: input
+    id: host
+    attributes:
+      label: Editor host
+      placeholder: e.g. Cursor 2.x / VS Code 1.105
+    validations:
+      required: true
+  - type: textarea
+    id: repro
+    attributes:
+      label: Steps to reproduce
+    validations:
+      required: true
+  - type: textarea
+    id: logs
+    attributes:
+      label: Relevant Output (MCP Watchdog)
+      description: Names of env/header keys OK; values never.

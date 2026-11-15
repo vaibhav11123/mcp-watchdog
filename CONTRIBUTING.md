@@ -1,5 +1,7 @@
 # Contributing
 
+By participating, you agree to our [Code of Conduct](./CODE_OF_CONDUCT.md).
+
 ## License
 
 Outbound license is **MIT** ([LICENSE](./LICENSE)). Contributions are accepted under the same terms and the project **CLA** ([docs/CLA.md](./docs/CLA.md)).

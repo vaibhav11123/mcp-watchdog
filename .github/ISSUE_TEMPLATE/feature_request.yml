@@ -1,0 +1,24 @@
+name: Feature request
+description: Idea or enhancement for MCP Watchdog
+title: '[feat] '
+labels: ['enhancement']
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem
+      description: What is hard or missing today?
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposal
+      description: What should Watchdog do instead?
+    validations:
+      required: true
+  - type: textarea
+    id: claims
+    attributes:
+      label: Claims check
+      description: Must stay within STRATEGY claim ladder (no bake-off win / diagnose% unless earned).
