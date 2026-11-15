@@ -11,5 +11,9 @@
   "license": "ISC",
   "dependencies": {
     "@modelcontextprotocol/server-filesystem": "^2025.11.25"
+  },
+  "overrides": {
+    "glob": ">=14.0.2",
+    "minimatch": ">=11.0.1"
   }
 }

@@ -10,10 +10,13 @@ const mocks = vi.hoisted(() => {
   return {
     mockConnect,
     mockClient,
-    StdioClientTransport: vi.fn(),
-    StreamableHTTPClientTransport: vi.fn(),
-    SSEClientTransport: vi.fn(),
-    Client: vi.fn(() => mockClient),
+    // Vitest 4: constructor mocks must be function/class implementations
+    StdioClientTransport: vi.fn(function StdioClientTransport() {}),
+    StreamableHTTPClientTransport: vi.fn(function StreamableHTTPClientTransport() {}),
+    SSEClientTransport: vi.fn(function SSEClientTransport() {}),
+    Client: vi.fn(function Client() {
+      return mockClient;
+    }),
   };
 });
 

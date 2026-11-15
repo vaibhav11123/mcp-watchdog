@@ -6,6 +6,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+### Security
+
+- Lock `@modelcontextprotocol/sdk` at 1.32.2 and the transitive ranges Dependabot flagged (hono 4.13.18, qs 6.17.1, proxy-addr 2.0.8, zod 4.6.7). Vitest 4.1.12 drops tinypool.
+
 ## [0.5.12] - 2026-11-15
 
 Cadence patch (2h train). No user-visible change. Live public story remains Doctor **0.5.7** (cause sentence / toast / dual-truth green). See commits since previous tag.

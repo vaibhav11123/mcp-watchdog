@@ -3,8 +3,8 @@
   "private": true,
   "description": "Fixture workspace for manual MCP Watchdog debugging (F5 EDH opens this folder).",
   "dependencies": {
-    "@modelcontextprotocol/sdk": "^1.10.0",
-    "zod": "^3.25.1"
+    "@modelcontextprotocol/sdk": ">=1.32.2 <2.0.0",
+    "zod": "^4.6.6"
   },
   "devDependencies": {
     "tsx": "^4.19.0"
