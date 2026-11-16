@@ -44,9 +44,9 @@ export function parseArgs(argv: string[]): {
 export function usage(): string {
   return `mcp-watchdog — Doctor MCP configs for terminal harnesses
 
-Usage:
-  mcp-watchdog [--host claude-code|pi|codex|opencode|auto] [--cwd <path>] [--full]
-               [doctor|status|fix|restore] [--yes] [--from <backup>]
+Supported invoke (repo clone after npm run build — not on PATH from a VSIX install):
+  node bin/mcp-watchdog.mjs [--host claude-code|pi|codex|opencode|auto] [--cwd <path>] [--full]
+                            [doctor|status|fix|restore] [--yes] [--from <backup>]
 
 Notes:
   - Same Doctor taxonomy as the VS Code/Cursor extension (causeId + Fix).
@@ -75,7 +75,7 @@ export async function runCli(argv: string[]): Promise<number> {
           ok: false,
           command: 'restore',
           message: 'restore requires --from <backup under .mcp-watchdog/backups/>',
-          next: 'mcp-watchdog restore --from .mcp-watchdog/backups/<file>',
+          next: 'node bin/mcp-watchdog.mjs restore --from .mcp-watchdog/backups/<file>',
           dualTruth: { watchdog: 'unknown', host: 'unknown' },
           hostConnection: 'unknown',
         },
@@ -92,7 +92,7 @@ export async function runCli(argv: string[]): Promise<number> {
           reason: restored.reason,
           dualTruth: { watchdog: 'unknown', host: 'unknown' },
           hostConnection: 'unknown',
-          next: 'mcp-watchdog doctor',
+          next: 'node bin/mcp-watchdog.mjs doctor',
         },
         { pretty: args.pretty, cwd: args.cwd },
       );
@@ -106,7 +106,7 @@ export async function runCli(argv: string[]): Promise<number> {
         to: restored.to,
         dualTruth: { watchdog: 'unknown', host: 'unknown' },
         hostConnection: 'unknown',
-        next: 'mcp-watchdog doctor',
+        next: 'node bin/mcp-watchdog.mjs doctor',
       },
       { pretty: args.pretty, cwd: args.cwd },
     );
@@ -181,7 +181,9 @@ export async function runCli(argv: string[]): Promise<number> {
           hostConnection: 'unknown',
           dualTruth,
           plan,
-          confirmCommand: plan.length ? `mcp-watchdog fix --yes --cwd ${args.cwd}` : undefined,
+          confirmCommand: plan.length
+            ? `node bin/mcp-watchdog.mjs fix --yes --cwd ${args.cwd}`
+            : undefined,
           servers,
         },
         { pretty: args.pretty, cwd: args.cwd },
@@ -220,7 +222,7 @@ export async function runCli(argv: string[]): Promise<number> {
     const verified = allResolved ? 'resolved' : anyResolved ? 'partial' : 'unresolved';
     const next =
       !allResolved && applied.backupPath
-        ? `mcp-watchdog restore --from ${applied.backupPath}`
+        ? `node bin/mcp-watchdog.mjs restore --from ${applied.backupPath}`
         : undefined;
 
     emitJson(
@@ -259,7 +261,7 @@ export async function runCli(argv: string[]): Promise<number> {
       hostConnection: 'unknown',
       dualTruth,
       servers,
-      next: failed > 0 ? 'mcp-watchdog fix --cwd .' : undefined,
+      next: failed > 0 ? 'node bin/mcp-watchdog.mjs fix --cwd .' : undefined,
     },
     { pretty: args.pretty, cwd: args.cwd },
   );

@@ -50,9 +50,11 @@ When a check fails:
 
 Unannounced CLI for Claude Code-style configs (same cause taxonomy; **host session stays Unknown**).
 
-**Open VSX / Marketplace install does not add `mcp-watchdog` to your shell PATH.** Use a **repo clone** (supported workflow):
+**There is no installed-extension shell command.** An Open VSX / Marketplace / VSIX install does **not** put `mcp-watchdog` on your `PATH`. Watchdog does not publish this CLI to npm. The only supported workflow is a **repo clone**:
 
 ```bash
+git clone https://github.com/vaibhav11123/mcp-watchdog.git
+cd mcp-watchdog
 npm ci && npm run build
 node bin/mcp-watchdog.mjs doctor
 node bin/mcp-watchdog.mjs fix          # plan only
@@ -60,7 +62,7 @@ node bin/mcp-watchdog.mjs fix --yes    # backup + allowlisted apply + re-probe
 node bin/mcp-watchdog.mjs restore --from .mcp-watchdog/backups/<file>
 ```
 
-Never prints secret env values. Editor Overview remains the primary product surface.
+Always invoke via `node bin/mcp-watchdog.mjs …` from that clone (after `npm run build`). Never prints secret env values. Editor Overview remains the primary product surface.
 
 ## Demo
 
