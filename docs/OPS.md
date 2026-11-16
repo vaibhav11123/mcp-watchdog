@@ -64,8 +64,6 @@ CI on public **does not** recurse the private submodule. Marketplace packaging a
 
 ## Stubs you’ll see in this tree
 
-Examples: `docs/STATUS.md`, `docs/GTM-*.md`, `docs/RELEASE.md`, `docs/gtm/README.md`, `docs/validation/README.md` — each points at `docs/ops/…`.
+Examples: `docs/STATUS.md`, `docs/GTM-*.md`, `docs/RELEASE.md`, `docs/TECHNICAL.md`, `docs/gtm/README.md`, `docs/validation/README.md` — each points at `docs/ops/…`.
 
-Historical public note: [TECHNICAL.md](./TECHNICAL.md) may remain; working architecture SoT is in ops.
-
-**History:** older process files may still exist in this repo’s git history until a rewrite. Ops is SoT going forward.
+**History:** older process files may still exist in this repo’s **git history** (and thus old commit URLs) until an OWNER-approved history rewrite. Ops is SoT going forward; do not paste full process docs back into public stubs.
