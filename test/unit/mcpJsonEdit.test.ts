@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { deleteServerKey, mergeServerCredential } from '../../src/mcpJsonEdit';
+import { deleteServerKey, ensureNpxYes, mergeServerCredential } from '../../src/mcpJsonEdit';
 
 const baseJson = JSON.stringify(
   {
@@ -34,6 +34,28 @@ describe('deleteServerKey', () => {
 
     const trailing = '{"mcpServers": {"a": {"command": "x"}},}';
     expect(deleteServerKey(trailing, 'a')).toEqual({ ok: false, reason: 'jsonc' });
+  });
+});
+
+describe('ensureNpxYes', () => {
+  it('inserts -y when missing', () => {
+    const raw = JSON.stringify({
+      mcpServers: { x: { command: 'npx', args: ['@pkg/server'] } },
+    });
+    const r = ensureNpxYes(raw, 'x');
+    expect(r.ok).toBe(true);
+    if (!r.ok) return;
+    expect(JSON.parse(r.raw).mcpServers.x.args).toEqual(['-y', '@pkg/server']);
+  });
+
+  it('is idempotent when -y present', () => {
+    const raw = JSON.stringify({
+      mcpServers: { x: { command: 'npx', args: ['-y', '@pkg/server'] } },
+    });
+    const r = ensureNpxYes(raw, 'x');
+    expect(r.ok).toBe(true);
+    if (!r.ok) return;
+    expect(JSON.parse(r.raw).mcpServers.x.args).toEqual(['-y', '@pkg/server']);
   });
 });
 

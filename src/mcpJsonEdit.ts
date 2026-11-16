@@ -43,6 +43,45 @@ export function deleteServerKey(raw: string, serverName: string): JsonEditResult
   return { ok: true, raw: `${JSON.stringify(root, null, 2)}\n`, rootKey };
 }
 
+/**
+ * Mechanical fix: if stdio command is `npx` and args lack `-y`/`--yes`, insert `-y`
+ * so non-interactive harnesses do not hang on install prompts. Never touches env/secrets.
+ */
+export function ensureNpxYes(raw: string, serverName: string): JsonEditResult {
+  if (looksLikeJsonc(raw)) {
+    return { ok: false, reason: 'jsonc' };
+  }
+  let parsed: unknown;
+  try {
+    parsed = JSON.parse(raw);
+  } catch {
+    return { ok: false, reason: 'syntax' };
+  }
+  if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) {
+    return { ok: false, reason: 'syntax' };
+  }
+  const root = parsed as Record<string, unknown>;
+  const rootKey = extractRootKey(root);
+  if (!rootKey) return { ok: false, reason: 'no_block' };
+  const block = root[rootKey] as Record<string, unknown>;
+  const entry = block[serverName];
+  if (!entry || typeof entry !== 'object' || Array.isArray(entry)) {
+    return { ok: false, reason: 'missing_server' };
+  }
+  const e = entry as Record<string, unknown>;
+  const command = typeof e.command === 'string' ? e.command : '';
+  const base = command.replace(/\\/g, '/').split('/').pop()?.toLowerCase() ?? '';
+  if (base !== 'npx' && base !== 'npx.cmd') {
+    return { ok: false, reason: 'missing_server' };
+  }
+  const args = Array.isArray(e.args) ? e.args.map(String) : [];
+  if (args.some((a) => a === '-y' || a === '--yes' || a === '--yes=true')) {
+    return { ok: true, raw: `${JSON.stringify(root, null, 2)}\n`, rootKey };
+  }
+  e.args = ['-y', ...args];
+  return { ok: true, raw: `${JSON.stringify(root, null, 2)}\n`, rootKey };
+}
+
 /** Merge env or headers onto an existing server entry (names+values written; caller never logs values). */
 export function mergeServerCredential(
   raw: string,

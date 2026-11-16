@@ -6,6 +6,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+### Added
+
+- CLI Act+Prove (unannounced companion): `mcp-watchdog fix` plan / `--yes` apply with backup, allowlisted `retry.probe` + `config.ensureNpxYes` + env overlay (no secret values written to mcp.json), then re-probe verify.
+- CLI `restore --from` under `.mcp-watchdog/backups/` only; rate limit (3 mutates / 5 min) and circuit breaker (same cause+step ≥2 / 10 min).
+- Compact JSON + 8KiB spill; dual-truth `hostConnection: unknown` on CLI JSON; `npm run test:cli-recovery` + harness script.
+
 ### Fixed
 
 - Stdio probes pipe stderr and capture it before `connect`, so a missing Windows binary
@@ -18,6 +24,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Notes
 
+- Editor remains the Marketplace brand. No CLI-hero listing/X story until OWNER A-cli-brand.
 - Owner: set branch protection required check to the gate job name **CI** (not matrix legs).
 
 ## [0.5.16] - 2026-11-16

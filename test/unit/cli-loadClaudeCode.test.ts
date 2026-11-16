@@ -12,6 +12,28 @@ describe('cli parseArgs', () => {
       cwd: path.resolve('/tmp'),
       help: false,
       command: 'doctor',
+      yes: false,
+      pretty: false,
+      from: undefined,
+    });
+  });
+
+  it('parses fix --yes and --full', () => {
+    expect(parseArgs(['fix', '--yes', '--full', '--cwd', '/tmp'])).toMatchObject({
+      command: 'fix',
+      yes: true,
+      pretty: true,
+      cwd: path.resolve('/tmp'),
+    });
+  });
+
+  it('parses restore --from', () => {
+    expect(
+      parseArgs(['restore', '--from', '.mcp-watchdog/backups/x.json', '--cwd', '/tmp']),
+    ).toMatchObject({
+      command: 'restore',
+      from: '.mcp-watchdog/backups/x.json',
+      cwd: path.resolve('/tmp'),
     });
   });
 });

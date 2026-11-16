@@ -46,6 +46,22 @@ When a check fails:
 - **Failure toast (≤3):** **Fix…** / **Show Log** / **Mute 1h** — cause sentence in plain language.
 - **Overview / commands:** **Accept**, **Remove**, **Retry probe**, **Reload Window**, and (in **Fix…** only when the host supports it) **Restart editor MCP**. Cursor often cannot restart host MCP — Watchdog will not fake that.
 
+## Terminal companion (optional)
+
+Unannounced CLI for Claude Code-style configs (same cause taxonomy; **host session stays Unknown**).
+
+**Open VSX / Marketplace install does not add `mcp-watchdog` to your shell PATH.** Use a **repo clone** (supported workflow):
+
+```bash
+npm ci && npm run build
+node bin/mcp-watchdog.mjs doctor
+node bin/mcp-watchdog.mjs fix          # plan only
+node bin/mcp-watchdog.mjs fix --yes    # backup + allowlisted apply + re-probe
+node bin/mcp-watchdog.mjs restore --from .mcp-watchdog/backups/<file>
+```
+
+Never prints secret env values. Editor Overview remains the primary product surface.
+
 ## Demo
 
 ![MCP Watchdog demo — failure toast and recovery](./images/demo.gif)
