@@ -6,6 +6,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+### Added
+
+- Doctor `transport.timeout` causeId for MCP `-32001 Request timed out` (before retryExhausted → `spawn.closed`). Sentence: “Server didn't answer in time - check its log and configuration.” Fix actions: plain Show Log / Open MCP Config / Retry probe. `ETIMEDOUT` stays `transport.http`.
+
 ## [0.5.13] - 2026-11-15
 
 Cadence patch (2h train). No user-visible change. Live public story remains Doctor **0.5.7** (cause sentence / toast / dual-truth green). See commits since previous tag.

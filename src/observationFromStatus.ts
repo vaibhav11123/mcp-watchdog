@@ -71,7 +71,7 @@ export function observationFromStatus(status: ServerStatus): RuntimeObservation 
       hostConnection,
     });
   }
-  if (causeId === 'transport.http') {
+  if (causeId === 'transport.http' || causeId === 'transport.timeout') {
     return emptyObservation({
       discovery: 'failed',
       transport: 'disconnected',

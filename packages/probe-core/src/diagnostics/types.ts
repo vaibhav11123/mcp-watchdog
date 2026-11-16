@@ -18,6 +18,7 @@ export type CauseId =
   | 'auth.expired'
   | 'auth.oauth_needed'
   | 'transport.http'
+  | 'transport.timeout'
   | 'spawn.enoent'
   | 'spawn.closed'
   | 'generic';
@@ -56,12 +57,7 @@ export interface Diagnosis {
 export type VerifiedOutcome = 'resolved' | 'unresolved' | 'unknown' | 'worsened';
 
 /** Five UI states only — never invent a sixth for auth. */
-export type DerivedServerState =
-  | 'connecting'
-  | 'healthy'
-  | 'degraded'
-  | 'failed'
-  | 'disconnected';
+export type DerivedServerState = 'connecting' | 'healthy' | 'degraded' | 'failed' | 'disconnected';
 
 /** Legacy telemetry / UI enum — shim only. */
 export type LegacyFailureClass = 'aws_session' | 'auth' | 'spawn' | 'generic';
