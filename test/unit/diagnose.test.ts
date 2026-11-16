@@ -44,6 +44,29 @@ describe('diagnose / auth taxonomy', () => {
     );
   });
 
+  it('Windows missing binary phrases → spawn.enoent (not retryExhausted spawn.closed)', () => {
+    expect(
+      classifyCauseId({
+        serverName: 'bad',
+        lastError: 'Max retries exceeded',
+        lastProbeError: 'The system cannot find the path specified.',
+      }),
+    ).toBe('spawn.enoent');
+    expect(
+      classifyCauseId({
+        serverName: 'bad',
+        lastError: 'spawn mcp-watchdog-missing-binary-xyz-9f3a ENOENT',
+      }),
+    ).toBe('spawn.enoent');
+    expect(
+      classifyCauseId({
+        serverName: 'bad',
+        lastError:
+          "'mcp-watchdog-missing-binary-xyz-9f3a' is not recognized as an internal or external command",
+      }),
+    ).toBe('spawn.enoent');
+  });
+
   it('C-AUTH-OAUTH-01: www-authenticate / oauth → auth.oauth_needed', () => {
     expect(
       diagnose({ serverName: 'remote', lastError: 'WWW-Authenticate: Bearer realm=prm' }).causeId,

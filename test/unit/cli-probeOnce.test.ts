@@ -28,12 +28,15 @@ describe('probeServerOnce honesty (CRITIQUE stop-clobber)', () => {
   }, 20_000);
 
   it('classifies ENOENT without clobbering to generic', async () => {
+    // Bare missing name (not a Unix-only absolute path) so Windows CreateProcess
+    // still surfaces a missing-binary error the classifier can map to spawn.enoent.
     const report = await probeServerOnce('missing', {
       type: 'stdio',
-      command: '/nonexistent/mcp-binary-watchdog-test',
+      command: 'mcp-watchdog-missing-binary-xyz-9f3a',
       args: [],
     });
-    // Interval probe maps spawn fail → degraded; cause must stay spawn.enoent (not stop-clobber generic).
+    // Interval probe maps spawn fail → degraded/failed; cause must stay spawn.enoent
+    // (not stop-clobber generic / retryExhausted → spawn.closed).
     expect(report.state).toMatch(/^(degraded|failed|disconnected)$/);
     expect(report.causeId).toBe('spawn.enoent');
     expect(report.hostConnection).toBe('unknown');
