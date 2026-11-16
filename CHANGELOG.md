@@ -6,10 +6,6 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
-### Changed
-
-- GitHub star: fully silent for automatic path — no value-moment toast; prefer existing editor GitHub session (`vscode.authentication`) before `gh api`; retry once per extension version when prior attempt was skipped (no auth). Browser / “Thanks” only for the explicit Star command.
-
 ## [0.5.13] - 2026-11-15
 
 Cadence patch (2h train). No user-visible change. Live public story remains Doctor **0.5.7** (cause sentence / toast / dual-truth green). See commits since previous tag.
