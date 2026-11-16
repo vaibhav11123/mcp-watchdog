@@ -59,7 +59,16 @@ export function classifyCause(input: ClassifyCauseInput): ClassifyCauseResult {
     return { causeId: 'auth.rejected', confidence: 'high', evidence, retryExhausted };
   }
 
-  if (/ENOENT|command not found|spawn .+ ENOENT/i.test(err)) {
+  // Unix: Node `spawn … ENOENT` / shell "command not found".
+  // Windows: CreateProcess / cmd often say "cannot find the path|file specified"
+  // or "'foo' is not recognized as an internal or external command" — without the
+  // ENOENT token. Miss those → retryExhausted falls through as spawn.closed
+  // (CI: unit (windows-latest) on PR #17).
+  if (
+    /ENOENT|command not found|spawn .+ ENOENT|cannot find the (path|file) specified|is not recognized as (an internal or external command|a command)/i.test(
+      err,
+    )
+  ) {
     return { causeId: 'spawn.enoent', confidence: 'high', evidence, retryExhausted };
   }
   if (/-32000:\s*Connection closed|Connection closed/i.test(err)) {

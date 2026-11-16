@@ -44,6 +44,39 @@ describe('diagnose / auth taxonomy', () => {
     );
   });
 
+  it('Windows missing binary phrases → spawn.enoent (not retryExhausted spawn.closed)', () => {
+    expect(
+      classifyCauseId({
+        serverName: 'bad',
+        lastError: 'Max retries exceeded',
+        lastProbeError: 'The system cannot find the path specified.',
+      }),
+    ).toBe('spawn.enoent');
+    expect(
+      classifyCauseId({
+        serverName: 'bad',
+        lastError: 'spawn mcp-watchdog-missing-binary-xyz-9f3a ENOENT',
+      }),
+    ).toBe('spawn.enoent');
+    expect(
+      classifyCauseId({
+        serverName: 'bad',
+        lastError:
+          "'mcp-watchdog-missing-binary-xyz-9f3a' is not recognized as an internal or external command",
+      }),
+    ).toBe('spawn.enoent');
+    // lastProbeError is Connection closed but stderr landed in failureContext (Windows inherit→pipe race)
+    expect(
+      classifyCauseId({
+        serverName: 'bad',
+        lastError: 'Max retries exceeded',
+        lastProbeError: 'MCP error -32000: Connection closed',
+        failureContext:
+          "[missing] stderr: 'mcp-watchdog-missing-binary-xyz-9f3a' is not recognized as an internal or external command, operable program or batch file.",
+      }),
+    ).toBe('spawn.enoent');
+  });
+
   it('C-AUTH-OAUTH-01: www-authenticate / oauth → auth.oauth_needed', () => {
     expect(
       diagnose({ serverName: 'remote', lastError: 'WWW-Authenticate: Bearer realm=prm' }).causeId,
@@ -120,8 +153,24 @@ describe('diagnose / auth taxonomy', () => {
 describe('verifyRecovery', () => {
   it('marks resolved when after discovery succeeds', () => {
     const before = emptyObservation({ discovery: 'failed', auth: 'missing' });
-    const after = emptyObservation({ discovery: 'success', transport: 'connected', auth: 'ok' });
+    const after = emptyObservation({
+      discovery: 'success',
+      transport: 'connected',
+      auth: 'ok',
+      execution: 'successful',
+    });
     expect(verifyRecovery({ before, after })).toBe('resolved');
+  });
+
+  it('never resolves when after is degraded (execution failed)', () => {
+    const before = emptyObservation({ discovery: 'failed', transport: 'disconnected' });
+    const after = emptyObservation({
+      discovery: 'success',
+      transport: 'connected',
+      auth: 'ok',
+      execution: 'failed',
+    });
+    expect(verifyRecovery({ before, after })).toBe('unresolved');
   });
 
   it('marks unresolved when still failing', () => {

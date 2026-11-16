@@ -3,6 +3,7 @@ import type { McpServerConfig } from '../config-core';
 import { diagnoseFailure } from '../failureTriage';
 import { ServerMonitor, type ServerStatus } from '../monitor';
 import type { MonitorOptions } from '../options';
+import { redactSecrets } from '../secretRedact';
 
 const DEFAULT_OPTS: MonitorOptions = {
   probeMode: 'interval',
@@ -44,18 +45,23 @@ export async function probeServerOnce(
     },
   );
 
+  // Snapshot before stop(): monitor.stop() always setStatus('disconnected') and would
+  // clobber a healthy one-shot (CRITIQUE stop-clobber / MCP client close lifecycle).
+  let snapshot: ServerStatus | undefined;
   try {
     await monitor.start();
+    snapshot = { ...monitor.getStatus() };
   } finally {
     await monitor.stop().catch(() => {});
   }
 
-  const status = last ?? {
-    name,
-    state: 'failed' as const,
-    retryCount: 0,
-    lastError: 'No status from probe',
-  };
+  const status = snapshot ??
+    last ?? {
+      name,
+      state: 'failed' as const,
+      retryCount: 0,
+      lastError: 'No status from probe',
+    };
 
   if (status.state === 'healthy' || status.state === 'connecting') {
     return {
@@ -81,6 +87,6 @@ export async function probeServerOnce(
     sentence: causeSentence(diagnosis.causeId),
     actions: diagnosis.actions.map((a) => ({ id: a.id, label: a.label })),
     hostConnection: 'unknown',
-    lastError: status.lastError ? String(status.lastError).slice(0, 200) : undefined,
+    lastError: status.lastError ? redactSecrets(String(status.lastError)).slice(0, 200) : undefined,
   };
 }
