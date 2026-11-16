@@ -1,7 +1,25 @@
 {
-  "mcpWatchdog.requireApproval": false,
+  "mcpWatchdog.requireApproval": true,
   "mcpWatchdog.probeMode": "persistent",
   "mcpWatchdog.perServer": {
+    "posthog": {
+      "enabled": false
+    },
+    "aws-mcp": {
+      "enabled": false
+    },
+    "exa": {
+      "enabled": false
+    },
+    "rea": {
+      "enabled": false
+    },
+    "apple-messages": {
+      "enabled": false
+    },
+    "slack-eng": {
+      "enabled": false
+    },
     "memory": {
       "enabled": false
     },
