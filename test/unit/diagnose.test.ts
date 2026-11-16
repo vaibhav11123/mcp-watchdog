@@ -68,6 +68,34 @@ describe('diagnose / auth taxonomy', () => {
     expect(d.retryExhausted).toBe(true);
   });
 
+  it('C-TRANSPORT-TIMEOUT-01: -32001 Request timed out beats retryExhausted → spawn.closed', () => {
+    for (const serverName of ['stdio-echo', 'http-remote', 'sse-feed']) {
+      const d = diagnose({
+        serverName,
+        lastError: 'Max retries exceeded',
+        lastProbeError: 'MCP error -32001: Request timed out',
+        wave2Actions: true,
+      });
+      expect(d.causeId).toBe('transport.timeout');
+      expect(d.retryExhausted).toBe(true);
+      expect(d.actions.map((a) => a.id)).toEqual(['show.log', 'open.config', 'retry.probe']);
+      expect(d.actions.map((a) => a.label)).toEqual(['Show Log', 'Open MCP Config', 'Retry probe']);
+      expect(d.actions.every((a) => !/crash|stderr|command -v/i.test(a.label))).toBe(true);
+    }
+  });
+
+  it('C-TRANSPORT-TIMEOUT-02: ETIMEDOUT stays transport.http', () => {
+    expect(
+      diagnose({ serverName: 'http', lastError: 'connect ETIMEDOUT 1.2.3.4:443' }).causeId,
+    ).toBe('transport.http');
+  });
+
+  it('C-TRANSPORT-TIMEOUT-03: bare -32001 Session not found is not timeout', () => {
+    expect(
+      diagnose({ serverName: 'x', lastError: 'MCP error -32001: Session not found' }).causeId,
+    ).not.toBe('transport.timeout');
+  });
+
   it('C-GENERIC-01: opaque text → generic', () => {
     expect(diagnose({ serverName: 'x', lastError: 'something weird happened' }).causeId).toBe(
       'generic',

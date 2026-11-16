@@ -40,4 +40,18 @@ describe('Phase 4 golden fixtures (cross-host causeId)', () => {
       expect(d.causeId).toBe('auth.rejected');
     }
   });
+
+  it.each(['stdio-tool', 'http-api', 'sse-bridge'])(
+    '%s + Request timed out → transport.timeout',
+    (serverName) => {
+      const d = diagnose({
+        serverName,
+        lastError: '-32001: Request timed out',
+      });
+      expect(d.causeId).toBe('transport.timeout');
+      expect(causeSentence(d.causeId)).toBe(
+        "Server didn't answer in time - check its log and configuration.",
+      );
+    },
+  );
 });
