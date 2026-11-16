@@ -691,6 +691,11 @@ export interface McpWatchdogApi {
   removeServerForTests(serverName: string): Promise<void>;
   /** Host-test hook: set Overview Verified: line (Live EH L7). */
   setVerifiedOutcomeForTests(serverName: string, outcome: VerifiedOutcome): void;
+  /**
+   * Host-test hook: Overview card click path (webview `data-action`).
+   * Use `{ type: 'showOutput' }` to assert Show Log → Output, not reconnect.
+   */
+  dispatchOverviewMessageForTests(msg: { type?: string; server?: string }): void;
 }
 
 export async function activate(context: vscode.ExtensionContext): Promise<McpWatchdogApi> {
@@ -932,6 +937,9 @@ export async function activate(context: vscode.ExtensionContext): Promise<McpWat
     },
     setVerifiedOutcomeForTests: (serverName: string, outcome: VerifiedOutcome) => {
       setVerifiedOutcome(serverName, outcome);
+    },
+    dispatchOverviewMessageForTests: (msg: { type?: string; server?: string }) => {
+      overviewProvider?.dispatchMessage(msg);
     },
   };
 }
