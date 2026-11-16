@@ -19,25 +19,21 @@ Works in **Cursor**, **Windsurf**, **VS Code**, **VSCodium**, and other forks th
 
 **Repository:** [github.com/vaibhav11123/mcp-watchdog](https://github.com/vaibhav11123/mcp-watchdog)
 
-## Install
+## Quick start
 
-### Install in Cursor (recommended)
+1. Install from **[Open VSX](https://open-vsx.org/extension/mcp-watchdog/mcp-watchdog)** (Cursor / forks) or the [VS Marketplace](https://marketplace.visualstudio.com/items?itemName=mcp-watchdog.mcp-watchdog) (VS Code).
+2. **Reload**, open a folder, then click the **activity bar MCP Watchdog** icon → **Overview** (not the Extensions detail page).
+3. Approve servers when prompted. On failure: toast names the cause → **Fix…** → look for **Verified:** on the Overview row after recovery.
 
-Most Cursor installs pull extensions from **Open VSX**, not the VS Marketplace:
-
-1. **Extensions** (`Cmd+Shift+X`) → search **`MCP Watchdog`**
-2. Or open **[MCP Watchdog on Open VSX](https://open-vsx.org/extension/mcp-watchdog/mcp-watchdog)** → **Download** / install from the registry
-3. Or CLI: `cursor --install-extension mcp-watchdog.mcp-watchdog`
-
-### All install channels
+## Install channels
 
 | Channel | Who | How |
 |--------|-----|-----|
-| **[Open VSX](https://open-vsx.org/extension/mcp-watchdog/mcp-watchdog)** (recommended) | **Cursor, Windsurf, VSCodium, Trae**, most VS Code forks | [Install on Open VSX](https://open-vsx.org/extension/mcp-watchdog/mcp-watchdog) or Extensions search |
+| **[Open VSX](https://open-vsx.org/extension/mcp-watchdog/mcp-watchdog)** (recommended) | **Cursor, Windsurf, VSCodium, Trae**, most VS Code forks | [Install on Open VSX](https://open-vsx.org/extension/mcp-watchdog/mcp-watchdog) or Extensions search `MCP Watchdog` |
 | **[VS Marketplace](https://marketplace.visualstudio.com/items?itemName=mcp-watchdog.mcp-watchdog)** | VS Code (Microsoft build) | Extensions search → `mcp-watchdog.mcp-watchdog` |
-| **[GitHub Releases](https://github.com/vaibhav11123/mcp-watchdog/releases)** | Airgapped / manual | Download the `.vsix` from the latest Release → **Install from VSIX…**, or `cursor --install-extension path/to/mcp-watchdog-*.vsix` |
+| **[GitHub Releases](https://github.com/vaibhav11123/mcp-watchdog/releases)** | Airgapped / manual | Download the `.vsix` → **Install from VSIX…** |
 
-After install, **reload** the window. Open the **activity bar** MCP Watchdog icon (not the Extensions detail page).
+CLI: `cursor --install-extension mcp-watchdog.mcp-watchdog`
 
 ## Editor
 
@@ -45,55 +41,30 @@ Watchdog opens its own connection to each approved server. The status bar shows 
 
 That result is Watchdog’s probe. It does not read the editor’s MCP client, so a green Watchdog row does not mean the editor’s own session is healthy.
 
-When a check fails, the next steps are separate:
+When a check fails:
 
-- **Accept** — acknowledge the failure; status-bar chip drops that server from **N/M** (Overview still shows Failed + Accepted). Probing continues.
-- **Fix…** — guided remediation by cause class (e.g. missing token vs 401 vs expired session vs spawn path); copy commands, open owning config, AWS login terminal, credential wizard, retry.
-- **Remove** — delete the server key from the owning config file (or Disable Watchdog monitoring).
-- **Retry probe** — run Watchdog’s check again.
-- **Restart editor MCP** — offered in **Fix…** when the host exposes `workbench.mcp.*`. Cursor and some forks do not; Watchdog will not fake a restart on those hosts.
-- **Reload Window** — when the editor client stays stuck after a healthy Watchdog probe. **Quit Cursor** is the last resort.
+- **Failure toast (≤3):** **Fix…** / **Show Log** / **Mute 1h** — cause sentence in plain language.
+- **Overview / commands:** **Accept**, **Remove**, **Retry probe**, **Reload Window**, and (in **Fix…** only when the host supports it) **Restart editor MCP**. Cursor often cannot restart host MCP — Watchdog will not fake that.
 
 ## Demo
 
 ![MCP Watchdog demo — failure toast and recovery](./images/demo.gif)
 
-Independent probe → cause sentence → Fix… → recovery. Prefer the Accept / Fix… / Remove story in [docs/media/GIF-RECORDING.md](./docs/media/GIF-RECORDING.md) when re-recording (no secret values in frames). After a remediable Fix, Overview keeps a quiet **Verified: resolved** (or honest Unknown) on the row — that is the moment worth sharing.
-
-## Requirements
-
-- **VS Code** or **Cursor** with a compatible engine: this manifest declares **`engines.vscode`: `^1.105.0`** (adjust if you need a different floor after testing).
-- A **workspace folder** open in the editor.
-- MCP config in at least one of:
-  - **`.vscode/mcp.json`** — VS Code workspace (`servers` object)
-  - **`.cursor/mcp.json`** — Cursor workspace (`mcpServers` or `servers`)
-  - **`~/.cursor/mcp.json`** — Cursor global
-  - **VS Code user `mcp.json`** — e.g. `~/Library/Application Support/Code/User/mcp.json` on macOS
-  - **Windsurf** — `~/.codeium/windsurf/mcp_config.json`
-  - **Claude Code** — `~/.claude.json` (`mcpServers` block)
-  - **Claude Desktop** — `claude_desktop_config.json` (`mcpServers`; fully quit the app after edits so MCP reloads)
-  - Layers merge (workspace project files override globals).
-- In **multi-root** workspaces, workspace **`.vscode/mcp.json`** / **`.cursor/mcp.json`** are merged from **every** folder (later folder wins on the same server name). `${workspaceFolder}` on **global** layers uses the **first** folder only; each workspace layer expands with that folder’s path.
+Independent probe → cause sentence → Fix… → **Verified:** on Overview when recovery works.
 
 ## Where is the UI?
 
-VS Code has **two different sidebars**:
-
 | Place | What you see |
 |--------|----------------|
-| **Extensions** (puzzle piece) → click **MCP Watchdog** | Marketplace **README** only—the same for almost every extension. This is **not** the live dashboard. |
-| **Activity bar** → **MCP Watchdog** icon | **Overview** dashboard (metrics, latency sparklines, failure snippets, actions) and **Servers** tree (per-server detail). This is the real UI. |
+| **Extensions** → click **MCP Watchdog** | Store **README** only — not the live dashboard. |
+| **Activity bar** → **MCP Watchdog** icon | **Overview** + **Servers** — the real UI. |
 
-Other extensions that “show UI when opened” usually either (1) open their **own activity bar panel** (GitLens, Docker, etc.), (2) add a **Getting Started walkthrough** (first install), or (3) use a **webview** in the sidebar. MCP Watchdog uses (1) + a walkthrough on first install.
+Walkthrough: **Help → Welcome → MCP Watchdog: Get started**, or **MCP Watchdog: Open Servers View**.
 
-After install, run **Help → Welcome → MCP Watchdog: Get started** (walkthrough), or **MCP Watchdog: Open Servers View**.
+## Requirements
 
-## Quick start
-
-1. Add MCP config (see examples below). Command: **MCP Watchdog: Open MCP Config**.
-2. Open that folder. Click the **MCP Watchdog** icon in the **activity bar** → **Overview** (not the Extensions panel). The **status bar** shows **`Watchdog: n/n`** when servers are monitored.
-3. On failure: toast names the cause → **Fix…** → look for **Verified:** on the Overview row after recovery.
-4. Optional: **View → Output → MCP Watchdog** for detailed logs.
+- **VS Code** / **Cursor** (`engines.vscode`: `^1.105.0`) and a **workspace folder**.
+- MCP config in at least one of: `.vscode/mcp.json`, `.cursor/mcp.json`, `~/.cursor/mcp.json`, VS Code user `mcp.json`, Windsurf `mcp_config.json`, Claude Code `~/.claude.json`, Claude Desktop `claude_desktop_config.json` (layers merge; workspace overrides globals).
 
 ## Watchdog Cloud (preview — optional)
 
@@ -102,6 +73,10 @@ Cloud is **not** required for the editor product. Start with status bar + failur
 If you self-host later: remote health checks, schema change alerts, and configuration policy checks with an audit trail (policy runs outside the MCP tool-call path). Opt-in via `mcpWatchdog.cloudBridge.enabled` and `cloudBridge.url` (names-only incidents; fail-soft). Default is off. Self-host notes: [packages/cloud/README.md](./packages/cloud/README.md).
 
 ## Screenshots
+
+**Overview after Fix** — quiet **Verified: resolved** on a healthy row (recommend punchline):
+
+![MCP Watchdog Overview showing Verified resolved](./images/screenshot-overview-verified.png)
 
 **Status bar** — aggregate health (`Watchdog: healthy / total`) on the bottom right (distinct from the editor’s own MCP chip):
 
@@ -210,7 +185,7 @@ These never force a server into `failed` on their own:
 
 ### Alerts
 
-When a server fails, Watchdog shows **Accept**, **Fix…**, **Remove**, **Retry probe**, **Restart editor MCP** (when `workbench.mcp.*` is available), **Show Log**, **Reload Window**, **Quit Cursor**, and **Mute 1h**. Accept quiets the chip without marking the server healthy; Mute only silences toasts for 1h. Retry probe only restarts Watchdog’s check. Set `mcpWatchdog.notify` to `all` to also get recovery toasts. Repeated failures within 10 minutes collapse into a single **flapping** warning.
+The **failure toast** stays at **≤3 actions:** **Fix…**, **Show Log**, **Mute 1h**. Other actions (**Accept**, **Remove**, **Retry probe**, **Reload Window**, **Quit Cursor**, and **Restart editor MCP** when `workbench.mcp.*` exists) live on Overview / commands / the Fix Quick Pick — not piled onto the toast. Accept quiets the chip without marking the server healthy; Mute only silences toasts for 1h. Retry probe only restarts Watchdog’s check. Set `mcpWatchdog.notify` to `all` to also get recovery toasts. Repeated failures within 10 minutes collapse into a single **flapping** warning.
 
 ### Auth probe (opt-in)
 
@@ -256,50 +231,9 @@ Settings changes apply within ~1s without reloading the window; **`mcp.json`** e
 
 See **Screenshots** above for the Marketplace / README visuals.
 
-## Development
+## Maintainers
 
-```bash
-npm install
-npm run compile
-npm run build
-```
-
-- **Run Extension** / **Run Extension (mcp-watchdog-test workspace)** from `.vscode/launch.json`.
-- Fixture: `mcp-watchdog-test/` (optional; not shipped in VSIX).
-- Headless smoke: `npm run smoke`.
-- **Start here (progress / routing):** [docs/STATUS.md](./docs/STATUS.md) — bird’s-eye phase, claim ladder, what to update next.
-- Release train / soak: [docs/RELEASE.md](./docs/RELEASE.md) · Pre-ship testing: [docs/TESTING.md](./docs/TESTING.md).
-- GTM role (Instinct): [docs/GTM-ROLE.md](./docs/GTM-ROLE.md) · Guardrails: [docs/GTM-GUARDRAILS.md](./docs/GTM-GUARDRAILS.md) · Comms: [docs/GTM-COMMS.md](./docs/GTM-COMMS.md) · Publish checklist: [docs/GTM-PUBLISH.md](./docs/GTM-PUBLISH.md).
-- Strategy thesis: [docs/STRATEGY-THESIS.md](./docs/STRATEGY-THESIS.md) — reliability + recovery intelligence; claim ladder; metric formulas.
-- Target architecture: [docs/TECHNICAL-ARCHITECTURE.md](./docs/TECHNICAL-ARCHITECTURE.md) — Doctor, dual-truth, verified recovery (Phases 1–3).
-- Bake-off method: [docs/BAKE-OFF.md](./docs/BAKE-OFF.md) — pinned competitors + scenarios + dated results.
-- Agent skills toolkit: [docs/AGENT-SKILLS.md](./docs/AGENT-SKILLS.md) — allowlist + selective install; catalog browse-only (not bulk installs).
-- Historical technical dump: [docs/TECHNICAL.md](./docs/TECHNICAL.md) — demoted; prefer CHANGELOG + code for shipped 0.x, ARCH for Doctor target.
-- Execution bible: [docs/EXECUTION.md](./docs/EXECUTION.md) · GTM/publish: [docs/GTM-PUBLISH.md](./docs/GTM-PUBLISH.md).
-- Historical raise notes: [docs/PRODUCT-DECISION.md](./docs/PRODUCT-DECISION.md) (superseded for identity by STRATEGY-THESIS).
-- Cloud self-host: [packages/cloud/README.md](./packages/cloud/README.md).
-- Validation notes: [docs/CUSTOMER-VALIDATION.md](./docs/CUSTOMER-VALIDATION.md).
-
-See [CHANGELOG.md](./CHANGELOG.md).
-
-## Ship checklist (maintainers)
-
-Progress board: [docs/STATUS.md](./docs/STATUS.md). Staged train + soak: [docs/RELEASE.md](./docs/RELEASE.md). Pre-ship QA: [docs/TESTING.md](./docs/TESTING.md). Marketing sync + **release map** (0.5.7 → 0.5.9 → 0.6.0): [docs/GTM-PUBLISH.md](./docs/GTM-PUBLISH.md). Claims: [docs/STRATEGY-THESIS.md](./docs/STRATEGY-THESIS.md).
-
-0. Complete [RELEASE.md](./docs/RELEASE.md) hard gates and [TESTING.md](./docs/TESTING.md) `SIGN-OFF.md` **READY** for this version (do not skip soak / collapse Unreleased into one blast).
-1. Confirm the cut matches the [release map](./docs/GTM-PUBLISH.md) (do not mix Doctor UI + verify + win in one patch without re-scoping the map).
-2. Record/update the live clip in [docs/media/GIF-RECORDING.md](./docs/media/GIF-RECORDING.md) when the failure→Fix→verify story changed; put it in `images/demo.gif` before announce.
-3. Bump `package.json` version (maintainer only) + move CHANGELOG Unreleased → versioned section (include Marketing claim-stage line from GTM template).
-4. Update README / store description only for user-visible deltas; Open VSX link stays primary for Cursor.
-5. `npm test` && `npx vsce package` — confirm `vsce ls` has no `test/`, `*.local.md`, `launch/`, `.agents/` (`npm test` includes lint + Prettier).
-6. Set GitHub secrets: **`VSCE_PAT`**, **`OVSX_PAT`** (see [CONTRIBUTING.md](./CONTRIBUTING.md)).
-7. `./scripts/ship-release.sh` or push tag `v*` to run [release.yml](./.github/workflows/release.yml) (**same VSIX** → Marketplace + Open VSX). Script waits for **CI** (`ci.yml`) green via `scripts/wait-ci.sh` — do not stop at Release-only green.
-8. G0 smoke on **published** Cursor (Open VSX), then post `launch/` drafts — claim stage must match thesis for this version.
-
-```bash
-export VSCE_PAT=... OVSX_PAT=...   # one-time
-./scripts/ship-release.sh
-```
+Build, F5, ship checklist, and private ops links: **[CONTRIBUTING.md](./CONTRIBUTING.md)**. Changelog: [CHANGELOG.md](./CHANGELOG.md). Cloud self-host: [packages/cloud/README.md](./packages/cloud/README.md).
 
 ## License
 

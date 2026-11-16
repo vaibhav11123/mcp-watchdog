@@ -38,6 +38,29 @@ Use the launch configs in [`.vscode/launch.json`](./.vscode/launch.json), which 
 
 Before F5, uninstall or disable other copies of **MCP Watchdog** (publisher `mcp-watchdog`) from Extensions. Host tests also pass `--disable-extensions` via [`.vscode-test.mjs`](./.vscode-test.mjs).
 
+## Docs map (not on the store README)
+
+- Progress / routing stubs: [docs/STATUS.md](./docs/STATUS.md), [docs/OPS.md](./docs/OPS.md)
+- Private ops (submodule): `docs/ops/` — RELEASE, TESTING, GTM-*, STRATEGY-THESIS
+- Architecture / bake-off: [docs/TECHNICAL-ARCHITECTURE.md](./docs/TECHNICAL-ARCHITECTURE.md), [docs/BAKE-OFF.md](./docs/BAKE-OFF.md)
+- GIF re-record notes: [docs/media/GIF-RECORDING.md](./docs/media/GIF-RECORDING.md)
+
+## Ship checklist (maintainers)
+
+1. Hard gates + SIGN-OFF READY (ops `RELEASE.md` / `TESTING.md`) — do not skip soak for announce cuts.
+2. Cut matches release map (do not mix Doctor + verify + win in one blast without re-scoping).
+3. Update `images/demo.gif` when the failure→Fix→Verified story changes ([GIF-RECORDING.md](./docs/media/GIF-RECORDING.md)).
+4. Bump `package.json` + CHANGELOG (buyer voice; never “No GTM announce” in public notes).
+5. README / store description only for user-visible deltas; Open VSX stays primary for Cursor.
+6. `npm test` && `npx vsce package` — no `test/`, secrets, or ops process in VSIX.
+7. Secrets `VSCE_PAT` / `OVSX_PAT`; tag `v*` → [release.yml](./.github/workflows/release.yml) (Marketplace + Open VSX).
+8. G0 on published Cursor (Open VSX). Claim stage must match thesis.
+
+```bash
+export VSCE_PAT=... OVSX_PAT=...
+./scripts/ship-release.sh
+```
+
 ## CLA
 
 Sign [docs/CLA.md](./docs/CLA.md) before large external PRs (individual or entity). Maintainer may require CLA assistant on GitHub.
