@@ -13,6 +13,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - Hang HTTP/SSE fixtures + `npm run live:http-sse-timeout` for Cut A live transport.timeout evidence (initialize OK, hang on ping → `-32001 Request timed out`).
 - First-open Overview nudge after activate/trust (one prompt + focus — Convert / trust→UI cliff).
 - `editor` + `extVersion` attached on every allowlisted PostHog event (Instrument / Cursor vs VS Code funnels).
+- Phase 6 harness CLI (Claude Code first): `mcp-watchdog doctor|status` loads `~/.claude.json` + `<cwd>/.mcp.json`, runs one-shot Watchdog probes, prints JSON with the same causeId / sentence / Fix actions as the extension. `hostConnection` stays `unknown`. Pi/Codex/OpenCode loaders not enabled yet.
+
+### Changed
+
+- `npm run build` now emits `dist/extension.js` and `dist/cli.js` (`build:ext` / `build:cli`).
 
 ## [0.5.13] - 2026-11-15
 

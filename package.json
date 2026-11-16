@@ -394,8 +394,10 @@
   },
   "scripts": {
     "vscode:prepublish": "npm run build",
-    "build": "esbuild src/extension.ts --bundle --outfile=dist/extension.js --external:vscode --format=cjs --platform=node --alias:@mcp-watchdog/probe-core=./packages/probe-core/src/index.ts",
-    "watch": "npm run build -- --watch",
+    "build:ext": "esbuild src/extension.ts --bundle --outfile=dist/extension.js --external:vscode --format=cjs --platform=node --alias:@mcp-watchdog/probe-core=./packages/probe-core/src/index.ts",
+    "build:cli": "esbuild src/cli/main.ts --bundle --outfile=dist/cli.js --format=cjs --platform=node --alias:@mcp-watchdog/probe-core=./packages/probe-core/src/index.ts",
+    "build": "npm run build:ext && npm run build:cli",
+    "watch": "npm run build:ext -- --watch",
     "compile": "tsc --noEmit",
     "smoke": "node scripts/smoke-connect.mjs",
     "live:http-sse-timeout": "tsx scripts/live-http-sse-timeout.ts",
