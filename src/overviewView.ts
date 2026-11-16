@@ -60,6 +60,14 @@ export class OverviewViewProvider implements vscode.WebviewViewProvider {
             );
           }
           break;
+        case 'fixFailure':
+          if (typeof (msg as { server?: string }).server === 'string') {
+            void vscode.commands.executeCommand(
+              'mcpWatchdog.fixFailure',
+              (msg as { server: string }).server,
+            );
+          }
+          break;
         case 'starOnGitHub':
           void vscode.commands.executeCommand('mcpWatchdog.starOnGitHub');
           break;

@@ -9,6 +9,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 ### Added
 
 - Doctor `transport.timeout` causeId for MCP `-32001 Request timed out` (before retryExhausted → `spawn.closed`). Sentence: “Server didn't answer in time - check its log and configuration.” Fix actions: plain Show Log / Open MCP Config / Retry probe. `ETIMEDOUT` stays `transport.http`.
+- Overview failed-row primary link now follows the first Doctor action (`show.log` → Logs, `open.config` → MCP config, `retry.probe` → reconnect) instead of always retrying while labeling “Show Log”.
 
 ## [0.5.13] - 2026-11-15
 

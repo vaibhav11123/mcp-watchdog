@@ -21,6 +21,8 @@ export interface OverviewSnapshot {
     error?: string;
     causeSentence?: string;
     firstActionLabel?: string;
+    /** DoctorActionId for the overview primary link — must match click handler, not always reconnect. */
+    firstActionId?: string;
     hostSessionUnknown?: boolean;
     verifiedOutcome?: string;
     dotClass: string;
@@ -67,6 +69,7 @@ export function statusesSnapshot(
       error: needsDoctor ? undefined : s.lastError,
       causeSentence: diagnosis ? causeSentence(diagnosis.causeId) : undefined,
       firstActionLabel: diagnosis?.actions[0]?.label,
+      firstActionId: diagnosis?.actions[0]?.id,
       hostSessionUnknown: needsDoctor,
       verifiedOutcome: s.verifiedOutcome,
       dotClass,
@@ -258,8 +261,8 @@ export function wrapOverviewDocument(body: string, nonce: string): string {
       el.addEventListener('click', () => {
         const action = el.getAttribute('data-action');
         const server = el.getAttribute('data-server');
-        if (action === 'reconnect' && server) {
-          vscode.postMessage({ type: 'reconnect', server });
+        if ((action === 'reconnect' || action === 'fixFailure') && server) {
+          vscode.postMessage({ type: action, server });
         } else if (action) {
           vscode.postMessage({ type: action });
         }
@@ -362,7 +365,7 @@ function renderDashboard(data: OverviewSnapshot): string {
         ${s.verifiedOutcome ? `<div class="server-meta">Verified: ${escapeHtml(s.verifiedOutcome)}</div>` : ''}
         ${
           s.state === 'failed' || s.state === 'degraded'
-            ? `<div class="actions" style="margin-top:6px"><button class="link" data-action="reconnect" data-server="${escapeHtml(s.name)}">${escapeHtml(s.firstActionLabel ?? 'Retry probe')}</button></div>`
+            ? `<div class="actions" style="margin-top:6px">${renderRowPrimaryAction(s.name, s.firstActionId, s.firstActionLabel)}</div>`
             : ''
         }
       </div>
@@ -384,6 +387,27 @@ function renderDashboard(data: OverviewSnapshot): string {
       <button class="secondary" data-action="openConfig">MCP config</button>
       <button class="secondary" data-action="showOutput">Logs</button>
     </div>`;
+}
+
+/** Map Doctor first action → webview click (label must match behavior). */
+export function renderRowPrimaryAction(
+  serverName: string,
+  actionId: string | undefined,
+  actionLabel: string | undefined,
+): string {
+  const label = escapeHtml(actionLabel ?? 'Retry probe');
+  const server = escapeHtml(serverName);
+  switch (actionId) {
+    case 'show.log':
+      return `<button class="link" data-action="showOutput">${label}</button>`;
+    case 'open.config':
+      return `<button class="link" data-action="openConfig">${label}</button>`;
+    case 'retry.probe':
+      return `<button class="link" data-action="reconnect" data-server="${server}">${label}</button>`;
+    default:
+      // Unknown primary step → open Fix QP (never pretend a Show Log click is a retry).
+      return `<button class="link" data-action="fixFailure" data-server="${server}">${label}</button>`;
+  }
 }
 
 function escapeHtml(s: string): string {
