@@ -404,7 +404,7 @@
     "smoke": "node scripts/smoke-connect.mjs",
     "live:http-sse-timeout": "tsx scripts/live-http-sse-timeout.ts",
     "test:unit": "vitest run",
-    "test:cli-recovery": "vitest run test/unit/cli-*.test.ts",
+    "test:cli-recovery": "vitest run test/unit/cli",
     "cli-recovery-harness": "node scripts/cli-recovery-harness.mjs",
     "t0": "tsx scripts/t0-probe-live.ts",
     "t2": "tsx scripts/t2-bridge-dry-run.ts",
