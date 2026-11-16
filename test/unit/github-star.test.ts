@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import {
   cooldownMsAfterToast,
   parseOwnerRepo,
+  shouldAttemptSilentStar,
   shouldShowStarToast,
   type GithubStarState,
 } from '../../src/githubStarCore';
@@ -16,6 +17,32 @@ describe('parseOwnerRepo', () => {
       owner: 'vaibhav11123',
       repo: 'mcp-watchdog',
     });
+  });
+});
+
+describe('shouldAttemptSilentStar', () => {
+  const base: GithubStarState = {
+    installFirstSeenAt: 0,
+    toastCount: 0,
+  };
+
+  it('allows first attempt', () => {
+    expect(shouldAttemptSilentStar(base, '0.5.13')).toBe(true);
+  });
+
+  it('blocks after success or explicit star open', () => {
+    expect(shouldAttemptSilentStar({ ...base, silentStarSucceeded: true }, '0.5.14')).toBe(false);
+    expect(shouldAttemptSilentStar({ ...base, starOpenedAt: 1 }, '0.5.14')).toBe(false);
+  });
+
+  it('retries skip on a new extension version only', () => {
+    const skipped: GithubStarState = {
+      ...base,
+      silentStarAttempted: true,
+      silentStarLastExtVersion: '0.5.13',
+    };
+    expect(shouldAttemptSilentStar(skipped, '0.5.13')).toBe(false);
+    expect(shouldAttemptSilentStar(skipped, '0.5.14')).toBe(true);
   });
 });
 

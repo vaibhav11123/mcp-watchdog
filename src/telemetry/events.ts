@@ -48,9 +48,11 @@ export type UiCommandName =
 
 export type StarMethod =
   | 'gh_api'
+  | 'vscode_auth'
   | 'browser'
   | 'already'
   | 'silent_gh'
+  | 'silent_vscode'
   | 'silent_already'
   | 'silent_skipped';
 
