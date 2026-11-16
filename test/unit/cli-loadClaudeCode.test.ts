@@ -14,6 +14,7 @@ describe('cli parseArgs', () => {
       command: 'doctor',
       yes: false,
       pretty: false,
+      from: undefined,
     });
   });
 
@@ -22,6 +23,16 @@ describe('cli parseArgs', () => {
       command: 'fix',
       yes: true,
       pretty: true,
+      cwd: path.resolve('/tmp'),
+    });
+  });
+
+  it('parses restore --from', () => {
+    expect(
+      parseArgs(['restore', '--from', '.mcp-watchdog/backups/x.json', '--cwd', '/tmp']),
+    ).toMatchObject({
+      command: 'restore',
+      from: '.mcp-watchdog/backups/x.json',
       cwd: path.resolve('/tmp'),
     });
   });

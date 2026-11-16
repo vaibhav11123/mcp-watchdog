@@ -5,6 +5,7 @@ import { buildFixPlan } from './fixPlan';
 import { loadClaudeCodeServers, resolveHost } from './loadClaudeCode';
 import { mapPool } from './mapPool';
 import { probeServerOnce } from './probeOnce';
+import { restoreMcpJsonFromBackup } from './restore';
 
 const HOSTS = new Set(['claude-code', 'pi', 'codex', 'opencode', 'auto']);
 const PROBE_CONCURRENCY = 4;
@@ -13,26 +14,29 @@ export function parseArgs(argv: string[]): {
   host: string;
   cwd: string;
   help: boolean;
-  command: 'doctor' | 'status' | 'fix';
+  command: 'doctor' | 'status' | 'fix' | 'restore';
   yes: boolean;
   pretty: boolean;
+  from?: string;
 } {
   const out = {
     host: 'auto',
     cwd: process.cwd(),
     help: false,
-    command: 'doctor' as 'doctor' | 'status' | 'fix',
+    command: 'doctor' as 'doctor' | 'status' | 'fix' | 'restore',
     yes: false,
     pretty: false,
+    from: undefined as string | undefined,
   };
   for (let i = 0; i < argv.length; i++) {
     const a = argv[i];
     if (a === '-h' || a === '--help') out.help = true;
     else if (a === '--host' && argv[i + 1]) out.host = argv[++i]!;
     else if (a === '--cwd' && argv[i + 1]) out.cwd = path.resolve(argv[++i]!);
+    else if (a === '--from' && argv[i + 1]) out.from = argv[++i]!;
     else if (a === '--yes' || a === '-y') out.yes = true;
     else if (a === '--full' || a === '--pretty') out.pretty = true;
-    else if (a === 'doctor' || a === 'status' || a === 'fix') out.command = a;
+    else if (a === 'doctor' || a === 'status' || a === 'fix' || a === 'restore') out.command = a;
   }
   return out;
 }
@@ -42,7 +46,7 @@ export function usage(): string {
 
 Usage:
   mcp-watchdog [--host claude-code|pi|codex|opencode|auto] [--cwd <path>] [--full]
-               [doctor|status|fix] [--yes]
+               [doctor|status|fix|restore] [--yes] [--from <backup>]
 
 Notes:
   - Same Doctor taxonomy as the VS Code/Cursor extension (causeId + Fix).
@@ -51,6 +55,8 @@ Notes:
   - Default JSON is compact (token-efficient); pass --full for pretty indent.
   - fix: plan only by default; --yes applies allowlisted retry.probe + verify (Act+Prove).
   - Kill switch: MCP_WATCHDOG_FIX=0 disables mutate.
+  - Rate limit: max 3 mutates per cwd per 5 minutes.
+  - restore --from <path>: restore .mcp.json from .mcp-watchdog/backups/ only.
   - v1 loader: Claude Code (~/.claude.json + <cwd>/.mcp.json).
 `;
 }
@@ -61,6 +67,52 @@ export async function runCli(argv: string[]): Promise<number> {
     process.stdout.write(usage());
     return 0;
   }
+
+  if (args.command === 'restore') {
+    if (!args.from) {
+      emitJson(
+        {
+          ok: false,
+          command: 'restore',
+          message: 'restore requires --from <backup under .mcp-watchdog/backups/>',
+          next: 'mcp-watchdog restore --from .mcp-watchdog/backups/<file>',
+          dualTruth: { watchdog: 'unknown', host: 'unknown' },
+          hostConnection: 'unknown',
+        },
+        { pretty: args.pretty, cwd: args.cwd },
+      );
+      return 2;
+    }
+    const restored = restoreMcpJsonFromBackup(args.cwd, args.from);
+    if (!restored.ok) {
+      emitJson(
+        {
+          ok: false,
+          command: 'restore',
+          reason: restored.reason,
+          dualTruth: { watchdog: 'unknown', host: 'unknown' },
+          hostConnection: 'unknown',
+          next: 'mcp-watchdog doctor',
+        },
+        { pretty: args.pretty, cwd: args.cwd },
+      );
+      return 1;
+    }
+    emitJson(
+      {
+        ok: true,
+        command: 'restore',
+        from: restored.from,
+        to: restored.to,
+        dualTruth: { watchdog: 'unknown', host: 'unknown' },
+        hostConnection: 'unknown',
+        next: 'mcp-watchdog doctor',
+      },
+      { pretty: args.pretty, cwd: args.cwd },
+    );
+    return 0;
+  }
+
   if (!HOSTS.has(args.host)) {
     process.stderr.write(`Unknown --host ${args.host}\n${usage()}`);
     return 2;
@@ -145,13 +197,14 @@ export async function runCli(argv: string[]): Promise<number> {
       plan,
       yes: true,
     });
-    if (applied.blocked === 'MCP_WATCHDOG_FIX=0 — mutate disabled') {
+    if (applied.blocked) {
       emitJson(
         {
           ok: false,
           command: 'fix',
           blocked: applied.blocked,
           dualTruth,
+          hostConnection: 'unknown',
         },
         { pretty: args.pretty, cwd: args.cwd },
       );
@@ -165,6 +218,10 @@ export async function runCli(argv: string[]): Promise<number> {
       applied.results.every((r) => r.applied);
     const anyResolved = verifyResults.some((r) => r.verifiedOutcome === 'resolved');
     const verified = allResolved ? 'resolved' : anyResolved ? 'partial' : 'unresolved';
+    const next =
+      !allResolved && applied.backupPath
+        ? `mcp-watchdog restore --from ${applied.backupPath}`
+        : undefined;
 
     emitJson(
       {
@@ -182,6 +239,7 @@ export async function runCli(argv: string[]): Promise<number> {
         plan,
         results: applied.results,
         verified,
+        next,
       },
       { pretty: args.pretty, cwd: args.cwd },
     );

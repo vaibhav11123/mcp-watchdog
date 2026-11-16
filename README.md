@@ -46,6 +46,19 @@ When a check fails:
 - **Failure toast (≤3):** **Fix…** / **Show Log** / **Mute 1h** — cause sentence in plain language.
 - **Overview / commands:** **Accept**, **Remove**, **Retry probe**, **Reload Window**, and (in **Fix…** only when the host supports it) **Restart editor MCP**. Cursor often cannot restart host MCP — Watchdog will not fake that.
 
+## Terminal companion (optional)
+
+The extension ships an unannounced `mcp-watchdog` bin for Claude Code-style configs (same cause taxonomy; **host session stays Unknown**):
+
+```bash
+mcp-watchdog doctor
+mcp-watchdog fix          # plan only
+mcp-watchdog fix --yes    # backup + allowlisted apply + re-probe
+mcp-watchdog restore --from .mcp-watchdog/backups/<file>
+```
+
+Never prints secret env values. Editor Overview remains the primary product surface.
+
 ## Demo
 
 ![MCP Watchdog demo — failure toast and recovery](./images/demo.gif)

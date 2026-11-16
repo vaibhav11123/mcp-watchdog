@@ -5,9 +5,11 @@ import { parseConfigFile } from '../config-core';
 import { ensureNpxYes } from '../mcpJsonEdit';
 import { observationFromStatus } from '../observationFromStatus';
 import { verifyAfterFix, type VerifiedOutcome } from '../verifyRecovery';
+import { clearCircuit, isCircuitOpen, recordCircuitFailure } from './circuitBreaker';
 import { applyProcessEnvOverlay } from './envOverlay';
 import type { FixPlanStep } from './fixPlan';
 import { probeServerOnce, type CliServerReport } from './probeOnce';
+import { canMutate, recordMutate } from './rateLimit';
 
 export interface FixApplyResult {
   server: string;
@@ -43,8 +45,13 @@ function reloadServerConfig(
   return parsed.servers[name] ?? fallback;
 }
 
+function causeFor(step: FixPlanStep): string {
+  return step.causeId ?? 'generic';
+}
+
 /**
  * Apply allowlisted steps. Kill switch: MCP_WATCHDOG_FIX=0
+ * Rate limit: max 3 mutates / cwd / 5 min. Circuit: same cause+step ≥2 fails / 10 min.
  */
 export async function applyFixPlan(args: {
   cwd: string;
@@ -60,6 +67,14 @@ export async function applyFixPlan(args: {
     return { results: [], blocked: 'confirmation_required' };
   }
 
+  const rate = canMutate(args.cwd);
+  if (!rate.ok) {
+    return {
+      results: [],
+      blocked: `rate_limited — max 3 mutates per cwd per 5 min (saw ${rate.count})`,
+    };
+  }
+
   const backupPath = backupMcpJson(args.cwd);
   const beforeByName = new Map(args.beforeReports.map((r) => [r.name, r]));
   const liveConfigs: Record<string, McpServerConfig> = { ...args.servers };
@@ -73,6 +88,42 @@ export async function applyFixPlan(args: {
       retryCount: 0,
       lastError: beforeReport?.lastError,
     });
+    const causeId = causeFor(step);
+
+    if (isCircuitOpen(args.cwd, causeId, step.id)) {
+      results.push({
+        server: step.server,
+        stepId: step.id,
+        applied: false,
+        verifiedOutcome: null,
+        after: beforeReport ?? {
+          name: step.server,
+          state: 'failed',
+          hostConnection: 'unknown',
+        },
+        detail: `circuit_open — ${causeId}+${step.id} failed ≥2 in 10 min`,
+        backupPath,
+      });
+      break;
+    }
+
+    const allow = canMutate(args.cwd);
+    if (!allow.ok) {
+      results.push({
+        server: step.server,
+        stepId: step.id,
+        applied: false,
+        verifiedOutcome: null,
+        after: beforeReport ?? {
+          name: step.server,
+          state: 'failed',
+          hostConnection: 'unknown',
+        },
+        detail: `rate_limited — max 3 mutates per cwd per 5 min (saw ${allow.count})`,
+        backupPath,
+      });
+      break;
+    }
 
     if (step.id === 'env.overlayFromProcess') {
       const cfg = liveConfigs[step.server];
@@ -90,14 +141,17 @@ export async function applyFixPlan(args: {
           detail: 'missing config',
           backupPath,
         });
+        recordCircuitFailure(args.cwd, causeId, step.id);
         break;
       }
       const { config: overlaid, filledKeys } = applyProcessEnvOverlay(cfg);
       liveConfigs[step.server] = overlaid;
+      const applied = filledKeys.length > 0;
+      if (applied) recordMutate(args.cwd);
       results.push({
         server: step.server,
         stepId: step.id,
-        applied: filledKeys.length > 0,
+        applied,
         verifiedOutcome: null,
         after: beforeReport ?? {
           name: step.server,
@@ -107,7 +161,11 @@ export async function applyFixPlan(args: {
         detail: filledKeys.length ? `overlay keys: ${filledKeys.join(',')}` : 'no fillable keys',
         backupPath,
       });
-      if (!filledKeys.length) break;
+      if (!filledKeys.length) {
+        recordCircuitFailure(args.cwd, causeId, step.id);
+        break;
+      }
+      clearCircuit(args.cwd, causeId, step.id);
       continue;
     }
 
@@ -127,6 +185,7 @@ export async function applyFixPlan(args: {
           detail: 'no .mcp.json',
           backupPath,
         });
+        recordCircuitFailure(args.cwd, causeId, step.id);
         break;
       }
       const raw = fs.readFileSync(mcpPath, 'utf8');
@@ -145,9 +204,11 @@ export async function applyFixPlan(args: {
           detail: edited.reason,
           backupPath,
         });
+        recordCircuitFailure(args.cwd, causeId, step.id);
         break;
       }
       fs.writeFileSync(mcpPath, edited.raw, 'utf8');
+      recordMutate(args.cwd);
       const cfg = reloadServerConfig(args.cwd, step.server, liveConfigs[step.server]);
       if (cfg) liveConfigs[step.server] = cfg;
       results.push({
@@ -163,6 +224,7 @@ export async function applyFixPlan(args: {
         detail: 'inserted npx -y',
         backupPath,
       });
+      clearCircuit(args.cwd, causeId, step.id);
       continue;
     }
 
@@ -179,11 +241,13 @@ export async function applyFixPlan(args: {
         },
         backupPath,
       });
+      recordCircuitFailure(args.cwd, causeId, step.id);
       break;
     }
 
     const cfg = liveConfigs[step.server];
     if (!cfg) continue;
+    recordMutate(args.cwd);
     const after = await probeServerOnce(step.server, cfg);
     const afterObs = observationFromStatus({
       name: after.name,
@@ -202,8 +266,10 @@ export async function applyFixPlan(args: {
     });
     beforeByName.set(step.server, after);
     if (verifiedOutcome !== 'resolved') {
+      recordCircuitFailure(args.cwd, causeId, step.id);
       break;
     }
+    clearCircuit(args.cwd, causeId, step.id);
   }
 
   return { results, backupPath };
