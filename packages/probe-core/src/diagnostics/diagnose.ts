@@ -60,8 +60,10 @@ export function verifyRecovery(args: {
   before: RuntimeObservation;
   after: RuntimeObservation;
 }): import('./types').VerifiedOutcome {
+  // Honesty: degraded (discovery ok + execution failed) must NOT count as resolved.
   const afterOk =
-    (args.after.discovery === 'success' || args.after.transport === 'connected') &&
+    args.after.discovery === 'success' &&
+    args.after.execution !== 'failed' &&
     args.after.auth !== 'missing' &&
     args.after.auth !== 'rejected' &&
     args.after.auth !== 'expired' &&

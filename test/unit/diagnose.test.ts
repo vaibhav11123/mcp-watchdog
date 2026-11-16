@@ -120,8 +120,24 @@ describe('diagnose / auth taxonomy', () => {
 describe('verifyRecovery', () => {
   it('marks resolved when after discovery succeeds', () => {
     const before = emptyObservation({ discovery: 'failed', auth: 'missing' });
-    const after = emptyObservation({ discovery: 'success', transport: 'connected', auth: 'ok' });
+    const after = emptyObservation({
+      discovery: 'success',
+      transport: 'connected',
+      auth: 'ok',
+      execution: 'successful',
+    });
     expect(verifyRecovery({ before, after })).toBe('resolved');
+  });
+
+  it('never resolves when after is degraded (execution failed)', () => {
+    const before = emptyObservation({ discovery: 'failed', transport: 'disconnected' });
+    const after = emptyObservation({
+      discovery: 'success',
+      transport: 'connected',
+      auth: 'ok',
+      execution: 'failed',
+    });
+    expect(verifyRecovery({ before, after })).toBe('unresolved');
   });
 
   it('marks unresolved when still failing', () => {

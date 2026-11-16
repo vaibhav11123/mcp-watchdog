@@ -28,4 +28,21 @@ describe('observationFromStatus + verify', () => {
     });
     expect(verifyAfterFix({ before, after })).toBe('resolved');
   });
+
+  it('degraded after Fix does not verify as resolved', () => {
+    const before = observationFromStatus({
+      name: 'svc',
+      state: 'failed',
+      retryCount: 1,
+      lastError: 'Connection closed',
+    });
+    const after = observationFromStatus({
+      name: 'svc',
+      state: 'degraded',
+      retryCount: 0,
+      lastError: 'tool failed',
+    });
+    expect(after.execution).toBe('failed');
+    expect(verifyAfterFix({ before, after })).toBe('unresolved');
+  });
 });
