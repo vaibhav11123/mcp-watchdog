@@ -48,13 +48,16 @@ When a check fails:
 
 ## Terminal companion (optional)
 
-The extension ships an unannounced `mcp-watchdog` bin for Claude Code-style configs (same cause taxonomy; **host session stays Unknown**):
+Unannounced CLI for Claude Code-style configs (same cause taxonomy; **host session stays Unknown**).
+
+**Open VSX / Marketplace install does not add `mcp-watchdog` to your shell PATH.** Use a **repo clone** (supported workflow):
 
 ```bash
-mcp-watchdog doctor
-mcp-watchdog fix          # plan only
-mcp-watchdog fix --yes    # backup + allowlisted apply + re-probe
-mcp-watchdog restore --from .mcp-watchdog/backups/<file>
+npm ci && npm run build
+node bin/mcp-watchdog.mjs doctor
+node bin/mcp-watchdog.mjs fix          # plan only
+node bin/mcp-watchdog.mjs fix --yes    # backup + allowlisted apply + re-probe
+node bin/mcp-watchdog.mjs restore --from .mcp-watchdog/backups/<file>
 ```
 
 Never prints secret env values. Editor Overview remains the primary product surface.
