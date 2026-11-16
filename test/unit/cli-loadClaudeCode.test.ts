@@ -12,6 +12,17 @@ describe('cli parseArgs', () => {
       cwd: path.resolve('/tmp'),
       help: false,
       command: 'doctor',
+      yes: false,
+      pretty: false,
+    });
+  });
+
+  it('parses fix --yes and --full', () => {
+    expect(parseArgs(['fix', '--yes', '--full', '--cwd', '/tmp'])).toMatchObject({
+      command: 'fix',
+      yes: true,
+      pretty: true,
+      cwd: path.resolve('/tmp'),
     });
   });
 });
