@@ -183,4 +183,39 @@ suite('Live EH matrix (TESTING.md L1–L9)', () => {
     // overflow-x:hidden + reconnectAll primary: test/unit/overviewHtml.test.ts
     assert.ok(true);
   });
+
+  test('Overview card Show Log dispatches showOutput (not reconnect)', async function () {
+    this.timeout(30_000);
+    const api = await activateWatchdog();
+    let reconnectCalls = 0;
+    const origReconnect = vscode.commands.executeCommand.bind(vscode.commands);
+    (
+      vscode.commands as unknown as {
+        executeCommand: typeof vscode.commands.executeCommand;
+      }
+    ).executeCommand = (async (command: string, ...args: unknown[]) => {
+      if (command === 'mcpWatchdog.reconnectOne' || command === 'mcpWatchdog.reconnectAll') {
+        reconnectCalls += 1;
+      }
+      return origReconnect(command, ...args);
+    }) as typeof vscode.commands.executeCommand;
+
+    try {
+      api.dispatchOverviewMessageForTests({ type: 'showOutput' });
+      await delay(400);
+      assert.strictEqual(
+        reconnectCalls,
+        0,
+        'Overview Show Log must not call reconnectOne/reconnectAll',
+      );
+      // showOutput command itself is registered + executed on this path (no throw).
+      await vscode.commands.executeCommand('mcpWatchdog.showOutput');
+    } finally {
+      (
+        vscode.commands as unknown as {
+          executeCommand: typeof vscode.commands.executeCommand;
+        }
+      ).executeCommand = origReconnect;
+    }
+  });
 });

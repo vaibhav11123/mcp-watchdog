@@ -398,6 +398,7 @@
     "watch": "npm run build -- --watch",
     "compile": "tsc --noEmit",
     "smoke": "node scripts/smoke-connect.mjs",
+    "live:http-sse-timeout": "tsx scripts/live-http-sse-timeout.ts",
     "test:unit": "vitest run",
     "t0": "tsx scripts/t0-probe-live.ts",
     "t2": "tsx scripts/t2-bridge-dry-run.ts",

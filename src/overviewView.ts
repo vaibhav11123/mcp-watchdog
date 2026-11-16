@@ -35,44 +35,46 @@ export class OverviewViewProvider implements vscode.WebviewViewProvider {
       }
     });
 
-    webview.onDidReceiveMessage((msg: { type?: string }) => {
-      switch (msg.type) {
-        case 'reconnectAll':
-          void vscode.commands.executeCommand('mcpWatchdog.reconnectAll');
-          break;
-        case 'openConfig':
-          void vscode.commands.executeCommand('mcpWatchdog.openMcpConfig');
-          break;
-        case 'showOutput':
-          void vscode.commands.executeCommand('mcpWatchdog.showOutput');
-          break;
-        case 'openFolder':
-          void vscode.commands.executeCommand('workbench.action.openFolder');
-          break;
-        case 'reviewTrust':
-          void vscode.commands.executeCommand('mcpWatchdog.reviewTrust');
-          break;
-        case 'reconnect':
-          if (typeof (msg as { server?: string }).server === 'string') {
-            void vscode.commands.executeCommand(
-              'mcpWatchdog.reconnectOne',
-              (msg as { server: string }).server,
-            );
-          }
-          break;
-        case 'fixFailure':
-          if (typeof (msg as { server?: string }).server === 'string') {
-            void vscode.commands.executeCommand(
-              'mcpWatchdog.fixFailure',
-              (msg as { server: string }).server,
-            );
-          }
-          break;
-        case 'starOnGitHub':
-          void vscode.commands.executeCommand('mcpWatchdog.starOnGitHub');
-          break;
-      }
+    webview.onDidReceiveMessage((msg: { type?: string; server?: string }) => {
+      void this.dispatchMessage(msg);
     });
+  }
+
+  /**
+   * Host-test / EH hook: same path as Overview webview button clicks
+   * (failed-row Show Log → showOutput, not reconnect).
+   */
+  dispatchMessage(msg: { type?: string; server?: string }): void {
+    switch (msg.type) {
+      case 'reconnectAll':
+        void vscode.commands.executeCommand('mcpWatchdog.reconnectAll');
+        break;
+      case 'openConfig':
+        void vscode.commands.executeCommand('mcpWatchdog.openMcpConfig');
+        break;
+      case 'showOutput':
+        void vscode.commands.executeCommand('mcpWatchdog.showOutput');
+        break;
+      case 'openFolder':
+        void vscode.commands.executeCommand('workbench.action.openFolder');
+        break;
+      case 'reviewTrust':
+        void vscode.commands.executeCommand('mcpWatchdog.reviewTrust');
+        break;
+      case 'reconnect':
+        if (typeof msg.server === 'string') {
+          void vscode.commands.executeCommand('mcpWatchdog.reconnectOne', msg.server);
+        }
+        break;
+      case 'fixFailure':
+        if (typeof msg.server === 'string') {
+          void vscode.commands.executeCommand('mcpWatchdog.fixFailure', msg.server);
+        }
+        break;
+      case 'starOnGitHub':
+        void vscode.commands.executeCommand('mcpWatchdog.starOnGitHub');
+        break;
+    }
   }
 
   update(

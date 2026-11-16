@@ -19,6 +19,7 @@ export interface McpWatchdogApi {
     serverName: string,
     outcome: 'resolved' | 'unresolved' | 'unknown' | 'worsened',
   ): void;
+  dispatchOverviewMessageForTests(msg: { type?: string; server?: string }): void;
 }
 
 export function delay(ms: number): Promise<void> {
