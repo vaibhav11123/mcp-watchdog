@@ -78,6 +78,12 @@ export function recommendActions(input: RecommendInput): DoctorAction[] {
         { id: 'open.config', label: 'Open MCP Config (URL / network)' },
         { id: 'retry.probe', label: 'Retry probe' },
       ];
+    case 'transport.timeout':
+      return [
+        { id: 'show.log', label: 'Show Log' },
+        { id: 'open.config', label: 'Open MCP Config' },
+        { id: 'retry.probe', label: 'Retry probe' },
+      ];
     default:
       return [
         { id: 'retry.probe', label: 'Retry probe' },

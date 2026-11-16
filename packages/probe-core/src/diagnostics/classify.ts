@@ -39,7 +39,11 @@ export function classifyCause(input: ClassifyCauseInput): ClassifyCauseResult {
     return { causeId: 'auth.expired', confidence: 'medium', evidence, retryExhausted };
   }
 
-  if (/no token provided|missing api key|missing.*token|provide a valid token|api key.*required/i.test(err)) {
+  if (
+    /no token provided|missing api key|missing.*token|provide a valid token|api key.*required/i.test(
+      err,
+    )
+  ) {
     return { causeId: 'auth.missing', confidence: 'high', evidence, retryExhausted };
   }
 
@@ -60,6 +64,13 @@ export function classifyCause(input: ClassifyCauseInput): ClassifyCauseResult {
   }
   if (/-32000:\s*Connection closed|Connection closed/i.test(err)) {
     return { causeId: 'spawn.closed', confidence: 'medium', evidence, retryExhausted };
+  }
+
+  // MCP JSON-RPC request timeout — before retryExhausted → spawn.closed.
+  // Require the "Request timed out" phrase (not bare -32001 Session not found).
+  // ETIMEDOUT stays on transport.http below.
+  if (/Request timed out/i.test(err)) {
+    return { causeId: 'transport.timeout', confidence: 'high', evidence, retryExhausted };
   }
 
   if (
@@ -89,6 +100,10 @@ export function causeIdToLegacyFailureClass(causeId: CauseId): LegacyFailureClas
     case 'spawn.enoent':
     case 'spawn.closed':
       return 'spawn';
+    case 'transport.http':
+    case 'transport.timeout':
+    case 'generic':
+      return 'generic';
     default:
       return 'generic';
   }

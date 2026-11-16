@@ -15,6 +15,21 @@ describe('deriveServerState (C-DERIVE-*)', () => {
     ).toBe('connecting');
   });
 
+  it('connecting unchanged even with transport.timeout diagnosis present', () => {
+    const diagnosis = diagnose({
+      serverName: 'x',
+      lastError: 'MCP error -32001: Request timed out',
+    });
+    expect(diagnosis.causeId).toBe('transport.timeout');
+    expect(
+      deriveServerState({
+        observation: emptyObservation(),
+        connecting: true,
+        diagnosis,
+      }),
+    ).toBe('connecting');
+  });
+
   it('hostConnection unknown alone does not force failed', () => {
     expect(
       deriveServerState({

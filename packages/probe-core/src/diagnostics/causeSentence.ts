@@ -13,6 +13,8 @@ export function causeSentence(causeId: CauseId): string {
       return 'Server wants OAuth / sign-in discovery before tools work.';
     case 'transport.http':
       return 'Network or HTTP transport failed — check URL and connectivity.';
+    case 'transport.timeout':
+      return "Server didn't answer in time - check its log and configuration.";
     case 'spawn.enoent':
       return 'Command not found — fix the stdio command path or install the binary.';
     case 'spawn.closed':

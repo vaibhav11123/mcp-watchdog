@@ -64,8 +64,31 @@ describe('overviewHtml', () => {
     const body = renderOverviewBody(snap);
     expect(body).toMatch(/Missing credential/);
     expect(body).toMatch(/Show Log/);
+    expect(body).toMatch(/data-action="showOutput"/);
+    expect(body).not.toMatch(/data-action="reconnect"/);
     expect(body).toMatch(/Editor session: Unknown/);
     expect(body).not.toMatch(/No token provided/);
+  });
+
+  it('timeout first action Show Log opens logs (not reconnect)', () => {
+    const snap = statusesSnapshot(
+      [
+        {
+          name: 'hang',
+          state: 'failed',
+          retryCount: 0,
+          lastError: 'MCP error -32001: Request timed out',
+        },
+      ],
+      { kind: 'ok', sources: ['.cursor/mcp.json'] },
+      {},
+    );
+    expect(snap.servers[0]?.firstActionId).toBe('show.log');
+    expect(snap.servers[0]?.firstActionLabel).toBe('Show Log');
+    const body = renderOverviewBody(snap);
+    expect(body).toMatch(/Server didn't answer in time/);
+    expect(body).toMatch(/<button class="link" data-action="showOutput">Show Log<\/button>/);
+    expect(body).not.toMatch(/data-action="reconnect"/);
   });
 
   it('dashboard uses Reconnecting metric and has no footer essays', () => {
