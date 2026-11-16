@@ -7,6 +7,8 @@ export interface WatchedServer {
   lastState?: string;
   lastHash?: string;
   lastError?: string;
+  /** Plain-language cause for failed polls (customer surface). */
+  causeSentence?: string;
 }
 
 export interface DualTruthRow {

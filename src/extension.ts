@@ -35,6 +35,7 @@ import { classifyFailure, diagnoseFailure } from './failureTriage';
 import { resolveHostCapabilities, type HostCapabilities } from './hostCapabilities';
 import { DoctorMetrics } from './incidentStore';
 import type { VerifiedOutcome } from './verifyRecovery';
+import { mergeVerifiedOutcome } from './verifiedOutcome';
 import { redactSecrets } from './secretRedact';
 import * as telemetry from './telemetry/client';
 
@@ -104,6 +105,8 @@ let bridgeFailLogged = false;
 let acceptedNames = new Set<string>();
 let hostCaps: HostCapabilities | undefined;
 const doctorMetrics = new DoctorMetrics();
+/** Survives reloadServers/status clear so Overview can keep Verified: after Fix (O4). */
+const stickyVerified = new Map<string, VerifiedOutcome>();
 
 /** Joined sorted folder paths — trust key covers the full multi-root workspace. */
 function workspacePath(): string {
@@ -301,13 +304,18 @@ function onServerStatus(name: string, s: ServerStatus): void {
     acceptedNames.delete(name);
     void persistAccepted();
   }
-  const withFlap = {
+  const withSticky = {
     ...s,
+    verifiedOutcome: s.verifiedOutcome ?? stickyVerified.get(name),
+  };
+  const verifiedOutcome = mergeVerifiedOutcome(prev, withSticky);
+  if (verifiedOutcome) stickyVerified.set(name, verifiedOutcome);
+  else stickyVerified.delete(name);
+  const withFlap = {
+    ...withSticky,
     flapping: alertManager.getFlapping(name),
     accepted: acceptedNames.has(name),
-    // Keep last Fix verify until healthy (S-VERIFY-01).
-    verifiedOutcome:
-      s.state === 'healthy' ? undefined : (s.verifiedOutcome ?? prev?.verifiedOutcome),
+    verifiedOutcome,
   };
   statuses.set(name, withFlap);
   alertManager.onStatusChange(withFlap);
@@ -513,6 +521,7 @@ async function clearAcceptance(serverName: string): Promise<void> {
 }
 
 function setVerifiedOutcome(serverName: string, outcome: VerifiedOutcome): void {
+  stickyVerified.set(serverName, outcome);
   const cur = statuses.get(serverName);
   if (!cur) return;
   statuses.set(serverName, { ...cur, verifiedOutcome: outcome });
@@ -993,7 +1002,7 @@ async function reloadServers(): Promise<void> {
   serverOrigins = loaded.origins ?? {};
   serverConfigs = config?.servers ?? {};
 
-  // Drop Accept entries for servers that disappeared from merged config.
+  // Drop Accept / sticky verify for servers that disappeared from merged config.
   if (config) {
     const names = new Set(Object.keys(config.servers));
     let changed = false;
@@ -1002,6 +1011,9 @@ async function reloadServers(): Promise<void> {
         acceptedNames.delete(n);
         changed = true;
       }
+    }
+    for (const n of [...stickyVerified.keys()]) {
+      if (!names.has(n)) stickyVerified.delete(n);
     }
     if (changed) void persistAccepted();
   }

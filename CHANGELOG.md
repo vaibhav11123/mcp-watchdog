@@ -6,9 +6,23 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [0.5.15] - 2026-11-16
+
+Silent patch — recovery punchline + buyer surfaces. Live public story remains Doctor **0.5.7** + verify one-post on X. Claim stage **Now+**.
+
+### Fixed
+
+- Overview keeps **Verified: resolved** (or other Fix outcomes) after a successful remediable Fix even when the row is healthy again — the recommend punchline no longer disappears on the next status tick or Refresh.
+- README: Restart editor MCP is a Fix… option when the host supports it (not on the ≤3 failure toast).
+
+### Changed
+
+- README / Quick start speak to the buyer: Overview + Verified path; differentiate from Open VSX config-lint “MCP Doctor.”
+- Watchdog Cloud preview: failed rows show a plain-language cause; dual-truth and policy audit are readable tables; Remove drops a watched server.
+
 ## [0.5.14] - 2026-11-16
 
-Silent patch (OWNER publish A). No Instinct announce. Live public story remains Doctor **0.5.7** + verify one-post X. Claim stage **Now+**.
+Silent patch — timeout Doctor, Overview Show Log honesty, first-open Overview nudge, editor/extVersion telemetry, Claude Code harness CLI. Live public story remains Doctor **0.5.7** + verify one-post on X.
 
 ### Added
 

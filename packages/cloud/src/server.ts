@@ -97,12 +97,14 @@ async function probeServer(s: WatchedServer): Promise<void> {
     if (initRes.status >= 300 && initRes.status < 400) {
       s.lastState = 'failed';
       s.lastError = `initialize redirect ${initRes.status}`;
+      s.causeSentence = causeFromError(s.lastError);
       await slack(`Watchdog: ${s.name} down (redirect)`);
       return;
     }
     if (!initRes.ok) {
       s.lastState = 'failed';
       s.lastError = `initialize HTTP ${initRes.status}`;
+      s.causeSentence = causeFromError(s.lastError);
       await slack(`Watchdog: ${s.name} down (initialize ${initRes.status})`);
       return;
     }
@@ -122,6 +124,7 @@ async function probeServer(s: WatchedServer): Promise<void> {
     if (listRes.status >= 300 && listRes.status < 400) {
       s.lastState = 'failed';
       s.lastError = `tools/list redirect ${listRes.status}`;
+      s.causeSentence = causeFromError(s.lastError);
       return;
     }
     const rawText = await readResponseLimited(listRes, MAX_BODY);
@@ -150,9 +153,11 @@ async function probeServer(s: WatchedServer): Promise<void> {
     s.lastHash = hash;
     s.lastState = 'healthy';
     s.lastError = undefined;
+    s.causeSentence = undefined;
   } catch (e) {
     s.lastState = 'failed';
     s.lastError = e instanceof Error ? e.message : String(e);
+    s.causeSentence = causeFromError(s.lastError);
     await slack(`Watchdog: ${s.name} probe error`);
   }
 }
@@ -189,10 +194,35 @@ function send(res: http.ServerResponse, status: number, body: unknown): void {
   res.end(data);
 }
 
+function causeFromError(err: string | undefined): string | undefined {
+  if (!err) return undefined;
+  const e = err.toLowerCase();
+  if (e.includes('abort') || e.includes('timeout')) {
+    return "Server didn't answer in time — check its log and address.";
+  }
+  if (e.includes('econnrefused') || e.includes('fetch failed')) {
+    return 'Nothing is listening at that address — is the server running?';
+  }
+  if (e.includes('401') || e.includes('unauthorized')) {
+    return 'Cloud probe got unauthorized — check credentials on the server URL.';
+  }
+  if (e.includes('redirect')) {
+    return 'Probe hit a redirect — Watchdog Cloud needs a direct MCP endpoint.';
+  }
+  if (e.includes('initialize http')) {
+    return `Initialize failed (${err}) — endpoint may not speak MCP.`;
+  }
+  return err.length > 120 ? `${err.slice(0, 117)}…` : err;
+}
+
 function publicServerView(s: WatchedServer): Record<string, unknown> {
   return {
-    ...s,
+    id: s.id,
+    name: s.name,
     url: displayUrl(s.url),
+    lastState: s.lastState ?? null,
+    lastError: s.lastError ?? null,
+    causeSentence: s.causeSentence ?? (s.lastState === 'failed' ? causeFromError(s.lastError) : null),
   };
 }
 
@@ -251,6 +281,18 @@ const server = http.createServer(async (req, res) => {
     }
     await probeServer(s);
     send(res, 200, publicServerView(s));
+    return;
+  }
+  if (req.method === 'DELETE' && url.pathname.startsWith('/v1/servers/')) {
+    const id = url.pathname.split('/')[3];
+    const s = id ? servers.get(id) : undefined;
+    if (!s || !id) {
+      send(res, 404, { error: 'not found' });
+      return;
+    }
+    servers.delete(id);
+    appendAudit('server.remove', s.name);
+    send(res, 200, { ok: true, name: s.name });
     return;
   }
   if (req.method === 'POST' && url.pathname === '/v1/bridge/incidents') {

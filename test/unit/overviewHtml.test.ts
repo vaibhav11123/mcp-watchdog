@@ -131,4 +131,22 @@ describe('overviewHtml', () => {
     const body = renderOverviewBody(snap);
     expect(body).toMatch(/Verified: unresolved/);
   });
+
+  it('healthy row keeps Verified: resolved meta (O4 recommend punchline)', () => {
+    const snap = statusesSnapshot(
+      [
+        {
+          name: 'echo',
+          state: 'healthy',
+          retryCount: 0,
+          lastPingMs: 12,
+          verifiedOutcome: 'resolved',
+        },
+      ],
+      { kind: 'ok', sources: ['.cursor/mcp.json'] },
+      {},
+    );
+    const body = renderOverviewBody(snap);
+    expect(body).toMatch(/Verified: resolved/);
+  });
 });
