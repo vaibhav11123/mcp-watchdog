@@ -17,6 +17,7 @@ Do **not** look for Desktop paths (`/Users/…`) from a Cloud VM.
 | Need | File (under ops root) |
 |------|------------------------|
 | Plan / Growth order / next actions | `STATUS.md` |
+| **CLI Act+Prove execution spine** | `design/cli-recovery/EXECUTE.md` (Phases A→Z — product code in this repo) |
 | How to verify in Cloud | `CLOUD-AGENT-VERIFY.md` |
 | Live EH / SIGN-OFF / capture | `TESTING.md` |
 | Soak / publish gates | `RELEASE.md` · `GTM-PUBLISH.md` |
