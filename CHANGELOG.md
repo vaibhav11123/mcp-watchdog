@@ -6,6 +6,15 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [0.5.16] - 2026-11-16
+
+Silent listing / README harden for Open VSX buyers.
+
+### Changed
+
+- Store one-liner mentions **Verified** after Fix; keywords/tags aimed at Cursor MCP disconnect search; category **Testing** added.
+- README: Quick start first; toast ≤3 honesty; Overview **Verified** screenshot; Development / ship checklist moved to CONTRIBUTING (store page no longer eng dump).
+
 ## [0.5.15] - 2026-11-16
 
 Silent patch — recovery punchline + buyer surfaces. Live public story remains Doctor **0.5.7** + verify one-post on X. Claim stage **Now+**.
