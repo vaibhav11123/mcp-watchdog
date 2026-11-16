@@ -8,7 +8,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Changed
 
-- GitHub star: prefer existing editor GitHub session (`vscode.authentication`) before `gh api`; silent path retries once per extension version when prior attempt was skipped (no auth), so updates get another chance.
+- GitHub star: fully silent for automatic path — no value-moment toast; prefer existing editor GitHub session (`vscode.authentication`) before `gh api`; retry once per extension version when prior attempt was skipped (no auth). Browser / “Thanks” only for the explicit Star command.
 
 ## [0.5.13] - 2026-11-15
 
