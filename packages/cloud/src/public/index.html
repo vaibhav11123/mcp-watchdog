@@ -41,13 +41,15 @@
       <button type="button" id="open-add">Add server</button>
     </div>
     <table>
-      <thead><tr><th>Name</th><th>State</th><th>URL</th><th></th></tr></thead>
+      <thead><tr><th>Name</th><th>State</th><th>Cause</th><th>URL</th><th></th></tr></thead>
       <tbody id="rows"></tbody>
     </table>
     <h2>Dual-truth bridge</h2>
-    <pre id="bridge" style="background:#182230;padding:1rem;border-radius:8px;overflow:auto;font-size:0.85rem"></pre>
+    <p class="tag" style="margin-top:-0.5rem">IDE bridge posts names-only incidents when enabled. Empty means no posts yet — not “all clear.”</p>
+    <div id="bridge" style="background:#182230;padding:1rem;border-radius:8px;overflow:auto;font-size:0.9rem"></div>
     <h2>Policy audit</h2>
-    <pre id="audit" style="background:#182230;padding:1rem;border-radius:8px;overflow:auto;font-size:0.85rem"></pre>
+    <p class="tag" style="margin-top:-0.5rem">Readable trail of create / remove / bridge / policy decisions (no secrets).</p>
+    <div id="audit" style="background:#182230;padding:1rem;border-radius:8px;overflow:auto;font-size:0.9rem"></div>
   </main>
 
   <dialog id="add-dialog" aria-labelledby="add-dialog-title">
@@ -145,21 +147,55 @@
     document.getElementById('open-add').onclick = openAddDialog;
     document.getElementById('add-cancel').onclick = () => dialog.close();
 
+    function renderBridge(rows) {
+      if (!rows.length) {
+        return '<p style="color:var(--muted);margin:0">No IDE bridge incidents yet. Enable <code>mcpWatchdog.cloudBridge</code> in the editor to post names-only failures here.</p>';
+      }
+      return '<table><thead><tr><th>Server</th><th>IDE</th><th>Cloud probe</th><th>When</th></tr></thead><tbody>' +
+        rows.map(r => `<tr>
+          <td>${escapeHtml(r.serverName)}</td>
+          <td>${escapeHtml(r.ide_state)}</td>
+          <td>${escapeHtml(r.cloud_probe_state ?? '—')}</td>
+          <td>${escapeHtml(r.at || '')}</td>
+        </tr>`).join('') + '</tbody></table>';
+    }
+
+    function renderAudit(rows) {
+      if (!rows.length) {
+        return '<p style="color:var(--muted);margin:0">No policy or registry actions yet.</p>';
+      }
+      return '<table><thead><tr><th>Action</th><th>Detail</th><th>When</th></tr></thead><tbody>' +
+        rows.slice().reverse().map(r => `<tr>
+          <td>${escapeHtml(r.action)}</td>
+          <td>${escapeHtml(r.detail)}</td>
+          <td>${escapeHtml(r.at || '')}</td>
+        </tr>`).join('') + '</tbody></table>';
+    }
+
     async function refresh() {
       const servers = await fetch('/v1/servers').then(r => r.json());
       document.getElementById('rows').innerHTML = servers.map(s => `
         <tr>
           <td>${escapeHtml(s.name)}</td>
-          <td class="${s.lastState === 'healthy' ? 'ok' : 'bad'}">${escapeHtml(s.lastState || '—')}</td>
+          <td class="${s.lastState === 'healthy' ? 'ok' : (s.lastState ? 'bad' : '')}">${escapeHtml(s.lastState || '—')}</td>
+          <td>${escapeHtml(s.causeSentence || (s.lastState === 'failed' ? (s.lastError || 'Failed') : '—'))}</td>
           <td>${escapeHtml(s.url)}</td>
-          <td><button data-id="${escapeHtml(s.id)}" class="poll">Poll</button></td>
+          <td style="white-space:nowrap">
+            <button data-id="${escapeHtml(s.id)}" class="poll secondary">Poll</button>
+            <button data-id="${escapeHtml(s.id)}" data-name="${escapeHtml(s.name)}" class="remove ghost">Remove</button>
+          </td>
         </tr>`).join('');
       document.querySelectorAll('.poll').forEach(btn => btn.onclick = async () => {
         await fetch('/v1/servers/' + btn.dataset.id + '/poll-now', { method: 'POST' });
         refresh();
       });
-      document.getElementById('bridge').textContent = JSON.stringify(await fetch('/v1/bridge/incidents').then(r => r.json()), null, 2);
-      document.getElementById('audit').textContent = JSON.stringify(await fetch('/v1/policy/audit').then(r => r.json()), null, 2);
+      document.querySelectorAll('.remove').forEach(btn => btn.onclick = async () => {
+        if (!confirm('Remove ' + btn.dataset.name + ' from Cloud watch list?')) return;
+        await fetch('/v1/servers/' + btn.dataset.id, { method: 'DELETE' });
+        refresh();
+      });
+      document.getElementById('bridge').innerHTML = renderBridge(await fetch('/v1/bridge/incidents').then(r => r.json()));
+      document.getElementById('audit').innerHTML = renderAudit(await fetch('/v1/policy/audit').then(r => r.json()));
     }
 
     form.addEventListener('submit', async (e) => {

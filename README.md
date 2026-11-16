@@ -9,9 +9,11 @@
 
 **Know which MCP servers are responding — independent of what the editor still shows.**
 
-The editor can still show tools after a server has gone quiet — after idle, sleep, or a network drop. MCP Watchdog is an independent check of the servers you approved. It shows status, latency, and failure details, then offers a next step.
+The editor can still show tools after a server has gone quiet — after idle, sleep, or a network drop. MCP Watchdog is an independent check of the servers you approved. It names the cause, offers a next step (Fix… / Show Log / Mute), and after a remediable Fix can show **Verified:** on Overview so you know recovery worked.
 
-Works in **Cursor**, **Windsurf**, **VS Code**, **VSCodium**, and other forks that install from [Open VSX](https://open-vsx.org/). Host roadmap (Claude Code–class CLI later, not JetBrains-first): [docs/STRATEGY-THESIS.md](./docs/STRATEGY-THESIS.md) — *Where Watchdog exists*.
+Not the same as Open VSX “MCP Doctor” config linters — Watchdog is a **live probe + dual-truth** status product (Watchdog green ≠ editor session).
+
+Works in **Cursor**, **Windsurf**, **VS Code**, **VSCodium**, and other forks that install from [Open VSX](https://open-vsx.org/).
 
 **Install (recommended for Cursor):** [MCP Watchdog on Open VSX](https://open-vsx.org/extension/mcp-watchdog/mcp-watchdog) — primary download channel for Cursor, Windsurf, VSCodium, and most VS Code forks.
 
@@ -49,20 +51,14 @@ When a check fails, the next steps are separate:
 - **Fix…** — guided remediation by cause class (e.g. missing token vs 401 vs expired session vs spawn path); copy commands, open owning config, AWS login terminal, credential wizard, retry.
 - **Remove** — delete the server key from the owning config file (or Disable Watchdog monitoring).
 - **Retry probe** — run Watchdog’s check again.
-- **Restart editor MCP** — only on the failure toast, and only when the host exposes `workbench.mcp.*`. Cursor and some forks do not.
-- **Reload Window** — when the editor client stays stuck. **Quit Cursor** is the last resort.
+- **Restart editor MCP** — offered in **Fix…** when the host exposes `workbench.mcp.*`. Cursor and some forks do not; Watchdog will not fake a restart on those hosts.
+- **Reload Window** — when the editor client stays stuck after a healthy Watchdog probe. **Quit Cursor** is the last resort.
 
 ## Demo
 
 ![MCP Watchdog demo — failure toast and recovery](./images/demo.gif)
 
-Independent probe → cause sentence → Fix… → recovery. Prefer the Accept / Fix… / Remove story in [docs/media/GIF-RECORDING.md](./docs/media/GIF-RECORDING.md) when re-recording (no secret values in frames). The punchline worth sharing is **Verified:** after Fix — when the Overview shows the server came back.
-
-## Watchdog Cloud (preview — optional)
-
-Cloud is **not** required for the editor product. The core customer path is still status bar + failure toast in Cursor/VS Code.
-
-If you self-host later: remote health checks, schema change alerts, and configuration policy checks with an audit trail (policy runs outside the MCP tool-call path). Opt-in via `mcpWatchdog.cloudBridge.enabled` and `cloudBridge.url` (names-only incidents; fail-soft). Default is off. Self-host notes: [packages/cloud/README.md](./packages/cloud/README.md).
+Independent probe → cause sentence → Fix… → recovery. Prefer the Accept / Fix… / Remove story in [docs/media/GIF-RECORDING.md](./docs/media/GIF-RECORDING.md) when re-recording (no secret values in frames). After a remediable Fix, Overview keeps a quiet **Verified: resolved** (or honest Unknown) on the row — that is the moment worth sharing.
 
 ## Requirements
 
@@ -95,8 +91,15 @@ After install, run **Help → Welcome → MCP Watchdog: Get started** (walkthrou
 ## Quick start
 
 1. Add MCP config (see examples below). Command: **MCP Watchdog: Open MCP Config**.
-2. Open that folder. Click the **MCP Watchdog** icon in the **activity bar** → **Servers** (not the Extensions panel). The **status bar** shows **`Watchdog: n/n`** when servers are monitored.
-3. Optional: **View → Output → MCP Watchdog** for detailed logs.
+2. Open that folder. Click the **MCP Watchdog** icon in the **activity bar** → **Overview** (not the Extensions panel). The **status bar** shows **`Watchdog: n/n`** when servers are monitored.
+3. On failure: toast names the cause → **Fix…** → look for **Verified:** on the Overview row after recovery.
+4. Optional: **View → Output → MCP Watchdog** for detailed logs.
+
+## Watchdog Cloud (preview — optional)
+
+Cloud is **not** required for the editor product. Start with status bar + failure toast + **Verified:** in the editor.
+
+If you self-host later: remote health checks, schema change alerts, and configuration policy checks with an audit trail (policy runs outside the MCP tool-call path). Opt-in via `mcpWatchdog.cloudBridge.enabled` and `cloudBridge.url` (names-only incidents; fail-soft). Default is off. Self-host notes: [packages/cloud/README.md](./packages/cloud/README.md).
 
 ## Screenshots
 

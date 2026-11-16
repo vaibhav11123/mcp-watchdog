@@ -177,6 +177,14 @@ suite('Live EH matrix (TESTING.md L1–L9)', () => {
     } finally {
       clearInterval(killTimer);
     }
+
+    // O4: resolved must stick through healthy ticks (recommend punchline).
+    api.setVerifiedOutcomeForTests(ECHO, 'resolved');
+    await vscode.commands.executeCommand('mcpWatchdog.refresh');
+    await waitHealthy(api);
+    const healthy = api.getStatuses().find((s) => s.name === ECHO);
+    assert.strictEqual(healthy?.state, 'healthy', JSON.stringify(healthy));
+    assert.strictEqual(healthy?.verifiedOutcome, 'resolved', JSON.stringify(healthy));
   });
 
   test('L9 layout — Overview primary + overflow clamp (unit-backed in host suite)', function () {
