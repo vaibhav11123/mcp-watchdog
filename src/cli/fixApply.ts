@@ -5,6 +5,7 @@ import { parseConfigFile } from '../config-core';
 import { ensureNpxYes } from '../mcpJsonEdit';
 import { observationFromStatus } from '../observationFromStatus';
 import { verifyAfterFix, type VerifiedOutcome } from '../verifyRecovery';
+import { applyProcessEnvOverlay } from './envOverlay';
 import type { FixPlanStep } from './fixPlan';
 import { probeServerOnce, type CliServerReport } from './probeOnce';
 
@@ -72,6 +73,43 @@ export async function applyFixPlan(args: {
       retryCount: 0,
       lastError: beforeReport?.lastError,
     });
+
+    if (step.id === 'env.overlayFromProcess') {
+      const cfg = liveConfigs[step.server];
+      if (!cfg) {
+        results.push({
+          server: step.server,
+          stepId: step.id,
+          applied: false,
+          verifiedOutcome: null,
+          after: beforeReport ?? {
+            name: step.server,
+            state: 'failed',
+            hostConnection: 'unknown',
+          },
+          detail: 'missing config',
+          backupPath,
+        });
+        break;
+      }
+      const { config: overlaid, filledKeys } = applyProcessEnvOverlay(cfg);
+      liveConfigs[step.server] = overlaid;
+      results.push({
+        server: step.server,
+        stepId: step.id,
+        applied: filledKeys.length > 0,
+        verifiedOutcome: null,
+        after: beforeReport ?? {
+          name: step.server,
+          state: 'failed',
+          hostConnection: 'unknown',
+        },
+        detail: filledKeys.length ? `overlay keys: ${filledKeys.join(',')}` : 'no fillable keys',
+        backupPath,
+      });
+      if (!filledKeys.length) break;
+      continue;
+    }
 
     if (step.id === 'config.ensureNpxYes') {
       const mcpPath = path.join(args.cwd, '.mcp.json');

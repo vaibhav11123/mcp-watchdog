@@ -4,6 +4,10 @@ import { diagnoseFailure } from '../failureTriage';
 import { ServerMonitor, type ServerStatus } from '../monitor';
 import type { MonitorOptions } from '../options';
 import { redactSecrets } from '../secretRedact';
+import { withTimeout } from './withTimeout';
+
+/** Hard wall for one-shot CLI connect+ping (TECH connectTimeout). */
+export const CLI_CONNECT_TIMEOUT_MS = 8_000;
 
 const DEFAULT_OPTS: MonitorOptions = {
   probeMode: 'interval',
@@ -49,8 +53,23 @@ export async function probeServerOnce(
   // clobber a healthy one-shot (CRITIQUE stop-clobber / MCP client close lifecycle).
   let snapshot: ServerStatus | undefined;
   try {
-    await monitor.start();
+    await withTimeout(
+      monitor.start(),
+      opts.pingTimeoutMs && opts.pingTimeoutMs > 0
+        ? Math.max(opts.pingTimeoutMs, CLI_CONNECT_TIMEOUT_MS)
+        : CLI_CONNECT_TIMEOUT_MS,
+      `probe ${name}`,
+    );
     snapshot = { ...monitor.getStatus() };
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : String(err);
+    snapshot = {
+      name,
+      state: 'failed',
+      retryCount: 0,
+      lastError: msg,
+      lastProbeError: msg,
+    };
   } finally {
     await monitor.stop().catch(() => {});
   }
