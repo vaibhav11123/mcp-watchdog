@@ -6,9 +6,13 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [0.5.17] - 2026-11-16
+
+Silent patch — Act+Prove CLI companion (unannounced) + Windows ENOENT honesty + CI gate. Editor remains brand; A-cli-brand HOLD.
+
 ### Added
 
-- CLI Act+Prove (unannounced companion): `mcp-watchdog fix` plan / `--yes` apply with backup, allowlisted `retry.probe` + `config.ensureNpxYes` + env overlay (no secret values written to mcp.json), then re-probe verify.
+- CLI Act+Prove (unannounced companion): `fix` plan / `--yes` apply with backup, allowlisted `retry.probe` + `config.ensureNpxYes` + env overlay (no secret values written to mcp.json), then re-probe verify. Invoke from a **repo clone**: `node bin/mcp-watchdog.mjs …` (store install does not add PATH).
 - CLI `restore --from` under `.mcp-watchdog/backups/` only; rate limit (3 mutates / 5 min) and circuit breaker (same cause+step ≥2 / 10 min).
 - Compact JSON + 8KiB spill; dual-truth `hostConnection: unknown` on CLI JSON; `npm run test:cli-recovery` + harness script.
 
@@ -21,11 +25,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 ### Changed
 
 - CI: concurrency cancel-in-progress; single required gate job named `CI`; unit matrix stays ubuntu + windows only (no required macOS).
+- README Terminal companion documents clone-only invocation (no PATH from VSIX).
 
 ### Notes
 
 - Editor remains the Marketplace brand. No CLI-hero listing/X story until OWNER A-cli-brand.
-- Owner: set branch protection required check to the gate job name **CI** (not matrix legs).
+- Branch protection required check: gate job **`CI`** (not matrix legs).
 
 ## [0.5.16] - 2026-11-16
 
@@ -420,7 +425,10 @@ Marketing: claim stage **Now+**. Public announce story for this cut is **Doctor 
 [0.5.12]: https://github.com/vaibhav11123/mcp-watchdog/releases/tag/v0.5.12
 [0.5.13]: https://github.com/vaibhav11123/mcp-watchdog/releases/tag/v0.5.13
 [0.5.14]: https://github.com/vaibhav11123/mcp-watchdog/releases/tag/v0.5.14
-[Unreleased]: https://github.com/vaibhav11123/mcp-watchdog/compare/v0.5.14...HEAD
+[0.5.15]: https://github.com/vaibhav11123/mcp-watchdog/releases/tag/v0.5.15
+[0.5.16]: https://github.com/vaibhav11123/mcp-watchdog/releases/tag/v0.5.16
+[0.5.17]: https://github.com/vaibhav11123/mcp-watchdog/releases/tag/v0.5.17
+[Unreleased]: https://github.com/vaibhav11123/mcp-watchdog/compare/v0.5.17...HEAD
 [0.5.7]: https://github.com/vaibhav11123/mcp-watchdog/releases/tag/v0.5.7
 [0.5.6]: https://github.com/vaibhav11123/mcp-watchdog/releases/tag/v0.5.6
 [0.5.5]: https://github.com/vaibhav11123/mcp-watchdog/releases/tag/v0.5.5

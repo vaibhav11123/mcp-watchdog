@@ -2,7 +2,7 @@
   "name": "mcp-watchdog",
   "displayName": "MCP Watchdog",
   "description": "Know which MCP servers are responding in Cursor and VS Code. Green is Watchdog's probe — not the editor session. After Fix, Overview can show Verified.",
-  "version": "0.5.16",
+  "version": "0.5.17",
   "publisher": "mcp-watchdog",
   "license": "MIT",
   "keywords": [
