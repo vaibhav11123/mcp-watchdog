@@ -251,6 +251,14 @@ export function init(context: vscode.ExtensionContext): void {
   context.subscriptions.push(vscodeTelListener);
 }
 
+/** Identity props for funnel splits (STATUS Instrument). Prefer caller values if set. */
+function identityProps(): { editor: string; extVersion: string } {
+  const editor = (vscode.env.appName || 'unknown').slice(0, 64);
+  const extVersion =
+    (contextRef?.extension.packageJSON as { version?: string } | undefined)?.version ?? '0.0.0';
+  return { editor, extVersion };
+}
+
 export function track<E extends TelemetryEventName>(
   event: E,
   props: EventPropsMap[E],
@@ -282,6 +290,17 @@ export function track<E extends TelemetryEventName>(
       echo[k] = v;
       capture[k] = v;
     }
+  }
+
+  // Attach editor + extVersion on every allowlisted event (STATUS Growth step 4).
+  const id = identityProps();
+  if (echo.editor === undefined) {
+    echo.editor = id.editor;
+    capture.editor = id.editor;
+  }
+  if (echo.extVersion === undefined) {
+    echo.extVersion = id.extVersion;
+    capture.extVersion = id.extVersion;
   }
 
   emitCapture(event, capture);

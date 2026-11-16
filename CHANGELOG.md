@@ -6,6 +6,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+### Added
+
+- First-open Overview nudge after activate/trust (one prompt + focus — Convert / trust→UI cliff).
+- `editor` + `extVersion` attached on every allowlisted PostHog event (Instrument / Cursor vs VS Code funnels).
+
 ## [0.5.13] - 2026-11-15
 
 Cadence patch (2h train). No user-visible change. Live public story remains Doctor **0.5.7** (cause sentence / toast / dual-truth green). See commits since previous tag.

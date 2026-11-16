@@ -205,6 +205,19 @@ describe('track → Capture', () => {
     expect(sent.properties.monitoringCount).toBe(1);
   });
 
+  it('attaches editor + extVersion on non-activation events', async () => {
+    const fetchImpl = vi.fn(async () => ({ ok: true, status: 200 }));
+    setFetchForTests(fetchImpl as FetchLike);
+    init(context as never);
+
+    track('ui_command', { command: 'showStatus' });
+    await vi.waitFor(() => expect(fetchImpl).toHaveBeenCalled());
+    const sent = JSON.parse(String(fetchImpl.mock.calls[0]?.[1]?.body));
+    expect(sent.event).toBe('ui_command');
+    expect(sent.properties.editor).toBe('Cursor');
+    expect(sent.properties.extVersion).toBe('0.5.6');
+  });
+
   it('sends telemetry.enabled=false opt-out event (ignoreWatchdogSetting path)', async () => {
     const fetchImpl = vi.fn(async () => ({ ok: true, status: 200 }));
     setFetchForTests(fetchImpl as FetchLike);
