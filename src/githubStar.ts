@@ -2,11 +2,17 @@ import { spawn } from 'child_process';
 import * as vscode from 'vscode';
 import * as telemetry from './telemetry/client';
 import type { StarMethod } from './telemetry/events';
-import { type GithubStarState, parseOwnerRepo, shouldShowStarToast } from './githubStarCore';
+import {
+  type GithubStarState,
+  parseOwnerRepo,
+  shouldAttemptSilentStar,
+  shouldShowStarToast,
+} from './githubStarCore';
 
 export {
   parseOwnerRepo,
   shouldShowStarToast,
+  shouldAttemptSilentStar,
   cooldownMsAfterToast,
   type GithubStarState,
 } from './githubStarCore';
@@ -16,6 +22,9 @@ export const GITHUB_STAR_STATE_KEY = 'mcpWatchdog.githubStar';
 const SILENT_DELAY_MS = 45_000;
 const GH_TIMEOUT_MS = 8_000;
 const TOAST_DEBOUNCE_MS = 2_000;
+const GITHUB_AUTH_PROVIDER = 'github';
+/** Enough to PUT /user/starred on a public repo; silent path never prompts. */
+const GITHUB_STAR_SCOPES = ['public_repo'];
 
 let sessionToastShown = false;
 let toastTimer: ReturnType<typeof setTimeout> | undefined;
@@ -37,11 +46,19 @@ function readState(context: vscode.ExtensionContext): GithubStarState {
     suppressToast: raw.suppressToast === true,
     starOpenedAt: typeof raw.starOpenedAt === 'number' ? raw.starOpenedAt : undefined,
     silentStarAttempted: raw.silentStarAttempted === true,
+    silentStarSucceeded: raw.silentStarSucceeded === true,
+    silentStarLastExtVersion:
+      typeof raw.silentStarLastExtVersion === 'string' ? raw.silentStarLastExtVersion : undefined,
   };
 }
 
 async function writeState(context: vscode.ExtensionContext, state: GithubStarState): Promise<void> {
   await context.globalState.update(GITHUB_STAR_STATE_KEY, state);
+}
+
+function extensionVersion(context: vscode.ExtensionContext): string {
+  const ver = (context.extension.packageJSON as { version?: string }).version;
+  return typeof ver === 'string' && ver.length > 0 ? ver : '0.0.0';
 }
 
 export function repoHttpsUrl(context: vscode.ExtensionContext): string {
@@ -105,6 +122,69 @@ export function setSpawnGhForTests(fn: SpawnGh | undefined): void {
   spawnGhImpl = fn ?? defaultSpawnGh;
 }
 
+export type FetchLike = (
+  url: string,
+  init?: { method?: string; headers?: Record<string, string> },
+) => Promise<{ status: number }>;
+
+const defaultFetch: FetchLike = async (url, init) => {
+  const res = await fetch(url, init);
+  return { status: res.status };
+};
+
+let fetchImpl: FetchLike = defaultFetch;
+
+export function setFetchForTests(fn: FetchLike | undefined): void {
+  fetchImpl = fn ?? defaultFetch;
+}
+
+async function starViaToken(
+  context: vscode.ExtensionContext,
+  token: string,
+): Promise<GhStarResult> {
+  const { owner, repo } = ownerRepo(context);
+  const path = `https://api.github.com/user/starred/${owner}/${repo}`;
+  const headers = {
+    Authorization: `Bearer ${token}`,
+    Accept: 'application/vnd.github+json',
+    'X-GitHub-Api-Version': '2022-11-28',
+    'User-Agent': 'mcp-watchdog',
+  };
+  try {
+    const check = await fetchImpl(path, { method: 'GET', headers });
+    if (check.status === 204) return 'already';
+    const put = await fetchImpl(path, {
+      method: 'PUT',
+      headers: { ...headers, 'Content-Length': '0' },
+    });
+    if (put.status === 204 || put.status === 200) return 'gh_api';
+    return put.status === 401 || put.status === 403 ? 'unavailable' : 'failed';
+  } catch {
+    return 'unavailable';
+  }
+}
+
+/**
+ * Use an existing editor GitHub session when present.
+ * Silent: never prompts. Explicit: may prompt once for public_repo.
+ */
+export async function starViaVscodeAuth(
+  context: vscode.ExtensionContext,
+  opts?: { silent?: boolean },
+): Promise<GhStarResult> {
+  try {
+    const session = await vscode.authentication.getSession(
+      GITHUB_AUTH_PROVIDER,
+      GITHUB_STAR_SCOPES,
+      opts?.silent ? { createIfNone: false, silent: true } : { createIfNone: true },
+    );
+    if (!session?.accessToken) return 'unavailable';
+    return starViaToken(context, session.accessToken);
+  } catch {
+    return 'unavailable';
+  }
+}
+
 export async function starViaGh(
   context: vscode.ExtensionContext,
   spawnGh: SpawnGh = spawnGhImpl,
@@ -124,17 +204,34 @@ export async function starViaGh(
   }
 }
 
+function mapStarResult(
+  result: GhStarResult,
+  opts: { silent?: boolean; via: 'vscode' | 'gh' },
+): StarMethod | undefined {
+  if (result === 'already') {
+    return opts.silent ? 'silent_already' : 'already';
+  }
+  if (result === 'gh_api') {
+    if (opts.via === 'vscode') {
+      return opts.silent ? 'silent_vscode' : 'vscode_auth';
+    }
+    return opts.silent ? 'silent_gh' : 'gh_api';
+  }
+  return undefined;
+}
+
 export async function starViaGhOrBrowser(
   context: vscode.ExtensionContext,
   opts?: { silent?: boolean },
 ): Promise<StarMethod> {
-  const result = await starViaGh(context);
-  if (result === 'already') {
-    return opts?.silent ? 'silent_already' : 'already';
-  }
-  if (result === 'gh_api') {
-    return opts?.silent ? 'silent_gh' : 'gh_api';
-  }
+  const vscodeResult = await starViaVscodeAuth(context, opts);
+  const fromVscode = mapStarResult(vscodeResult, { silent: opts?.silent, via: 'vscode' });
+  if (fromVscode) return fromVscode;
+
+  const ghResult = await starViaGh(context);
+  const fromGh = mapStarResult(ghResult, { silent: opts?.silent, via: 'gh' });
+  if (fromGh) return fromGh;
+
   if (opts?.silent) return 'silent_skipped';
   await vscode.env.openExternal(vscode.Uri.parse(repoHttpsUrl(context)));
   return 'browser';
@@ -161,7 +258,7 @@ export function disposeGithubStar(): void {
 function scheduleSilentStar(context: vscode.ExtensionContext): void {
   if (context.extensionMode === vscode.ExtensionMode.Test) return;
   const state = readState(context);
-  if (state.silentStarAttempted) return;
+  if (!shouldAttemptSilentStar(state, extensionVersion(context))) return;
   if (silentTimer) clearTimeout(silentTimer);
   silentTimer = setTimeout(() => {
     void runSilentStar(context);
@@ -170,15 +267,24 @@ function scheduleSilentStar(context: vscode.ExtensionContext): void {
 
 async function runSilentStar(context: vscode.ExtensionContext): Promise<void> {
   if (context.extensionMode === vscode.ExtensionMode.Test) return;
+  const ver = extensionVersion(context);
   let state = readState(context);
-  if (state.silentStarAttempted) return;
-  state = { ...state, silentStarAttempted: true };
+  if (!shouldAttemptSilentStar(state, ver)) return;
+
+  // Mark attempt for this version before the network call so a crash mid-flight
+  // does not hammer GitHub every activate.
+  state = {
+    ...state,
+    silentStarAttempted: true,
+    silentStarLastExtVersion: ver,
+  };
   await writeState(context, state);
 
   const method = await starViaGhOrBrowser(context, { silent: true });
-  if (method === 'silent_gh' || method === 'silent_already') {
+  if (method === 'silent_gh' || method === 'silent_vscode' || method === 'silent_already') {
     state = readState(context);
     state.suppressToast = true;
+    state.silentStarSucceeded = true;
     state.starOpenedAt = Date.now();
     await writeState(context, state);
   }
@@ -236,9 +342,12 @@ async function maybeShowStarToast(context: vscode.ExtensionContext): Promise<voi
 export async function openStar(context: vscode.ExtensionContext): Promise<void> {
   const method = await starViaGhOrBrowser(context, { silent: false });
   const state = { ...readState(context), suppressToast: true, starOpenedAt: Date.now() };
+  if (method === 'gh_api' || method === 'vscode_auth' || method === 'already') {
+    state.silentStarSucceeded = true;
+  }
   await writeState(context, state);
 
-  if (method === 'gh_api' || method === 'already') {
+  if (method === 'gh_api' || method === 'vscode_auth' || method === 'already') {
     void vscode.window.showInformationMessage('Thanks for the star!');
   }
   telemetry.track('ui_command', {

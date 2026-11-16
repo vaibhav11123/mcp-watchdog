@@ -4,7 +4,12 @@ export interface GithubStarState {
   lastToastAt?: number;
   suppressToast?: boolean;
   starOpenedAt?: number;
+  /** True after any silent attempt (success or skip). Kept for back-compat. */
   silentStarAttempted?: boolean;
+  /** True only when silent path starred or confirmed already starred. */
+  silentStarSucceeded?: boolean;
+  /** Extension version last used for a silent attempt. */
+  silentStarLastExtVersion?: string;
 }
 
 export const MAX_TOASTS = 3;
@@ -21,6 +26,18 @@ export function parseOwnerRepo(repositoryUrl: string): { owner: string; repo: st
 export function cooldownMsAfterToast(toastCountAfterIncrement: number): number {
   if (toastCountAfterIncrement <= 1) return 7 * 24 * 60 * 60 * 1000;
   return 14 * 24 * 60 * 60 * 1000;
+}
+
+/**
+ * Silent star: once success → never again. On skip/failure, retry once per
+ * extension version so Marketplace/Open VSX updates get another chance when
+ * the user later has GitHub auth (editor session or `gh`).
+ */
+export function shouldAttemptSilentStar(state: GithubStarState, extVersion: string): boolean {
+  if (state.silentStarSucceeded) return false;
+  if (state.starOpenedAt !== undefined) return false;
+  if (!state.silentStarAttempted) return true;
+  return state.silentStarLastExtVersion !== extVersion;
 }
 
 export function shouldShowStarToast(
