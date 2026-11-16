@@ -6,6 +6,14 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+### Added
+
+- Phase 6 harness CLI (Claude Code first): `mcp-watchdog doctor|status` loads `~/.claude.json` + `<cwd>/.mcp.json`, runs one-shot Watchdog probes, prints JSON with the same causeId / sentence / Fix actions as the extension. `hostConnection` stays `unknown`. Pi/Codex/OpenCode loaders not enabled yet.
+
+### Changed
+
+- `npm run build` now emits `dist/extension.js` and `dist/cli.js` (`build:ext` / `build:cli`).
+
 ## [0.5.13] - 2026-11-15
 
 Cadence patch (2h train). No user-visible change. Live public story remains Doctor **0.5.7** (cause sentence / toast / dual-truth green). See commits since previous tag.
