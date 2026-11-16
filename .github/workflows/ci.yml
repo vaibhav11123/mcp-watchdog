@@ -6,6 +6,10 @@ on:
   pull_request:
     branches: [main]
 
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 permissions:
   contents: read
 
@@ -76,3 +80,29 @@ jobs:
       - run: xvfb-run -a npm run test:host
         env:
           VSCODE_VERSION: ${{ matrix.vscode-version }}
+
+  # Single required status check for branch protection. Do not put optional /
+  # flaky OS legs (e.g. macos-latest) in `needs` — add them as separate jobs
+  # with continue-on-error and leave them out of this gate until capacity is stable.
+  ci:
+    name: CI
+    needs: [lint, unit, integration, host]
+    if: always()
+    runs-on: ubuntu-latest
+    steps:
+      - name: Require all upstream jobs
+        run: |
+          set -euo pipefail
+          results=(
+            "${{ needs.lint.result }}"
+            "${{ needs.unit.result }}"
+            "${{ needs.integration.result }}"
+            "${{ needs.host.result }}"
+          )
+          for r in "${results[@]}"; do
+            if [[ "$r" != "success" ]]; then
+              echo "Upstream job result was '$r' (want success)"
+              exit 1
+            fi
+          done
+          echo "All required jobs succeeded."
