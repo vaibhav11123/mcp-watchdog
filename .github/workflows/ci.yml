@@ -26,10 +26,16 @@ jobs:
       - run: npm run format:check
       - run: npm run compile
 
+  # macOS hosted runners are currently capacity-starved: jobs sit queued with no
+  # runner, then cancel after ~15m (zero steps) and fail the whole workflow —
+  # see actions/runner#4833 and main run 43896514359. Darwin path logic is still
+  # covered by unit stubs (e.g. claudeDesktopMcpPath(..., 'darwin')). Keep
+  # ubuntu + windows for real OS coverage until macOS acquisition is reliable.
   unit:
     strategy:
+      fail-fast: false
       matrix:
-        os: [ubuntu-latest, macos-latest, windows-latest]
+        os: [ubuntu-latest, windows-latest]
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v4
