@@ -118,7 +118,6 @@ git config user.name "${GIT_AUTHOR_NAME:-Vaibhav Singh}"
 git config user.email "${GIT_AUTHOR_EMAIL:-scion2304@gmail.com}"
 git add package.json package-lock.json CHANGELOG.md
 git commit -m "Release ${NEXT}: cadence patch (2h train)."
-git tag -a "${TAG}" -m "Release ${TAG} (cadence)"
 
 # Never write PAT into remote.origin.url — env credential helper only (Git 2.31+).
 # Prefer CADENCE_PUSH_TOKEN; else GH_TOKEN / GITHUB_TOKEN (Actions default).
@@ -131,7 +130,26 @@ if [[ -n "${CADENCE_PUSH_TOKEN}" ]]; then
   export GIT_CONFIG_KEY_1=credential.helper
   export GIT_CONFIG_VALUE_1='!f() { test "$1" = get || exit 0; echo username=x-access-token; echo "password=$CADENCE_PUSH_TOKEN"; }; f'
 fi
-git push origin HEAD:main
+
+# Tag only after main accepts the release commit. The 2026-11-16 12:08 UTC
+# cadence job committed + tagged locally, then lost the race to main and left
+# a failed run with no published tag (run 43863802790).
+PUSHED=0
+for attempt in 1 2 3; do
+  if git push origin HEAD:main; then
+    PUSHED=1
+    break
+  fi
+  echo "cadence: push rejected (attempt ${attempt}) — rebase onto origin/main and retry"
+  git fetch origin main
+  git rebase origin/main
+done
+if [[ "${PUSHED}" -ne 1 ]]; then
+  echo "cadence: push to main failed after retries" >&2
+  exit 1
+fi
+
+git tag -a "${TAG}" -m "Release ${TAG} (cadence)"
 git push origin "${TAG}"
 
 # GITHUB_TOKEN tag pushes do not re-trigger release.yml — publish here when asked.
