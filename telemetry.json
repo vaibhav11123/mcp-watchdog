@@ -62,7 +62,7 @@
     },
     {
       "name": "ui_command",
-      "description": "Allowlisted Watchdog command or star CTA (including silent gh star attempt).",
+      "description": "Allowlisted Watchdog command or star CTA (including silent GitHub star via editor auth or gh).",
       "properties": {
         "command": { "classification": "SystemMetaData", "purpose": "FeatureInsight" },
         "method": { "classification": "SystemMetaData", "purpose": "FeatureInsight" }
