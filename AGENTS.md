@@ -64,6 +64,16 @@ npm run smoke
 
 Then **computer use**: inspect UI, attach screenshots/videos of what’s wrong (toast ≤3, cause sentences, dual-truth, no secret values). Claim stage **Now+**.
 
+### CI contract (merge-ready)
+
+Local Cloud Ubuntu green is **not** merge-ready by itself. GitHub Actions must pass the single required gate job named **CI** (see `.github/workflows/ci.yml`).
+
+- Any new CLI / spawn / shell script path must also pass `unit (windows-latest)` (PowerShell does not expand bash globs).
+- Prefer vitest directory filters or config `include` over unquoted shell globs (`cli-*.test.ts`, brace expansion) in `package.json` scripts that CI runs.
+- Do **not** re-add required `macos-latest` to the unit matrix until hosted macOS capacity is reliable (actions/runner#4833). Optional Darwin live coverage belongs in a separate job excluded from the gate `needs`.
+- Prefer rebasing feature branches onto `main` after CI durability merges; avoid parallel fix forks of the same train.
+- Keep `ENABLE_CADENCE_RELEASE=false` until intentional.
+
 ### Local IDE Agent chat
 
 STATUS / GTM / Slack / small fixes only. For “test the product / what’s wrong,” **start a Cloud Agent** in the multi-repo env (or self-hosted Mac). Do not paste ops into public stubs. No spend.

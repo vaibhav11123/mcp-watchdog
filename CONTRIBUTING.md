@@ -30,6 +30,15 @@ npm run build
 - Unit tests must pass with **no network**
 - Never log or commit env/header **values**
 
+## CI contract
+
+Merge requires the GitHub Actions gate job named **CI** (not individual matrix legs).
+
+- Ubuntu-only green locally is insufficient — Windows unit must stay green too.
+- Do not put unquoted bash globs in npm scripts CI runs (Windows PowerShell will not expand them); use directory filters (e.g. `vitest run test/unit/cli`).
+- Do not re-add required `macos-latest` until runner capacity is stable; optional macOS jobs must stay outside the gate `needs`.
+- Rebase onto `main` after CI durability landings instead of forking parallel fix PRs for the same failure.
+
 ## Extension Host / F5
 
 Marketplace, a local install, and Extension Development Host can all register the same view IDs (`mcpWatchdog.overview` / `mcpWatchdog.servers`). That causes **Cannot register multiple views** / activation failure.
