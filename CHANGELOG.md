@@ -12,6 +12,14 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   (`'…' is not recognized…`) classifies as `spawn.enoent` instead of `spawn.closed`
   when the SDK only surfaces `Connection closed`.
 
+### Changed
+
+- CI: concurrency cancel-in-progress; single required gate job named `CI`; unit matrix stays ubuntu + windows only (no required macOS).
+
+### Notes
+
+- Owner: set branch protection required check to the gate job name **CI** (not matrix legs).
+
 ## [0.5.16] - 2026-11-16
 
 Silent listing / README harden for Open VSX buyers.
