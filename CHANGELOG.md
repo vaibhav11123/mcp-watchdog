@@ -6,6 +6,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+### Fixed
+
+- Stdio probes pipe stderr and capture it before `connect`, so a missing Windows binary
+  (`'…' is not recognized…`) classifies as `spawn.enoent` instead of `spawn.closed`
+  when the SDK only surfaces `Connection closed`.
+
 ## [0.5.16] - 2026-11-16
 
 Silent listing / README harden for Open VSX buyers.

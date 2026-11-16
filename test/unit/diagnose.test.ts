@@ -65,6 +65,16 @@ describe('diagnose / auth taxonomy', () => {
           "'mcp-watchdog-missing-binary-xyz-9f3a' is not recognized as an internal or external command",
       }),
     ).toBe('spawn.enoent');
+    // lastProbeError is Connection closed but stderr landed in failureContext (Windows inherit→pipe race)
+    expect(
+      classifyCauseId({
+        serverName: 'bad',
+        lastError: 'Max retries exceeded',
+        lastProbeError: 'MCP error -32000: Connection closed',
+        failureContext:
+          "[missing] stderr: 'mcp-watchdog-missing-binary-xyz-9f3a' is not recognized as an internal or external command, operable program or batch file.",
+      }),
+    ).toBe('spawn.enoent');
   });
 
   it('C-AUTH-OAUTH-01: www-authenticate / oauth → auth.oauth_needed', () => {

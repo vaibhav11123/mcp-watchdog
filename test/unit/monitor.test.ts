@@ -1,11 +1,14 @@
+import { PassThrough } from 'node:stream';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import {
+  enrichSpawnProbeError,
   ServerMonitor,
   type MonitorClient,
   type MonitorClientFactory,
   type MonitorClock,
 } from '../../src/monitor';
 import type { McpServerConfig } from '../../src/config-core';
+import { diagnoseFailure } from '../../src/failureTriage';
 
 const stdioConfig: McpServerConfig = { type: 'stdio', command: 'echo', args: ['ok'] };
 
@@ -320,6 +323,62 @@ describe('ServerMonitor', () => {
     const failed = onStatus.mock.calls.map((c) => c[0]).find((s) => s.state === 'failed');
     expect(failed?.failureContext).toBeTruthy();
     expect(failed?.failureContext).toMatch(/boom|failed|Max retries/i);
+  });
+
+  it('enrichSpawnProbeError prefers Windows missing-binary stderr over Connection closed', () => {
+    const win =
+      "'mcp-watchdog-missing-binary-xyz-9f3a' is not recognized as an internal or external command, operable program or batch file.";
+    expect(
+      enrichSpawnProbeError('MCP error -32000: Connection closed', new Error('closed'), [
+        `[missing] stderr: ${win}`,
+      ]),
+    ).toBe(win);
+    expect(
+      enrichSpawnProbeError(
+        'Connection closed',
+        Object.assign(new Error('x'), { code: 'ENOENT', path: 'foo' }),
+        [],
+      ),
+    ).toBe('spawn foo ENOENT');
+  });
+
+  it('interval probe: Windows cmd stderr + Connection closed → spawn.enoent', async () => {
+    const onStatus = vi.fn();
+    const clock = makeFakeClock();
+    const stderr = new PassThrough();
+    const win =
+      "'mcp-watchdog-missing-binary-xyz-9f3a' is not recognized as an internal or external command, operable program or batch file.";
+    const factory: MonitorClientFactory = () => ({
+      transport: { stderr },
+      client: {
+        connect: async () => {
+          stderr.write(`${win}\n`);
+          throw new Error('MCP error -32000: Connection closed');
+        },
+        ping: async () => {},
+        close: async () => {},
+      },
+    });
+    const monitor = new ServerMonitor(
+      'missing',
+      stdioConfig,
+      { ...defaultOptions, probeMode: 'interval', maxRetries: 0 },
+      onStatus,
+      vi.fn(),
+      clock,
+      factory,
+    );
+    await monitor.start();
+    const degraded = onStatus.mock.calls.map((c) => c[0]).find((s) => s.state === 'degraded');
+    expect(degraded?.lastProbeError).toMatch(/is not recognized/i);
+    const d = diagnoseFailure({
+      serverName: 'missing',
+      lastError: degraded?.lastError,
+      lastProbeError: degraded?.lastProbeError,
+      failureContext: degraded?.failureContext,
+      config: stdioConfig,
+    });
+    expect(d.causeId).toBe('spawn.enoent');
   });
 
   it('checkEmptyTools: listTools [] stays healthy with toolCount 0', async () => {

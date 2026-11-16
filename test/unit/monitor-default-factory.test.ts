@@ -71,6 +71,7 @@ describe('ServerMonitor default client factory', () => {
       args: ['server.js'],
       env: { FOO: 'bar' },
       cwd: '/tmp',
+      stderr: 'pipe',
     });
     expect(mocks.mockConnect).toHaveBeenCalled();
     await monitor.stop();

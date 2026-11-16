@@ -92,11 +92,14 @@ function defaultClientFactory(
   const client = new Client({ name: 'mcp-watchdog', version: '1.0.0' }, { capabilities: {} });
   let transport: StdioClientTransport | StreamableHTTPClientTransport | SSEClientTransport;
   if (config.type === 'stdio') {
+    // Pipe stderr so Windows cmd "is not recognized" (and other early spawn noise)
+    // is capturable before/during connect — SDK default is inherit (lost to console).
     transport = new StdioClientTransport({
       command: config.command,
       args: config.args ?? [],
       env: config.env,
       cwd: config.cwd,
+      stderr: 'pipe',
     });
   } else {
     const requestInit: RequestInit | undefined =
@@ -132,6 +135,42 @@ function attachStderrCapture(transport: unknown, onLine: (line: string) => void)
       if (line.trim()) onLine(line);
     }
   });
+}
+
+/** Windows/cmd + Unix phrases that mean the stdio binary was missing. */
+const MISSING_BINARY_RE =
+  /ENOENT|command not found|spawn .+ ENOENT|cannot find the (path|file) specified|is not recognized as (an internal or external command|a command)/i;
+
+/**
+ * When connect fails with Connection closed (Windows cmd wrapper) but stderr/log
+ * already captured a missing-binary phrase — or err.code is ENOENT — prefer that
+ * for lastProbeError so classify → spawn.enoent (not spawn.closed).
+ */
+export function enrichSpawnProbeError(
+  message: string,
+  err: unknown,
+  recentLog: readonly string[],
+): string {
+  if (MISSING_BINARY_RE.test(message)) return message;
+  const code =
+    err && typeof err === 'object' && 'code' in err
+      ? String((err as { code?: unknown }).code ?? '')
+      : '';
+  if (code === 'ENOENT') {
+    const path =
+      err && typeof err === 'object' && 'path' in err
+        ? String((err as { path?: unknown }).path ?? '')
+        : '';
+    return path ? `spawn ${path} ENOENT` : 'spawn ENOENT';
+  }
+  for (let i = recentLog.length - 1; i >= 0; i--) {
+    const line = recentLog[i]!;
+    if (MISSING_BINARY_RE.test(line)) {
+      const stripped = line.replace(/^\[.*?\]\s*stderr:\s*/i, '').trim();
+      return stripped || line;
+    }
+  }
+  return message;
 }
 
 export class ServerMonitor {
@@ -335,8 +374,10 @@ export class ServerMonitor {
     try {
       const { client, transport } = this.clientFactory(this.config, this.options);
       probeClient = client;
-      await client.connect(transport);
+      // Attach before connect: SDK PassThrough exists immediately when stderr:'pipe',
+      // so Windows cmd missing-binary lines are not lost to the Connection closed race.
       attachStderrCapture(transport, (line) => this.recordLog(`[${this.name}] stderr: ${line}`));
+      await client.connect(transport);
       const start = this.clock.now();
       await client.ping({ timeout: this.options.pingTimeoutMs });
       const elapsed = this.clock.now() - start;
@@ -380,7 +421,8 @@ export class ServerMonitor {
       }
       this.client = null;
       const msg = err instanceof Error ? err.message : String(err);
-      const classified = classifyProbeError(msg);
+      const enriched = enrichSpawnProbeError(msg, err, this.recentLog);
+      const classified = classifyProbeError(enriched);
       const lastError = endpointReachable
         ? `MCP session failed but endpoint reachable: ${classified}`
         : classified;
@@ -410,8 +452,8 @@ export class ServerMonitor {
 
     try {
       const { client, transport } = this.clientFactory(this.config, this.options);
-      await client.connect(transport);
       attachStderrCapture(transport, (line) => this.recordLog(`[${this.name}] stderr: ${line}`));
+      await client.connect(transport);
 
       this.client = client;
       this.retryCount = 0;
@@ -425,7 +467,8 @@ export class ServerMonitor {
       this.schedulePing();
     } catch (err) {
       const msg = err instanceof Error ? err.message : String(err);
-      const lastError = classifyProbeError(msg);
+      const enriched = enrichSpawnProbeError(msg, err, this.recentLog);
+      const lastError = classifyProbeError(enriched);
       this.recordLog(`[${this.name}] Connection failed: ${msg}`);
       this.setStatus('failed', {
         lastError,
