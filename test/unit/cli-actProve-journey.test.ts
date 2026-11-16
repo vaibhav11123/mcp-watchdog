@@ -40,6 +40,8 @@ describe('Act+Prove journeys (product)', () => {
     const verify = applied.results.find((r) => r.stepId === 'retry.probe');
     expect(verify?.verifiedOutcome).toBe('resolved');
     expect(verify?.after.state).toBe('healthy');
+    expect(before.hostConnection).toBe('unknown');
+    expect(verify?.after.hostConnection).toBe('unknown');
   }, 25_000);
 
   it('F4: empty env in config + shell token → overlay then Verified (no secret in report)', async () => {
@@ -69,6 +71,7 @@ describe('Act+Prove journeys (product)', () => {
       });
       const verify = applied.results.find((r) => r.stepId === 'retry.probe');
       expect(verify?.verifiedOutcome).toBe('resolved');
+      expect(verify?.after.hostConnection).toBe('unknown');
       expect(JSON.stringify(applied)).not.toContain(secret);
     } finally {
       if (prev === undefined) delete process.env.DEMO_TOKEN;
