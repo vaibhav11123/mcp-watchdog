@@ -117,7 +117,7 @@ export async function runCli(argv: string[]): Promise<number> {
   };
 
   if (args.command === 'fix') {
-    const plan = buildFixPlan(servers);
+    const plan = buildFixPlan(servers, loaded.servers);
     if (!args.yes) {
       emitJson(
         {
@@ -158,10 +158,12 @@ export async function runCli(argv: string[]): Promise<number> {
       return 1;
     }
 
+    const verifyResults = applied.results.filter((r) => r.stepId === 'retry.probe');
     const allResolved =
-      applied.results.length > 0 &&
-      applied.results.every((r) => r.applied && r.verifiedOutcome === 'resolved');
-    const anyResolved = applied.results.some((r) => r.verifiedOutcome === 'resolved');
+      verifyResults.length > 0 &&
+      verifyResults.every((r) => r.applied && r.verifiedOutcome === 'resolved') &&
+      applied.results.every((r) => r.applied);
+    const anyResolved = verifyResults.some((r) => r.verifiedOutcome === 'resolved');
     const verified = allResolved ? 'resolved' : anyResolved ? 'partial' : 'unresolved';
 
     emitJson(

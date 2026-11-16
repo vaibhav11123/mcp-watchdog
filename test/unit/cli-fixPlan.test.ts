@@ -22,4 +22,23 @@ describe('buildFixPlan', () => {
       },
     ]);
   });
+
+  it('adds ensureNpxYes before retry when npx lacks -y', () => {
+    const servers: CliServerReport[] = [
+      {
+        name: 'footgun',
+        state: 'degraded',
+        causeId: 'generic',
+        hostConnection: 'unknown',
+      },
+    ];
+    const plan = buildFixPlan(servers, {
+      footgun: {
+        type: 'stdio',
+        command: 'npx',
+        args: ['@modelcontextprotocol/server-everything'],
+      },
+    });
+    expect(plan.map((p) => p.id)).toEqual(['config.ensureNpxYes', 'retry.probe']);
+  });
 });
