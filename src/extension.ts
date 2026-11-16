@@ -675,6 +675,7 @@ async function reviewTrustQuickPick(): Promise<void> {
   notifyValueMoment();
   trustPromptShown = false;
   await reloadServers();
+  await maybeFirstOpenNudge(extensionContext);
 }
 
 export interface McpWatchdogApi {
@@ -915,11 +916,8 @@ export async function activate(context: vscode.ExtensionContext): Promise<McpWat
     $set_once: { firstEditor: editor },
   });
 
-  const revealKey = 'mcpWatchdog.didRevealServersView';
-  if (!context.globalState.get<boolean>(revealKey)) {
-    void context.globalState.update(revealKey, true);
-    setTimeout(() => void focusServersView(), 750);
-  }
+  // One hard first-open nudge (STATUS Convert) — not toast spam; once per install.
+  void maybeFirstOpenNudge(context);
 
   return {
     getStatuses: () => annotateStatuses([...statuses.values()]),
@@ -947,6 +945,33 @@ export async function activate(context: vscode.ExtensionContext): Promise<McpWat
 async function focusServersView(): Promise<void> {
   await vscode.commands.executeCommand('workbench.view.extension.mcp-watchdog');
   await vscode.commands.executeCommand('mcpWatchdog.overview.focus');
+}
+
+const FIRST_OPEN_NUDGE_KEY = 'mcpWatchdog.didFirstOpenNudge';
+
+/**
+ * Convert silent installs → Overview (STATUS Growth step 1).
+ * One information prompt + focus; never a failure toast; once per machine install id store.
+ */
+async function maybeFirstOpenNudge(context: vscode.ExtensionContext): Promise<void> {
+  if (context.globalState.get<boolean>(FIRST_OPEN_NUDGE_KEY)) {
+    return;
+  }
+  await context.globalState.update(FIRST_OPEN_NUDGE_KEY, true);
+  // Also mark legacy soft-reveal so older installs don't double-focus later.
+  await context.globalState.update('mcpWatchdog.didRevealServersView', true);
+
+  const choice = await vscode.window.showInformationMessage(
+    'MCP Watchdog is ready — open Overview to see MCP server health.',
+    'Open Overview',
+  );
+  trackUi('focusServersView');
+  if (choice === 'Open Overview') {
+    await focusServersView();
+  } else {
+    // Still reveal once so trust→UI cliff shrinks even if they dismiss.
+    await focusServersView();
+  }
 }
 
 async function reloadServers(): Promise<void> {
