@@ -6,6 +6,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+### Changed
+
+- Public `docs/TECHNICAL.md` is now a stub; historical design dump lives in private ops only.
+
 ## [0.5.17] - 2026-11-16
 
 Silent patch — Act+Prove CLI companion (unannounced) + Windows ENOENT honesty + CI gate. Editor remains brand; A-cli-brand HOLD.
