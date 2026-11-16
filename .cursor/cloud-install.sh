@@ -8,11 +8,13 @@ cd "$ROOT"
 
 link_ops() {
   local cand
+  # Cursor Cloud multi-repo layout uses /agent/repos/<name> (not always a sibling of ROOT).
   for cand in \
     "${ROOT}/../mcp-watchdog-ops" \
     "${ROOT}/../../mcp-watchdog-ops" \
-    "${HOME}/mcp-watchdog-ops" \
-    "/workspace/mcp-watchdog-ops"
+    "/agent/repos/mcp-watchdog-ops" \
+    "/workspace/mcp-watchdog-ops" \
+    "${HOME}/mcp-watchdog-ops"
   do
     if [[ -d "${cand}/.git" || -f "${cand}/STATUS.md" || -f "${cand}/DUAL-REPO.md" ]]; then
       mkdir -p "${ROOT}/docs"
@@ -25,6 +27,11 @@ link_ops() {
       if [[ ! -e "${ROOT}/docs/ops" ]]; then
         ln -sfn "${cand}" "${ROOT}/docs/ops"
         echo "Linked docs/ops → ${cand}"
+      elif [[ ! -f "${ROOT}/docs/ops/STATUS.md" ]]; then
+        # Empty dir or broken submodule — force link
+        rm -rf "${ROOT}/docs/ops"
+        ln -sfn "${cand}" "${ROOT}/docs/ops"
+        echo "Replaced empty docs/ops → ${cand}"
       else
         echo "docs/ops already present ($(ls "${ROOT}/docs/ops/STATUS.md" 2>/dev/null || echo no-STATUS))"
       fi
@@ -34,6 +41,7 @@ link_ops() {
   echo "WARN: mcp-watchdog-ops not found beside this repo."
   echo "      Create a multi-repo Cloud Environment with both:"
   echo "      vaibhav11123/mcp-watchdog + vaibhav11123/mcp-watchdog-ops"
+  echo "      Fallback path if present: /agent/repos/mcp-watchdog-ops/STATUS.md"
   return 0
 }
 
@@ -41,4 +49,4 @@ link_ops
 npm ci
 npm run compile
 npm run build
-echo "Cloud install done. Ops STATUS: $(test -f docs/ops/STATUS.md && echo OK || echo MISSING)"
+echo "Cloud install done. Ops STATUS: $(test -f docs/ops/STATUS.md && echo OK || echo MISSING — try /agent/repos/mcp-watchdog-ops/STATUS.md)"

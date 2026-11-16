@@ -1,10 +1,35 @@
 # Agent notes — MCP Watchdog
 
-Open **ops** `docs/ops/STATUS.md` first (submodule or multi-repo cloud env with `mcp-watchdog-ops`).
+Open **ops STATUS** first (plan of action / Progress train / Growth order):
+
+| Where you are | Open |
+|---------------|------|
+| **Local Mac** (submodule linked) | `docs/ops/STATUS.md` |
+| **Cloud Agent** (after `cloud-install.sh`) | `docs/ops/STATUS.md` (symlink → ops clone) |
+| **Cloud Agent fallback** if `docs/ops/` empty | `/agent/repos/mcp-watchdog-ops/STATUS.md` |
+
+Do **not** look for Desktop paths (`/Users/…`) from a Cloud VM.
+
+**Path roots (same files):** `docs/ops/<file>` after link · else `/agent/repos/mcp-watchdog-ops/<file>`
+
+### Supporting docs Cloud Agents need
+
+| Need | File (under ops root) |
+|------|------------------------|
+| Plan / Growth order / next actions | `STATUS.md` |
+| How to verify in Cloud | `CLOUD-AGENT-VERIFY.md` |
+| Live EH / SIGN-OFF / capture | `TESTING.md` |
+| Soak / publish gates | `RELEASE.md` · `GTM-PUBLISH.md` |
+| Claims / ICP | `STRATEGY-THESIS.md` |
+| Doctor UI / cause | `design/SCREEN-SPEC.md` · `design/CAUSE-CATALOG.md` |
+| Eng checklist | `tasks/todo.md` |
+| Instinct / Slack | `GTM-ROLE.md` · `GTM-COMMS.md` · `GTM-GUARDRAILS.md` |
+| Dual-repo rules | `DUAL-REPO.md` |
+| Public stubs only (no private process) | repo `docs/STATUS.md`, `docs/OPS.md`, `README.md`, `CHANGELOG.md` |
 
 ## Cursor Cloud specific instructions
 
-Full SoT: `docs/ops/CLOUD-AGENT-VERIFY.md` (private ops).
+Full SoT: `docs/ops/CLOUD-AGENT-VERIFY.md` — or `/agent/repos/mcp-watchdog-ops/CLOUD-AGENT-VERIFY.md` if unlinked.
 
 ### Default: verify in a Cloud Agent environment
 
@@ -24,8 +49,8 @@ Vaibhav must create a **multi-repo** Environment in [cursor.com/agents](https://
 1. `vaibhav11123/mcp-watchdog`  
 2. `vaibhav11123/mcp-watchdog-ops`  
 
-Point it at `.cursor/environment.json` (declares `repositoryDependencies` + `cloud-install.sh` which symlinks ops → `docs/ops`).  
-Without that dashboard step, Cloud Agents **404** private ops — stubs only.  
+Point it at `.cursor/environment.json` (declares `repositoryDependencies` + `cloud-install.sh` which symlinks ops → `docs/ops`, including `/agent/repos/mcp-watchdog-ops`).  
+Without that dashboard step, Cloud Agents **404** private ops — stubs only. If Build ran but `docs/ops/` is still empty, read STATUS at **`/agent/repos/mcp-watchdog-ops/STATUS.md`** and re-run `bash .cursor/cloud-install.sh`.  
 Terminal: Watchdog Cloud on `:8787`.
 
 ### Cloud Agent must run

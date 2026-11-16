@@ -1,6 +1,6 @@
 # MCP Watchdog — Status (public stub)
 
-**Full switchboard is private:** [docs/ops/STATUS.md](./ops/STATUS.md) after `git submodule update --init docs/ops`.
+**Full switchboard is private:** [docs/ops/STATUS.md](./ops/STATUS.md) after `git submodule update --init docs/ops`. Cloud Agent fallback: `/agent/repos/mcp-watchdog-ops/STATUS.md` if `docs/ops/` is empty.
 
 **You are here:** See private ops STATUS for soak / claim stage / next announce. Public registries carry the product; cadence patches are silent.
 
