@@ -7,7 +7,6 @@ import {
   RATE_MESSAGE,
   RATE_PROMPT_DISABLED,
   REVIEW_ASK_DELAY_MS,
-  choiceTriggersGithubStarWrite,
   resolveOpenStrategy,
   shouldOfferAsk,
   type OpenStrategy,
@@ -115,13 +114,12 @@ async function presentAsk(context: vscode.ExtensionContext, source: ReviewSource
 
   telemetry.track('review_ask_choice', { choice });
 
-  if (choiceTriggersGithubStarWrite(choice)) {
+  if (choice === 'rate') {
     await runRateWatchdog(context);
   } else if (choice === 'feedback') {
     await softOpenExternal(FEEDBACK_ISSUES_URL);
     telemetry.track('review_surface_opened', { surface: 'issues' });
   }
-  // Not now / dismiss: no GitHub star write
 }
 
 function scheduleReviewAsk(context: vscode.ExtensionContext, source: ReviewSource): void {

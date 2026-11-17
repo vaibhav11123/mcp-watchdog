@@ -38,7 +38,7 @@ function spawnGh(args: string[]): Promise<{ code: number | null; stdout: string 
   });
 }
 
-/** Best-effort GitHub star via `gh` CLI (no browser). Only call when --star is set. */
+/** Best-effort GitHub star via `gh` CLI (no browser). */
 export async function tryCliGithubStar(
   owner = 'vaibhav11123',
   repo = 'mcp-watchdog',
@@ -77,32 +77,21 @@ function openUrl(url: string): Promise<boolean> {
 export type CliRateResult = {
   ok: true;
   command: 'rate';
-  githubStar: 'starred' | 'already' | 'skipped' | 'opened_browser' | 'declined';
+  githubStar: 'starred' | 'already' | 'skipped' | 'opened_browser';
   store: { kind: OpenStrategy['kind']; url: string; opened: boolean };
   note: string;
   hostConnection: 'unknown';
 };
 
-export type CliRateOpts = {
-  appName?: string;
-  /** Explicit opt-in for GitHub star API / browser star leg. Default false — no write. */
-  star?: boolean;
-};
-
 /**
- * CLI Rate: open one store listing. GitHub star write only when `star: true` (`--star`).
+ * CLI Rate: try gh star, else open GitHub repo; then one store URL (default Open VSX ICP).
  */
-export async function runCliRate(opts?: CliRateOpts): Promise<CliRateResult> {
+export async function runCliRate(opts?: { appName?: string }): Promise<CliRateResult> {
   const strategy = resolveOpenStrategy(opts?.appName ?? process.env.TERM_PROGRAM ?? '');
-  const wantStar = opts?.star === true;
-
-  let githubStar: CliRateResult['githubStar'] = 'declined';
-  if (wantStar) {
-    githubStar = await tryCliGithubStar();
-    if (githubStar === 'skipped') {
-      const openedGh = await openUrl(GITHUB_REPO_URL);
-      githubStar = openedGh ? 'opened_browser' : 'skipped';
-    }
+  let githubStar: CliRateResult['githubStar'] = await tryCliGithubStar();
+  if (githubStar === 'skipped') {
+    const openedGh = await openUrl(GITHUB_REPO_URL);
+    githubStar = openedGh ? 'opened_browser' : 'skipped';
   }
 
   const storeUrl = strategy.kind === 'extension_open' ? strategy.fallbackUrl : strategy.url;
@@ -119,9 +108,7 @@ export async function runCliRate(opts?: CliRateOpts): Promise<CliRateResult> {
       url,
       opened,
     },
-    note: wantStar
-      ? 'Star leg requested (--star). Does not auto-post Marketplace/Open VSX reviews — opens official UI for you to submit.'
-      : 'Store open only — pass --star to also star on GitHub via gh (or open the repo). Does not auto-post Marketplace/Open VSX reviews.',
+    note: 'Does not auto-post Marketplace/Open VSX reviews — opens official UI for you to submit.',
     hostConnection: 'unknown',
   };
 }

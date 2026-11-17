@@ -3,12 +3,9 @@ import {
   resolvePrimaryStore,
   resolveOpenStrategy,
   shouldOfferAsk,
-  choiceTriggersGithubStarWrite,
   EXTENSION_ID,
   OPEN_VSX_URL,
   MARKETPLACE_URL,
-  RATE_ACTION_MARKETPLACE,
-  RATE_ACTION_OPENVSX,
 } from '../../src/reviewAskCore';
 
 describe('resolvePrimaryStore / resolveOpenStrategy', () => {
@@ -20,8 +17,7 @@ describe('resolvePrimaryStore / resolveOpenStrategy', () => {
     expect(s.kind).toBe('open_external');
     if (s.kind === 'open_external') {
       expect(s.url).toBe(OPEN_VSX_URL);
-      expect(s.rateLabel).toBe(RATE_ACTION_OPENVSX);
-      expect(s.rateLabel).toMatch(/^Star on GitHub \+/);
+      expect(s.rateLabel).toContain('Open VSX');
     }
   });
 
@@ -32,8 +28,7 @@ describe('resolvePrimaryStore / resolveOpenStrategy', () => {
     if (s.kind === 'extension_open') {
       expect(s.extensionId).toBe(EXTENSION_ID);
       expect(s.fallbackUrl).toBe(MARKETPLACE_URL);
-      expect(s.rateLabel).toBe(RATE_ACTION_MARKETPLACE);
-      expect(s.rateLabel).toMatch(/^Star on GitHub \+/);
+      expect(s.rateLabel).toContain('Marketplace');
     }
   });
 
@@ -116,13 +111,5 @@ describe('shouldOfferAsk', () => {
         askInFlight: false,
       }),
     ).toEqual({ action: 'offer', nextCount: 5 });
-  });
-});
-
-describe('choiceTriggersGithubStarWrite', () => {
-  it('only disclosed rate choice may star; dismiss/feedback do not', () => {
-    expect(choiceTriggersGithubStarWrite('rate')).toBe(true);
-    expect(choiceTriggersGithubStarWrite('dismiss')).toBe(false);
-    expect(choiceTriggersGithubStarWrite('feedback')).toBe(false);
   });
 });
