@@ -18,6 +18,7 @@ export function parseArgs(argv: string[]): {
   command: 'doctor' | 'status' | 'fix' | 'restore' | 'rate';
   yes: boolean;
   pretty: boolean;
+  star: boolean;
   from?: string;
 } {
   const out = {
@@ -27,6 +28,7 @@ export function parseArgs(argv: string[]): {
     command: 'doctor' as 'doctor' | 'status' | 'fix' | 'restore' | 'rate',
     yes: false,
     pretty: false,
+    star: false,
     from: undefined as string | undefined,
   };
   for (let i = 0; i < argv.length; i++) {
@@ -37,6 +39,7 @@ export function parseArgs(argv: string[]): {
     else if (a === '--from' && argv[i + 1]) out.from = argv[++i]!;
     else if (a === '--yes' || a === '-y') out.yes = true;
     else if (a === '--full' || a === '--pretty') out.pretty = true;
+    else if (a === '--star') out.star = true;
     else if (a === 'doctor' || a === 'status' || a === 'fix' || a === 'restore' || a === 'rate') {
       out.command = a;
     }
@@ -49,7 +52,7 @@ export function usage(): string {
 
 Supported invoke (repo clone after npm run build — not on PATH from a VSIX install):
   node bin/mcp-watchdog.mjs [--host claude-code|pi|codex|opencode|auto] [--cwd <path>] [--full]
-                            [doctor|status|fix|restore|rate] [--yes] [--from <backup>]
+                            [doctor|status|fix|restore|rate] [--yes] [--star] [--from <backup>]
 
 Notes:
   - Same Doctor taxonomy as the VS Code/Cursor extension (causeId + Fix).
@@ -60,7 +63,7 @@ Notes:
   - Kill switch: MCP_WATCHDOG_FIX=0 disables mutate.
   - Rate limit: max 3 mutates per cwd per 5 minutes.
   - restore --from <path>: restore .mcp.json from .mcp-watchdog/backups/ only.
-  - rate: try gh star + open one store listing (does not auto-post reviews).
+  - rate: open one store listing; pass --star to also star on GitHub via gh (or open the repo). No undisclosed star write. Does not auto-post reviews.
   - v1 loader: Claude Code (~/.claude.json + <cwd>/.mcp.json).
 `;
 }
@@ -73,7 +76,7 @@ export async function runCli(argv: string[]): Promise<number> {
   }
 
   if (args.command === 'rate') {
-    const result = await runCliRate();
+    const result = await runCliRate({ star: args.star });
     emitJson(result, { pretty: args.pretty, cwd: args.cwd });
     return 0;
   }
