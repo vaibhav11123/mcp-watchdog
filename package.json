@@ -121,7 +121,7 @@
       },
       {
         "command": "mcpWatchdog.rateWatchdog",
-        "title": "MCP Watchdog: Star on GitHub + open store page"
+        "title": "MCP Watchdog: Rate / review…"
       },
       {
         "command": "mcpWatchdog.showReviewAskPreview",
@@ -375,7 +375,7 @@
           "type": "number",
           "default": 3,
           "minimum": 0,
-          "description": "After this many recoveries from failed/degraded to healthy, ask once with a disclosed Star on GitHub + store action. Not now forever suppresses (no star write). Set 0 to disable the interruptive ask (command still works). Does not auto-post Marketplace/Open VSX reviews."
+          "description": "After this many recoveries from failed/degraded to healthy, ask once to Rate Watchdog (GitHub star when signed in + one store hop). Not now forever suppresses. Set 0 to disable the interruptive ask (Rate command still works). Does not auto-post Marketplace/Open VSX reviews."
         },
         "mcpWatchdog.enableReviewAskPreview": {
           "type": "boolean",

@@ -54,10 +54,6 @@ export function resolvePrimaryStore(appName: string): StoreSurface {
   return 'openvsx';
 }
 
-/** Button / command copy must disclose the GitHub star write — never a generic "Rate". */
-export const RATE_ACTION_MARKETPLACE = 'Star on GitHub + open Marketplace';
-export const RATE_ACTION_OPENVSX = 'Star on GitHub + open Open VSX';
-
 export function resolveOpenStrategy(appName: string): OpenStrategy {
   const store = resolvePrimaryStore(appName);
   if (store === 'marketplace') {
@@ -65,19 +61,14 @@ export function resolveOpenStrategy(appName: string): OpenStrategy {
       kind: 'extension_open',
       extensionId: EXTENSION_ID,
       fallbackUrl: MARKETPLACE_URL,
-      rateLabel: RATE_ACTION_MARKETPLACE,
+      rateLabel: 'Rate on Marketplace',
     };
   }
   return {
     kind: 'open_external',
     url: OPEN_VSX_URL,
-    rateLabel: RATE_ACTION_OPENVSX,
+    rateLabel: 'Rate on Open VSX',
   };
-}
-
-/** Only the disclosed Rate action may trigger a GitHub star write. */
-export function choiceTriggersGithubStarWrite(choice: ReviewAskChoice): boolean {
-  return choice === 'rate';
 }
 
 export function storeListingUrl(surface: StoreSurface): string {
