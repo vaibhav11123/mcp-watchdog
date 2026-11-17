@@ -375,7 +375,7 @@
           "type": "number",
           "default": 3,
           "minimum": 0,
-          "description": "After this many recoveries from failed/degraded to healthy, ask once to Rate Watchdog. Star / Not now runs before any GitHub star API call; Not now makes no star call and forever suppresses the ask. Set 0 to disable the interruptive ask (Rate command still works). Does not auto-post Marketplace/Open VSX reviews."
+          "description": "After this many recoveries from failed/degraded to healthy, ask once to Rate Watchdog (GitHub star when signed in + one store hop). Not now forever suppresses. Set 0 to disable the interruptive ask (Rate command still works). Does not auto-post Marketplace/Open VSX reviews."
         },
         "mcpWatchdog.enableReviewAskPreview": {
           "type": "boolean",

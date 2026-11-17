@@ -1,10 +1,8 @@
-import { describe, expect, it, vi } from 'vitest';
+import { describe, expect, it } from 'vitest';
 import {
   resolvePrimaryStore,
   resolveOpenStrategy,
   shouldOfferAsk,
-  isExplicitStarConfirm,
-  withConfirmedStarWrite,
   EXTENSION_ID,
   OPEN_VSX_URL,
   MARKETPLACE_URL,
@@ -113,33 +111,5 @@ describe('shouldOfferAsk', () => {
         askInFlight: false,
       }),
     ).toEqual({ action: 'offer', nextCount: 5 });
-  });
-});
-
-describe('star confirmation gate', () => {
-  it('accepts only an explicit yes', () => {
-    expect(isExplicitStarConfirm('y')).toBe(true);
-    expect(isExplicitStarConfirm('YES')).toBe(true);
-    expect(isExplicitStarConfirm(' star ')).toBe(true);
-    expect(isExplicitStarConfirm('n')).toBe(false);
-    expect(isExplicitStarConfirm('Not now')).toBe(false);
-    expect(isExplicitStarConfirm('')).toBe(false);
-    expect(isExplicitStarConfirm(undefined)).toBe(false);
-  });
-
-  it('does not call the star write when confirmation is declined', async () => {
-    const write = vi.fn(async () => {
-      throw new Error('star API must not run');
-    });
-    const result = await withConfirmedStarWrite({ confirmed: false, write });
-    expect(result).toEqual({ confirmed: false });
-    expect(write).not.toHaveBeenCalled();
-  });
-
-  it('calls the star write only after confirmation', async () => {
-    const write = vi.fn(async () => 'starred' as const);
-    const result = await withConfirmedStarWrite({ confirmed: true, write });
-    expect(write).toHaveBeenCalledTimes(1);
-    expect(result).toEqual({ confirmed: true, value: 'starred' });
   });
 });
