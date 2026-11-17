@@ -6,6 +6,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [0.5.18] - 2026-11-17
+
+Silent patch — stickiness-first Rate Watchdog (unannounced). Editor remains brand; A-cli-brand HOLD.
+
 ### Added
 
 - Stickiness-first **Rate Watchdog**: one earned ask after recoveries (GitHub star when signed in + one store hop — in-IDE `extension.open` on VS Code, Open VSX on Cursor). Command Palette **Rate / review…** and CLI `rate`. Does not auto-post Marketplace/Open VSX reviews; **Not now** forever suppresses.
@@ -436,7 +440,8 @@ Marketing: claim stage **Now+**. Public announce story for this cut is **Doctor 
 [0.5.15]: https://github.com/vaibhav11123/mcp-watchdog/releases/tag/v0.5.15
 [0.5.16]: https://github.com/vaibhav11123/mcp-watchdog/releases/tag/v0.5.16
 [0.5.17]: https://github.com/vaibhav11123/mcp-watchdog/releases/tag/v0.5.17
-[Unreleased]: https://github.com/vaibhav11123/mcp-watchdog/compare/v0.5.17...HEAD
+[0.5.18]: https://github.com/vaibhav11123/mcp-watchdog/releases/tag/v0.5.18
+[Unreleased]: https://github.com/vaibhav11123/mcp-watchdog/compare/v0.5.18...HEAD
 [0.5.7]: https://github.com/vaibhav11123/mcp-watchdog/releases/tag/v0.5.7
 [0.5.6]: https://github.com/vaibhav11123/mcp-watchdog/releases/tag/v0.5.6
 [0.5.5]: https://github.com/vaibhav11123/mcp-watchdog/releases/tag/v0.5.5
