@@ -10,7 +10,10 @@ export type TelemetryEventName =
   | 'trust_decision'
   | 'settings_change'
   | 'error'
-  | 'ui_command';
+  | 'ui_command'
+  | 'review_ask_shown'
+  | 'review_ask_choice'
+  | 'review_surface_opened';
 
 export type TriageAction =
   | 'accept'
@@ -44,7 +47,9 @@ export type UiCommandName =
   | 'fixFailure'
   | 'removeServer'
   | 'clearAcceptance'
-  | 'starOnGitHub';
+  | 'starOnGitHub'
+  | 'rateWatchdog'
+  | 'showReviewAskPreview';
 
 export type StarMethod =
   | 'gh_api'
@@ -109,6 +114,27 @@ export interface UiCommandProps {
   method?: StarMethod;
 }
 
+export type ReviewAskSource = 'recovery' | 'preview' | 'command';
+export type ReviewAskChoiceProp = 'rate' | 'dismiss' | 'feedback';
+export type ReviewSurfaceProp =
+  | 'extension_open'
+  | 'openvsx'
+  | 'marketplace'
+  | 'github_star'
+  | 'issues';
+
+export interface ReviewAskShownProps {
+  source: ReviewAskSource;
+}
+
+export interface ReviewAskChoiceProps {
+  choice: ReviewAskChoiceProp;
+}
+
+export interface ReviewSurfaceOpenedProps {
+  surface: ReviewSurfaceProp;
+}
+
 export type EventPropsMap = {
   activation: ActivationProps;
   state_transition: StateTransitionProps;
@@ -117,4 +143,7 @@ export type EventPropsMap = {
   settings_change: SettingsChangeProps;
   error: ErrorProps;
   ui_command: UiCommandProps;
+  review_ask_shown: ReviewAskShownProps;
+  review_ask_choice: ReviewAskChoiceProps;
+  review_surface_opened: ReviewSurfaceOpenedProps;
 };

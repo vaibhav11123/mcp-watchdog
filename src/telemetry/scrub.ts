@@ -26,6 +26,9 @@ export const ALLOWED_PROP_KEYS = new Set([
   'name',
   'command',
   'method',
+  'source',
+  'intent',
+  'choice',
   '$lib',
   '$set',
   '$set_once',
@@ -61,6 +64,9 @@ export const EVENT_NAMES = new Set<string>([
   'settings_change',
   'error',
   'ui_command',
+  'review_ask_shown',
+  'review_ask_choice',
+  'review_surface_opened',
 ]);
 
 export type ScrubbedValue = string | number | boolean | Record<string, string | number | boolean>;

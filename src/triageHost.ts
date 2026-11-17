@@ -24,6 +24,7 @@ import type { Logger } from './logger';
 import * as telemetry from './telemetry/client';
 import type { TriageSurface } from './telemetry/events';
 import { notifyValueMoment } from './githubStar';
+import { notifyFixQuickPickOpen } from './reviewAsk';
 import { observationFromStatus } from './observationFromStatus';
 import { verifyAfterFix, type VerifiedOutcome } from './verifyRecovery';
 import type { HostCapabilities } from './hostCapabilities';
@@ -91,17 +92,23 @@ export async function runFixFailure(deps: {
   );
   deps.logger.info(`[Watchdog] Fix ${deps.serverName}: causeId=${diagnosis.causeId} class=${cls}`);
 
-  const picked = await vscode.window.showQuickPick(
-    steps.map((s) => ({
-      label: s.label,
-      description: s.id,
-      step: s,
-    })),
-    {
-      title: `Fix ${deps.serverName} (${diagnosis.causeId})`,
-      placeHolder: 'Choose a remediation step',
-    },
-  );
+  notifyFixQuickPickOpen(true);
+  let picked: { label: string; description: string; step: (typeof steps)[number] } | undefined;
+  try {
+    picked = await vscode.window.showQuickPick(
+      steps.map((s) => ({
+        label: s.label,
+        description: s.id,
+        step: s,
+      })),
+      {
+        title: `Fix ${deps.serverName} (${diagnosis.causeId})`,
+        placeHolder: 'Choose a remediation step',
+      },
+    );
+  } finally {
+    notifyFixQuickPickOpen(false);
+  }
   if (!picked) return;
   telemetry.track('triage_action', {
     action: 'fix_step',
