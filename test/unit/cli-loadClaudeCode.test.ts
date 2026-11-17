@@ -14,6 +14,7 @@ describe('cli parseArgs', () => {
       command: 'doctor',
       yes: false,
       pretty: false,
+      star: false,
       from: undefined,
     });
   });
@@ -24,6 +25,11 @@ describe('cli parseArgs', () => {
       yes: true,
       pretty: true,
       cwd: path.resolve('/tmp'),
+      star: false,
+    });
+    expect(parseArgs(['rate', '--star'])).toMatchObject({
+      command: 'rate',
+      star: true,
     });
   });
 
