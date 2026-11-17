@@ -6,13 +6,17 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+### Fixed
+
+- Rate no longer stars the GitHub repo as soon as a login exists. The extension asks **Star / Not now** before any star API call. CLI `rate` asks the same question; `rate --yes` confirms the star. **Not now**, dismiss, and a non-yes answer make no star API call.
+
 ## [0.5.18] - 2026-11-17
 
 Silent patch — stickiness-first Rate Watchdog (unannounced). Editor remains brand; A-cli-brand HOLD.
 
 ### Added
 
-- Stickiness-first **Rate Watchdog**: one earned ask after recoveries (GitHub star only after **Star / Not now**, plus one store hop — in-IDE `extension.open` on VS Code, Open VSX on Cursor). **Not now** makes no star API call. Command Palette **Rate / review…**. CLI `rate` asks the same question; `rate --yes` confirms the star. Does not auto-post Marketplace/Open VSX reviews; **Not now** on the recovery ask forever suppresses.
+- Stickiness-first **Rate Watchdog**: one earned ask after recoveries (GitHub star when signed in + one store hop — in-IDE `extension.open` on VS Code, Open VSX on Cursor). Command Palette **Rate / review…** and CLI `rate`. Does not auto-post Marketplace/Open VSX reviews; **Not now** forever suppresses.
 
 ### Changed
 
