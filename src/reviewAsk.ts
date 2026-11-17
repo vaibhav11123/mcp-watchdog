@@ -4,15 +4,11 @@ import * as telemetry from './telemetry/client';
 import {
   FEEDBACK_ISSUES_URL,
   FIX_DEFER_TIMEOUT_MS,
-  GITHUB_STAR_CONFIRM_ACCEPT,
-  GITHUB_STAR_CONFIRM_DECLINE,
-  GITHUB_STAR_CONFIRM_MESSAGE,
   RATE_MESSAGE,
   RATE_PROMPT_DISABLED,
   REVIEW_ASK_DELAY_MS,
   resolveOpenStrategy,
   shouldOfferAsk,
-  withConfirmedStarWrite,
   type OpenStrategy,
   type ReviewAskChoice,
 } from './reviewAskCore';
@@ -60,34 +56,22 @@ async function softOpenExternal(url: string): Promise<void> {
   }
 }
 
-async function confirmExtensionStar(): Promise<boolean> {
-  const pick = await vscode.window.showInformationMessage(
-    GITHUB_STAR_CONFIRM_MESSAGE,
-    { modal: true },
-    GITHUB_STAR_CONFIRM_ACCEPT,
-    GITHUB_STAR_CONFIRM_DECLINE,
-  );
-  return pick === GITHUB_STAR_CONFIRM_ACCEPT;
-}
-
 async function runGithubStarLeg(context: vscode.ExtensionContext): Promise<void> {
-  const gated = await withConfirmedStarWrite({
-    confirmed: await confirmExtensionStar(),
-    write: async () => {
-      try {
-        let method = await starViaGhOrBrowser(context, { silent: true });
-        if (method === 'silent_skipped') {
-          method = await starViaGhOrBrowser(context, { silent: false });
-        }
-        return method;
-      } catch {
-        await softOpenExternal(repoHttpsUrl(context));
-        return 'browser' as const;
-      }
-    },
-  });
-  if (!gated.confirmed) return;
-  telemetry.track('review_surface_opened', { surface: 'github_star' });
+  try {
+    let method = await starViaGhOrBrowser(context, { silent: true });
+    if (method === 'silent_skipped') {
+      method = await starViaGhOrBrowser(context, { silent: false });
+    }
+    void method;
+    telemetry.track('review_surface_opened', { surface: 'github_star' });
+  } catch {
+    try {
+      await softOpenExternal(repoHttpsUrl(context));
+      telemetry.track('review_surface_opened', { surface: 'github_star' });
+    } catch {
+      /* ignore */
+    }
+  }
 }
 
 async function runStoreLeg(strategy: OpenStrategy): Promise<void> {
