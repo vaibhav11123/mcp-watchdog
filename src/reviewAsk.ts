@@ -98,7 +98,10 @@ export async function runRateWatchdog(context: vscode.ExtensionContext): Promise
   await runStoreLeg(strategy);
 }
 
-async function presentAsk(context: vscode.ExtensionContext, source: ReviewSource): Promise<void> {
+export async function presentAsk(
+  context: vscode.ExtensionContext,
+  source: ReviewSource,
+): Promise<void> {
   const strategy = resolveOpenStrategy(vscode.env.appName || '');
   telemetry.track('review_ask_shown', { source });
 

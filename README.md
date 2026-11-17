@@ -58,10 +58,11 @@ node bin/mcp-watchdog.mjs doctor
 node bin/mcp-watchdog.mjs fix          # plan only
 node bin/mcp-watchdog.mjs fix --yes    # backup + allowlisted apply + re-probe
 node bin/mcp-watchdog.mjs restore --from .mcp-watchdog/backups/<file>
-node bin/mcp-watchdog.mjs rate         # gh star when possible + one store listing
+node bin/mcp-watchdog.mjs rate         # store listing only — no GitHub star write
+node bin/mcp-watchdog.mjs rate --star  # disclosed GitHub star + one store listing
 ```
 
-Command Palette: **MCP Watchdog: Star on GitHub + rate / review…** (disclosed star + in-IDE Marketplace on VS Code, or one Open VSX page on Cursor). Does **not** auto-post store reviews. Ask-after-recovery is one-shot — **Not now** never nags and never stars. CLI: `rate` opens the store; `rate --star` also stars via `gh`.
+Command Palette: **MCP Watchdog: Star on GitHub + open store page** (one click: disclosed star + in-IDE Marketplace on VS Code, or one Open VSX page on Cursor). Does **not** auto-post store reviews. Ask-after-recovery is one-shot — **Not now** never nags and never stars. CLI: `rate` opens the store; `rate --star` also stars via `gh`.
 
 Never prints secret env values. Editor Overview remains the primary product surface.
 
