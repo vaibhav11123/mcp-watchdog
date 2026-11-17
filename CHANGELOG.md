@@ -8,7 +8,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Added
 
-- Stickiness-first **Rate Watchdog**: one earned ask after recoveries (GitHub star when signed in + one store hop — in-IDE `extension.open` on VS Code, Open VSX on Cursor). Command Palette **Rate / review…** and CLI `rate`. Does not auto-post Marketplace/Open VSX reviews; **Not now** forever suppresses.
+- Stickiness-first **Rate Watchdog**: one earned ask after recoveries (GitHub star only after **Star / Not now**, plus one store hop — in-IDE `extension.open` on VS Code, Open VSX on Cursor). **Not now** makes no star API call. Command Palette **Rate / review…**. CLI `rate` asks the same question; `rate --yes` confirms the star. Does not auto-post Marketplace/Open VSX reviews; **Not now** on the recovery ask forever suppresses.
 
 ### Changed
 

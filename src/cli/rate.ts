@@ -1,9 +1,13 @@
 import { spawn } from 'child_process';
+import { createInterface } from 'node:readline';
 import {
   GITHUB_REPO_URL,
-  OPEN_VSX_URL,
+  GITHUB_STAR_CONFIRM_MESSAGE,
+  isExplicitStarConfirm,
   MARKETPLACE_URL,
+  OPEN_VSX_URL,
   resolveOpenStrategy,
+  withConfirmedStarWrite,
   type OpenStrategy,
 } from '../reviewAskCore';
 
@@ -77,21 +81,53 @@ function openUrl(url: string): Promise<boolean> {
 export type CliRateResult = {
   ok: true;
   command: 'rate';
-  githubStar: 'starred' | 'already' | 'skipped' | 'opened_browser';
+  githubStar: 'starred' | 'already' | 'skipped' | 'opened_browser' | 'declined';
   store: { kind: OpenStrategy['kind']; url: string; opened: boolean };
   note: string;
   hostConnection: 'unknown';
 };
 
+/** TTY prompt. No TTY means decline — no star API call. */
+export function promptStarConfirm(): Promise<boolean> {
+  if (!process.stdin.isTTY || !process.stdout.isTTY) return Promise.resolve(false);
+  return new Promise((resolve) => {
+    const rl = createInterface({ input: process.stdin, output: process.stdout });
+    rl.question(`${GITHUB_STAR_CONFIRM_MESSAGE} [y/N] `, (answer) => {
+      rl.close();
+      resolve(isExplicitStarConfirm(answer));
+    });
+  });
+}
+
 /**
- * CLI Rate: try gh star, else open GitHub repo; then one store URL (default Open VSX ICP).
+ * CLI Rate: confirm before any GitHub star write, then one store URL.
+ * `--yes` is that confirmation. Declining makes no star API call.
  */
-export async function runCliRate(opts?: { appName?: string }): Promise<CliRateResult> {
+export async function runCliRate(opts?: {
+  appName?: string;
+  yes?: boolean;
+  confirmStar?: () => Promise<boolean>;
+}): Promise<CliRateResult> {
   const strategy = resolveOpenStrategy(opts?.appName ?? process.env.TERM_PROGRAM ?? '');
-  let githubStar: CliRateResult['githubStar'] = await tryCliGithubStar();
-  if (githubStar === 'skipped') {
-    const openedGh = await openUrl(GITHUB_REPO_URL);
-    githubStar = openedGh ? 'opened_browser' : 'skipped';
+  const confirmed =
+    opts?.yes === true
+      ? true
+      : opts?.confirmStar
+        ? await opts.confirmStar()
+        : await promptStarConfirm();
+
+  const gated = await withConfirmedStarWrite({
+    confirmed,
+    write: () => tryCliGithubStar(),
+  });
+
+  let githubStar: CliRateResult['githubStar'] = 'declined';
+  if (gated.confirmed) {
+    githubStar = gated.value;
+    if (githubStar === 'skipped') {
+      const openedGh = await openUrl(GITHUB_REPO_URL);
+      githubStar = openedGh ? 'opened_browser' : 'skipped';
+    }
   }
 
   const storeUrl = strategy.kind === 'extension_open' ? strategy.fallbackUrl : strategy.url;
@@ -108,7 +144,7 @@ export async function runCliRate(opts?: { appName?: string }): Promise<CliRateRe
       url,
       opened,
     },
-    note: 'Does not auto-post Marketplace/Open VSX reviews — opens official UI for you to submit.',
+    note: 'A GitHub star is sent only after you confirm. Does not auto-post Marketplace/Open VSX reviews.',
     hostConnection: 'unknown',
   };
 }

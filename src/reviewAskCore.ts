@@ -91,3 +91,30 @@ export const RATE_MESSAGE =
 
 export const RATE_PROMPT_DISABLED =
   'Enable mcpWatchdog.enableReviewAskPreview to try the review ask.';
+
+/** Asked before any GitHub star write from Rate. */
+export const GITHUB_STAR_CONFIRM_MESSAGE =
+  'Star vaibhav11123/mcp-watchdog on GitHub? This uses your existing GitHub login. It does not post a review.';
+
+export const GITHUB_STAR_CONFIRM_ACCEPT = 'Star';
+export const GITHUB_STAR_CONFIRM_DECLINE = 'Not now';
+
+/** Explicit yes only. Empty, Not now, and any other answer are a decline. */
+export function isExplicitStarConfirm(answer: string | undefined | null): boolean {
+  if (typeof answer !== 'string') return false;
+  const normalized = answer.trim().toLowerCase();
+  return normalized === 'y' || normalized === 'yes' || normalized === 'star';
+}
+
+/**
+ * Runs `write` only when `confirmed` is exactly true.
+ * A decline does not call `write`, so no star API request is made.
+ */
+export async function withConfirmedStarWrite<T>(opts: {
+  confirmed: boolean;
+  write: () => Promise<T>;
+}): Promise<{ confirmed: true; value: T } | { confirmed: false }> {
+  if (opts.confirmed !== true) return { confirmed: false };
+  const value = await opts.write();
+  return { confirmed: true, value };
+}

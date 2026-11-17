@@ -60,7 +60,8 @@ Notes:
   - Kill switch: MCP_WATCHDOG_FIX=0 disables mutate.
   - Rate limit: max 3 mutates per cwd per 5 minutes.
   - restore --from <path>: restore .mcp.json from .mcp-watchdog/backups/ only.
-  - rate: try gh star + open one store listing (does not auto-post reviews).
+  - rate: asks before any GitHub star write. --yes is that confirmation.
+    Declining makes no star API call. Then opens one store listing (does not auto-post reviews).
   - v1 loader: Claude Code (~/.claude.json + <cwd>/.mcp.json).
 `;
 }
@@ -73,7 +74,7 @@ export async function runCli(argv: string[]): Promise<number> {
   }
 
   if (args.command === 'rate') {
-    const result = await runCliRate();
+    const result = await runCliRate({ yes: args.yes });
     emitJson(result, { pretty: args.pretty, cwd: args.cwd });
     return 0;
   }
