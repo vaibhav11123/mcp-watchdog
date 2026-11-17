@@ -58,7 +58,10 @@ node bin/mcp-watchdog.mjs doctor
 node bin/mcp-watchdog.mjs fix          # plan only
 node bin/mcp-watchdog.mjs fix --yes    # backup + allowlisted apply + re-probe
 node bin/mcp-watchdog.mjs restore --from .mcp-watchdog/backups/<file>
+node bin/mcp-watchdog.mjs rate         # gh star when possible + one store listing
 ```
+
+Command Palette: **MCP Watchdog: Rate / review…** (GitHub star when signed in + in-IDE Marketplace details on VS Code, or one Open VSX page on Cursor). Does **not** auto-post store reviews. Ask-after-recovery is one-shot — **Not now** never nags again.
 
 Never prints secret env values. Editor Overview remains the primary product surface.
 
@@ -185,7 +188,8 @@ Watchdog keeps an in-memory ring of the last ~200 state transitions (not written
 | `checkEmptyTools` | `false` | After ping, `tools/list` → show tool count (advisory). |
 | `detectToolDrift` | `false` | Fingerprint tool names; info toast when the set changes (advisory). |
 | `passiveHttpProbe` | `false` | HTTP interval: HEAD/GET before MCP; reachable-but-MCP-fail → degraded advisory. |
-| `reviewAfterRecoveries` | `3` | After N recoveries, ask once for an Open VSX/Marketplace review (`0` = off). |
+| `reviewAfterRecoveries` | `3` | After N recoveries, ask **once** to Rate Watchdog (GitHub star when signed in + one store hop). **Not now** forever suppresses. `0` = off interruptive ask. Does **not** auto-post Marketplace/Open VSX reviews. |
+| `enableReviewAskPreview` | `false` | QA only: Preview review ask command. |
 | `cloudBridge.enabled` | `false` | Opt-in: POST names-only incidents to self-hosted Watchdog Cloud. |
 | `cloudBridge.url` | `""` | Cloud base URL (e.g. `http://127.0.0.1:8787`). |
 | `telemetry.enabled` | `true` | Anonymous product usage via PostHog (allowlisted events). Also requires the editor’s telemetry setting. |

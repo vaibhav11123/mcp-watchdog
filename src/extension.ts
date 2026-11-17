@@ -51,6 +51,12 @@ import {
   notifyValueMoment,
   registerStarCommand,
 } from './githubStar';
+import {
+  disposeReviewAsk,
+  initReviewAsk,
+  maybeAskForReview,
+  registerReviewAskCommands,
+} from './reviewAsk';
 
 function trackUi(command: UiCommandName): void {
   telemetry.track('ui_command', { command });
@@ -72,12 +78,6 @@ const vscodeEditorMcpHost: EditorMcpHost = {
 };
 
 let editorMcpHintShown = false;
-
-const ASKED_REVIEW_KEY = 'mcpWatchdog.askedReview';
-const RECOVERY_COUNT_KEY = 'mcpWatchdog.recoveryCount';
-const OPEN_VSX_REVIEW = 'https://open-vsx.org/extension/mcp-watchdog/mcp-watchdog';
-const MARKETPLACE_REVIEW =
-  'https://marketplace.visualstudio.com/items?itemName=mcp-watchdog.mcp-watchdog';
 
 const monitors = new Map<string, ServerMonitor>();
 let statusBar: McpStatusBar;
@@ -338,34 +338,9 @@ function onServerStatus(name: string, s: ServerStatus): void {
     prev &&
     (prev.state === 'failed' || prev.state === 'degraded')
   ) {
-    void maybeAskForReview();
+    void maybeAskForReview(extensionContext);
   }
   refreshAllUi();
-}
-
-async function maybeAskForReview(): Promise<void> {
-  const threshold = vscode.workspace
-    .getConfiguration('mcpWatchdog')
-    .get<number>('reviewAfterRecoveries', 3);
-  if (threshold <= 0) return;
-  if (extensionContext.globalState.get<boolean>(ASKED_REVIEW_KEY)) return;
-
-  const count = (extensionContext.globalState.get<number>(RECOVERY_COUNT_KEY) ?? 0) + 1;
-  await extensionContext.globalState.update(RECOVERY_COUNT_KEY, count);
-  if (count < threshold) return;
-
-  await extensionContext.globalState.update(ASKED_REVIEW_KEY, true);
-  const pick = await vscode.window.showInformationMessage(
-    'MCP Watchdog helped recover a server. Leave a short review? It helps others find the extension.',
-    'Open VSX',
-    'Marketplace',
-    'Not now',
-  );
-  if (pick === 'Open VSX') {
-    await vscode.env.openExternal(vscode.Uri.parse(OPEN_VSX_REVIEW));
-  } else if (pick === 'Marketplace') {
-    await vscode.env.openExternal(vscode.Uri.parse(MARKETPLACE_REVIEW));
-  }
 }
 
 function startMonitor(name: string, serverConfig: McpServerConfig, opts: MonitorOptions): void {
@@ -715,10 +690,13 @@ export async function activate(context: vscode.ExtensionContext): Promise<McpWat
   logger = new Logger();
   telemetry.init(context);
   initGithubStar(context);
+  initReviewAsk(context);
   context.subscriptions.push(
     { dispose: () => telemetry.dispose() },
     { dispose: () => disposeGithubStar() },
+    { dispose: () => disposeReviewAsk() },
     registerStarCommand(context),
+    ...registerReviewAskCommands(context),
   );
   configDiagnostics = new ConfigDiagnostics();
   context.subscriptions.push(configDiagnostics);

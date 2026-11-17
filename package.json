@@ -118,6 +118,14 @@
       {
         "command": "mcpWatchdog.starOnGitHub",
         "title": "MCP Watchdog: Star on GitHub"
+      },
+      {
+        "command": "mcpWatchdog.rateWatchdog",
+        "title": "MCP Watchdog: Rate / review…"
+      },
+      {
+        "command": "mcpWatchdog.showReviewAskPreview",
+        "title": "MCP Watchdog: Preview review ask"
       }
     ],
     "menus": {
@@ -367,7 +375,12 @@
           "type": "number",
           "default": 3,
           "minimum": 0,
-          "description": "After this many recoveries from failed/degraded to healthy, ask once for an Open VSX/Marketplace review. Set 0 to disable."
+          "description": "After this many recoveries from failed/degraded to healthy, ask once to Rate Watchdog (GitHub star when signed in + one store hop). Not now forever suppresses. Set 0 to disable the interruptive ask (Rate command still works). Does not auto-post Marketplace/Open VSX reviews."
+        },
+        "mcpWatchdog.enableReviewAskPreview": {
+          "type": "boolean",
+          "default": false,
+          "description": "QA only: allow Preview review ask command to show the one-shot Rate prompt without waiting for recoveries."
         },
         "mcpWatchdog.cloudBridge.enabled": {
           "type": "boolean",

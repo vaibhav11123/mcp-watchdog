@@ -6,6 +6,7 @@ import { loadClaudeCodeServers, resolveHost } from './loadClaudeCode';
 import { mapPool } from './mapPool';
 import { probeServerOnce } from './probeOnce';
 import { restoreMcpJsonFromBackup } from './restore';
+import { runCliRate } from './rate';
 
 const HOSTS = new Set(['claude-code', 'pi', 'codex', 'opencode', 'auto']);
 const PROBE_CONCURRENCY = 4;
@@ -14,7 +15,7 @@ export function parseArgs(argv: string[]): {
   host: string;
   cwd: string;
   help: boolean;
-  command: 'doctor' | 'status' | 'fix' | 'restore';
+  command: 'doctor' | 'status' | 'fix' | 'restore' | 'rate';
   yes: boolean;
   pretty: boolean;
   from?: string;
@@ -23,7 +24,7 @@ export function parseArgs(argv: string[]): {
     host: 'auto',
     cwd: process.cwd(),
     help: false,
-    command: 'doctor' as 'doctor' | 'status' | 'fix' | 'restore',
+    command: 'doctor' as 'doctor' | 'status' | 'fix' | 'restore' | 'rate',
     yes: false,
     pretty: false,
     from: undefined as string | undefined,
@@ -36,7 +37,9 @@ export function parseArgs(argv: string[]): {
     else if (a === '--from' && argv[i + 1]) out.from = argv[++i]!;
     else if (a === '--yes' || a === '-y') out.yes = true;
     else if (a === '--full' || a === '--pretty') out.pretty = true;
-    else if (a === 'doctor' || a === 'status' || a === 'fix' || a === 'restore') out.command = a;
+    else if (a === 'doctor' || a === 'status' || a === 'fix' || a === 'restore' || a === 'rate') {
+      out.command = a;
+    }
   }
   return out;
 }
@@ -44,9 +47,9 @@ export function parseArgs(argv: string[]): {
 export function usage(): string {
   return `mcp-watchdog — Doctor MCP configs for terminal harnesses
 
-Usage:
-  mcp-watchdog [--host claude-code|pi|codex|opencode|auto] [--cwd <path>] [--full]
-               [doctor|status|fix|restore] [--yes] [--from <backup>]
+Supported invoke (repo clone after npm run build — not on PATH from a VSIX install):
+  node bin/mcp-watchdog.mjs [--host claude-code|pi|codex|opencode|auto] [--cwd <path>] [--full]
+                            [doctor|status|fix|restore|rate] [--yes] [--from <backup>]
 
 Notes:
   - Same Doctor taxonomy as the VS Code/Cursor extension (causeId + Fix).
@@ -57,6 +60,7 @@ Notes:
   - Kill switch: MCP_WATCHDOG_FIX=0 disables mutate.
   - Rate limit: max 3 mutates per cwd per 5 minutes.
   - restore --from <path>: restore .mcp.json from .mcp-watchdog/backups/ only.
+  - rate: try gh star + open one store listing (does not auto-post reviews).
   - v1 loader: Claude Code (~/.claude.json + <cwd>/.mcp.json).
 `;
 }
@@ -65,6 +69,12 @@ export async function runCli(argv: string[]): Promise<number> {
   const args = parseArgs(argv);
   if (args.help) {
     process.stdout.write(usage());
+    return 0;
+  }
+
+  if (args.command === 'rate') {
+    const result = await runCliRate();
+    emitJson(result, { pretty: args.pretty, cwd: args.cwd });
     return 0;
   }
 

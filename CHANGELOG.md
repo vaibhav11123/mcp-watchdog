@@ -6,6 +6,14 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+### Added
+
+- Stickiness-first **Rate Watchdog**: one earned ask after recoveries (GitHub star when signed in + one store hop — in-IDE `extension.open` on VS Code, Open VSX on Cursor). Command Palette **Rate / review…** and CLI `rate`. Does not auto-post Marketplace/Open VSX reviews; **Not now** forever suppresses.
+
+### Changed
+
+- `reviewAfterRecoveries` description clarifies one-shot + no auto-post; QA `enableReviewAskPreview`.
+
 ## [0.5.17] - 2026-11-16
 
 Silent patch — Act+Prove CLI companion (unannounced) + Windows ENOENT honesty + CI gate. Editor remains brand; A-cli-brand HOLD.
